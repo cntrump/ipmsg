@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: AppControl.m
@@ -118,7 +118,7 @@
 	ReceiveControl*	recv;
 	// 表示中のウィンドウがある場合無視する
 	if ([[WindowManager sharedManager] receiveWindowForKey:msg]) {
-		WRN1(@"already visible message.(%@)", msg);
+		WRN(@"already visible message.(%@)", msg);
 		return;
 	}
 	// 受信音再生
@@ -342,9 +342,9 @@
 	{
 		NSStringEncoding* encodings = (NSStringEncoding*)[NSString availableStringEncodings];
 		DBG0(@"ENCODINGS*****");
-		DBG1(@" default=%@", [NSString localizedNameOfStringEncoding:[NSString defaultCStringEncoding]]);
+		DBG(@" default=%@", [NSString localizedNameOfStringEncoding:[NSString defaultCStringEncoding]]);
 		while (*encodings) {
-			DBG2(@" %08X:%@", *encodings, [NSString localizedNameOfStringEncoding:*encodings]);
+			DBG(@" %08X:%@", *encodings, [NSString localizedNameOfStringEncoding:*encodings]);
 			encodings++;
 		}
 	}
@@ -414,9 +414,7 @@
 // アプリ終了時処理
 - (void)applicationWillTerminate:(NSNotification*)aNotification {
 	// EXITパケットのブロードキャスト
-	if ([MessageCenter valid]) {
-		[[MessageCenter sharedCenter] broadcastExit];
-	}
+	[[MessageCenter sharedCenter] broadcastExit];
 	// 添付ファイルサーバの終了
 	[[AttachmentServer sharedServer] shutdownServer];
 	
@@ -439,7 +437,7 @@
 
 // Dockファイルドロップ時
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)fileName {
-	DBG1(@"drop file=%@", fileName);
+	DBG(@"drop file=%@", fileName);
 	if (lastDockDraggedDate && lastDockDraggedWindow) {
 		if ([lastDockDraggedDate timeIntervalSinceNow] > -0.5) {
 			[lastDockDraggedWindow appendAttachmentByPath:fileName];
@@ -495,7 +493,7 @@
 	[receiveQueueLock unlock];
 	// 新規送信ウィンドウのオープン
 
-//DBG1(@"#window = %d", [[NSApp windows] count]);
+//DBG(@"#window = %d", [[NSApp windows] count]);
 	wins = [NSApp windows];
 	for (i = 0; i < [wins count]; i++) {
 		NSWindow* win = [wins objectAtIndex:i];

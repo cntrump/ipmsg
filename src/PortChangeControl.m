@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: PortChangeControl.m
@@ -48,7 +48,7 @@
 			[NSApp stopModal];
 		}
 	} else {
-		ERR1(@"Unknown Button Pressed(%@)", sender);
+		ERR(@"Unknown Button Pressed(%@)", sender);
 	}
 }
 
@@ -56,7 +56,7 @@
 	if (sender == portNoField) {
 		// NOP
 	} else {
-		ERR1(@"Unknown TextField Changed(%@)", sender);
+		ERR(@"Unknown TextField Changed(%@)", sender);
 	}
 }
 

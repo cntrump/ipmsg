@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: UserManager.h
@@ -15,16 +15,16 @@
  *============================================================================*/
 
 // ユーザ一覧変更
-#define NOTICE_USER_LIST_CHANGE		@"IPMsgUserListChange"
+#define NOTICE_USER_LIST_CHANGED		@"IPMsgUserListChanged"
 
 /*============================================================================*
  * クラス定義
  *============================================================================*/
 
 @interface UserManager : NSObject {
-	NSMutableArray*			userList;		// ユーザ一覧
-	NSMutableDictionary*	dialupDic;		// ダイアルアップユーザ一覧
-	NSLock*					lock;			// 更新排他用ロック
+	NSMutableArray*		userList;		// ユーザ一覧
+	NSMutableSet*		dialupSet;		// ダイアルアップアドレス一覧
+	NSRecursiveLock*	lock;			// 更新排他用ロック
 }
 
 // ファクトリ
@@ -34,7 +34,6 @@
 - (int)numberOfUsers;
 - (int)indexOfUser:(UserInfo*)user;
 - (UserInfo*)userAtIndex:(int)index;
-//- (UserInfo*)userForKey:(NSString*)key;
 - (UserInfo*)userForLogOnUser:(NSString*)logOn address:(struct sockaddr_in*)addr;
 
 // ユーザ情報追加／削除

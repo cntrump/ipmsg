@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: SendWindow.m
@@ -20,14 +20,16 @@
 
 - (void)keyDown:(NSEvent*)theEvent {
 	// Enterキー入力時、送信処理を行う
-	if (([theEvent keyCode] == 52) &&
-		([[self delegate] respondsToSelector:@selector(sendMessage:)])) {
-//		DBG0(@"send!(byEnter)");
-		[[self delegate] sendMessage:self];
+	if ([theEvent keyCode] == 52) {
+		id obj = [self delegate];
+		if ([obj respondsToSelector:@selector(sendMessage:)]) {
+//			DBG0(@"send!(byEnter)");
+			[obj sendMessage:self];
+		}
 	} else {
 		[super keyDown:theEvent];
 	}
-//	DBG1(@"keycode=%d", [theEvent keyCode]);
+//	DBG(@"keycode=%d", [theEvent keyCode]);
 }
 
 @end

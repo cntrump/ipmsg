@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: RefuseInfo.m
@@ -22,10 +22,12 @@
 
 // 初期化
 - (id)initWithTarget:(IPRefuseTarget)aTarget string:(NSString*)aString condition:(IPRefuseCondition)aCondition {
-	self = [super self];
-	target		= aTarget;
-	string		= [aString copy];
-	condition	= aCondition;
+	self = [super init];
+	if (self) {
+		target		= aTarget;
+		string		= [aString copy];
+		condition	= aCondition;
+	}
 	return self;
 }
 
@@ -81,7 +83,7 @@
 	case IP_REFUSE_LOGON:	targetStr = [user logOnUser];	break;
 	case IP_REFUSE_ADDRESS:	targetStr = [user address];		break;
 	default:
-		WRN1(@"拒否対象不正(%d)", target);
+		WRN(@"invalid refuse target(%d)", target);
 		return NO;
 	}
 	switch (condition) {
@@ -112,7 +114,7 @@
 	}
 		break; 
 	default:
-		WRN1(@"拒否条件不正(%d)", condition);
+		WRN(@"invalid refuse condition(%d)", condition);
 		break;
 	}
 	return NO;
@@ -137,7 +139,7 @@
 	case IP_REFUSE_LOGON:	targetStr = NSLocalizedString(@"Refuse.Desc.LogOn", nil);		break;
 	case IP_REFUSE_ADDRESS:	targetStr = NSLocalizedString(@"Refuse.Desc.IPAddress", nil);	break;
 	default:
-		WRN1(@"拒否対象不正(%d)", target);
+		WRN(@"invalid refuse target(%d)", target);
 		break;
 	}
 	switch (condition) {
@@ -146,7 +148,7 @@
 	case IP_REFUSE_START:	conditionStr = NSLocalizedString(@"Refuse.Desc.Start", nil);	break;
 	case IP_REFUSE_END:		conditionStr = NSLocalizedString(@"Refuse.Desc.End", nil);		break;
 	default:
-		WRN1(@"拒否条件不正(%d)", condition);
+		WRN(@"invalid refuse condition(%d)", condition);
 		break;
 	}
 	

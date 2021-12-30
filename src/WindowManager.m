@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: WindowManager.m
@@ -9,6 +9,9 @@
 #import "WindowManager.h"
 #import "ReceiveControl.h"
 #import "SendControl.h"
+#import "DebugLog.h"
+
+#define	_DEBUG_DETAIL	0
 
 /*============================================================================*
  * クラス実装
@@ -51,7 +54,7 @@
  * 内部利用
  *----------------------------------------------------------------------------*/
 
-/*	// debug
+#if _DEBUG_DETAIL
 - (void)report:(NSString*)msg {
 	int			i;
 	int			num;
@@ -60,7 +63,7 @@
 	DBG0(msg);
 	num		= [receiveDic count];
 	keys	= [receiveDic allKeys];
-	DBG1(@"  ReceiveWin:num=%d", num);
+	DBG(@"  ReceiveWin:num=%d", num);
 	for (i = 0; i < num; i++) {
 		id key = [keys objectAtIndex:i];
 		id obj = [receiveDic objectForKey:key];
@@ -68,14 +71,14 @@
 	}
 	num		= [replyDic count];
 	keys	= [replyDic allKeys];
-	DBG1(@"  ReplyWin:num=%d", num);
+	DBG(@"  ReplyWin:num=%d", num);
 	for (i = 0; i < num; i++) {
 		id key = [keys objectAtIndex:i];
 		id obj = [replyDic objectForKey:key];
 		DBG3(@"  ReplyWin  [%d]:id=%@,obj=%@", i, key, obj);
 	}
 }
-*/
+#endif
 
 /*----------------------------------------------------------------------------*
  * 受信ウィンドウ管理
@@ -96,7 +99,9 @@
 	if (aKey && aWindow) {
 		[receiveDic setObject:aWindow forKey:aKey];
 	}
-//	[self report:[NSString stringWithFormat:@"WinMng:ReceiveWindow set(%@)", aKey]];
+#if _DEBUG_DETAIL
+	[self report:[NSString stringWithFormat:@"WinMng:ReceiveWindow set(%@)", aKey]];
+#endif
 }
 
 // 受信ウィンドウを削除する
@@ -104,7 +109,9 @@
 	if (aKey) {
 		[receiveDic removeObjectForKey:aKey];
 	}
-//	[self report:[NSString stringWithFormat:@"WinMng:ReceiveWindow remove(%@)", aKey]];
+#if _DEBUG_DETAIL
+	[self report:[NSString stringWithFormat:@"WinMng:ReceiveWindow remove(%@)", aKey]];
+#endif
 }
 	
 /*----------------------------------------------------------------------------*
@@ -126,7 +133,9 @@
 	if (aKey && aWindow) {
 		[replyDic setObject:aWindow forKey:aKey];
 	}
-//	[self report:[NSString stringWithFormat:@"WinMng:ReplyWindow set(%@)", aKey]];
+#if _DEBUG_DETAIL
+	[self report:[NSString stringWithFormat:@"WinMng:ReplyWindow set(%@)", aKey]];
+#endif
 }
 
 // 返信ウィンドウを削除する
@@ -134,7 +143,9 @@
 	if (aKey) {
 		[replyDic removeObjectForKey:aKey];
 	}
-//	[self report:[NSString stringWithFormat:@"WinMng:ReplyWindow remove(%@)", aKey]];
+#if _DEBUG_DETAIL
+	[self report:[NSString stringWithFormat:@"WinMng:ReplyWindow remove(%@)", aKey]];
+#endif
 }
 	
 @end

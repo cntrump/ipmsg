@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: RecvMessage.m
@@ -13,7 +13,6 @@
 #import "UserInfo.h"
 #import "Attachment.h"
 #import "NSStringIPMessenger.h"
-#import "HelperFunctions.h"
 #import "DebugLog.h"
 
 #import <netinet/in.h>
@@ -71,7 +70,7 @@
 		return nil;
 	}
 	if (len <= 0) {
-		ERR1(@"parameter error(len is %d)", len);
+		ERR(@"parameter error(len is %d)", len);
 		[self release];
 		return nil;
 	}
@@ -105,44 +104,44 @@
 	}
 	
 	// バージョン番号
-	if (!(tok = IPMtokenize(buffer, MESSAGE_SEPARATOR, &ptr))) {
-		ERR1(@"msg:illegal format(version get error,\"%s\")", buf);
+	if (!(tok = strtok_r(buffer, MESSAGE_SEPARATOR, &ptr))) {
+		ERR(@"msg:illegal format(version get error,\"%s\")", buf);
 		[self release];
 		return nil;
 	}
 	if (strtol(tok, NULL, 10) != IPMSG_VERSION) {
-		ERR1(@"msg:version invalid(%d)", strtol(tok, NULL, 10));
+		ERR(@"msg:version invalid(%d)", strtol(tok, NULL, 10));
 		[self release];
 		return nil;
 	}
 	
 	// パケット番号
-	if (!(tok = IPMtokenize(NULL, MESSAGE_SEPARATOR, &ptr))) {
-		ERR1(@"msg:illegal format(version get error,\"%s\")", buf);
+	if (!(tok = strtok_r(NULL, MESSAGE_SEPARATOR, &ptr))) {
+		ERR(@"msg:illegal format(version get error,\"%s\")", buf);
 		[self release];
 		return nil;
 	}
 	packetNo = strtol(tok, NULL, 10);
 	
 	// ログイン名
-	if (!(tok = IPMtokenize(NULL, MESSAGE_SEPARATOR, &ptr))) {
-		ERR1(@"msg:illegal format(logOn get error,\"%s\")", buf);
+	if (!(tok = strtok_r(NULL, MESSAGE_SEPARATOR, &ptr))) {
+		ERR(@"msg:illegal format(logOn get error,\"%s\")", buf);
 		[self release];
 		return nil;
 	}
 	logOnUser = [[NSString alloc] initWithIPMsgCString:tok];
 	
 	// ホスト名
-	if (!(tok = IPMtokenize(NULL, MESSAGE_SEPARATOR, &ptr))) {
-		ERR1(@"msg:illegal format(host get error,\"%s\")", buf);
+	if (!(tok = strtok_r(NULL, MESSAGE_SEPARATOR, &ptr))) {
+		ERR(@"msg:illegal format(host get error,\"%s\")", buf);
 		[self release];
 		return nil;
 	}
 	hostName = [[NSString alloc] initWithIPMsgCString:tok];
 	
 	// コマンド番号
-	if (!(tok = IPMtokenize(NULL, MESSAGE_SEPARATOR, &ptr))) {
-		ERR1(@"msg:illegal format(command get error,\"%s\")", buf);
+	if (!(tok = strtok_r(NULL, MESSAGE_SEPARATOR, &ptr))) {
+		ERR(@"msg:illegal format(command get error,\"%s\")", buf);
 		[self release];
 		return nil;
 	}
@@ -178,12 +177,12 @@
 	case IPMSG_SENDMSG:
 		if ((command & IPMSG_FILEATTACHOPT) && subMessage) {
 			NSMutableArray* array = [[[NSMutableArray alloc] initWithCapacity:10] autorelease];
-			for (tok = IPMtokenize(subMessage, "\a", &ptr); tok; tok = IPMtokenize(NULL, "\a", &ptr)) {
+			for (tok = strtok_r(subMessage, "\a", &ptr); tok; tok = strtok_r(NULL, "\a", &ptr)) {
 				Attachment* attach = [Attachment attachmentWithMessageAttachment:tok];
 				if (attach) {
 					[array addObject:attach];
 				} else {
-					ERR1(@"attach str parse error.(%s)", tok);
+					ERR(@"attach str parse error.(%s)", tok);
 				}
 			}
 			if ([array count] > 0) {
@@ -201,7 +200,7 @@
 				int				i;
 				continueCount	= [[lists objectAtIndex:0] intValue];
 				if ([lists count] < (unsigned)(totalCount * 7 + 2)) {
-					WRN3(@"hostlist:invalid data(items=%d,totalCount=%d,%@)", [lists count], totalCount, self);
+					WRN(@"hostlist:invalid data(items=%d,totalCount=%d,%@)", [lists count], totalCount, self);
 					totalCount = ([lists count] - 2) / 7;
 				}
 				for (i = 0; i < totalCount; i++) {
@@ -403,7 +402,7 @@
 		newObj->continueCount	= continueCount;
 		newObj->needLog			= needLog;
 	} else {
-		ERR1(@"copy error(%@)", self);
+		ERR(@"copy error(%@)", self);
 	}
 	
 	return newObj;

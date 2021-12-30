@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: PrefControl.m
@@ -21,6 +21,14 @@
 #include <arpa/inet.h>
 
 /*============================================================================*
+ * プライベートメソッド（カテゴリ）
+ *============================================================================*/
+
+@interface PrefControl(Private)
+- (void)hostNameChanged:(NSNotification*)aNotification;
+@end
+
+/*============================================================================*
  * クラス実装
  *============================================================================*/
 
@@ -38,11 +46,7 @@
 	[baseUserNameField			setStringValue:	[config userName]];
 	[baseGroupNameField 		setStringValue:	[config groupName]];
 	[baseLogOnNameField			setStringValue: NSUserName()];
-	[baseMachineNameField		setStringValue:	[config machineName]];
-	[baseMachineNameMatrix		selectCellAtRow:[config machineNameType] column:0];
-	[[baseMachineNameMatrix cellAtRow:1 column:0] setEnabled:[config canUseAppleTalkHostname]];
-	[baseHostDomainRmoveCheck	setEnabled:		([config machineNameType] == 0)];
-	[baseHostDomainRmoveCheck	setState:		[config hostnameRemoveDomain]];
+	[baseMachineNameField		setStringValue:	[[MessageCenter sharedCenter] myHostName]];
 	[receiveStatusBarCheckBox	setState:		[config useStatusBar]];
 
 	// 送信タブ
@@ -139,7 +143,7 @@
 					[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.NoOldPwd", nil)];
 					return;
 				}
-				if (![password isEqualToString:[NSString stringWithCString:crypt([oldPwd cString], "IP")]] &&
+				if (![password isEqualToString:[NSString stringWithCString:crypt([oldPwd UTF8String], "IP")]] &&
 					![password isEqualToString:oldPwd]) {
 					// 平文とも比較するのはv0.4までとの互換性のため
 					[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.OldPwdErr", nil)];
@@ -154,7 +158,7 @@
 		}
 		// ここまでくれば正しいのでパスワード値変更
 		if ([newPwd1 length] > 0) {
-			[[Config sharedConfig] setPassword:[NSString stringWithCString:crypt([newPwd1 cString], "IP")]];
+			[[Config sharedConfig] setPassword:[NSString stringWithCString:crypt([newPwd1 UTF8String], "IP")]];
 		} else {
 			[[Config sharedConfig] setPassword:@""];
 		}
@@ -185,7 +189,7 @@
 		int index = [netBroadAddressTable selectedRow];
 		if (index != -1) {
 			[[Config sharedConfig] removeBroadcastAtIndex:index];
-			[netBroadAddressTable setNeedsDisplay:YES];
+			[netBroadAddressTable reloadData];
 			[netBroadAddressTable deselectAll:self];
 		}
 	}
@@ -205,7 +209,7 @@
 		}
 		// IPアドレス設定の場合
 		if (ip) {
-			unsigned long 	inetaddr = inet_addr([string cString]);
+			unsigned long 	inetaddr = inet_addr([string UTF8String]);
 			struct in_addr	addr;
 			NSString*		strAddr;
 			if (inetaddr == INADDR_NONE) {
@@ -236,7 +240,7 @@
 			[config addBroadcastWithHost:string];
 		}
 		[bcastSheetErrorLabel setStringValue:@""];
-		[netBroadAddressTable setNeedsDisplay:YES];
+		[netBroadAddressTable reloadData];
 		[NSApp endSheet:bcastSheet returnCode:NSOKButton];
 	}
 	// ブロードキャストシートキャンセルボタン
@@ -279,7 +283,7 @@
 		} else if (rmvIdx < absIdx) {
 			[config setAbsenceIndex:absIdx - 1];
 		}
-		[absenceTable setNeedsDisplay:YES];
+		[absenceTable reloadData];
 		[absenceTable deselectAll:self];
 		[[NSApp delegate] buildAbsenceMenu];
 	}
@@ -294,8 +298,8 @@
 		} else if (upIdx == absIdx + 1) {
 			[config setAbsenceIndex:absIdx + 1];
 		}
-		[absenceTable setNeedsDisplay:YES];
-		[absenceTable selectRow:upIdx-1 byExtendingSelection:NO];
+		[absenceTable reloadData];
+		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:upIdx-1] byExtendingSelection:NO];
 		[[NSApp delegate] buildAbsenceMenu];
 	}
 	// 不在下へボタン	
@@ -310,8 +314,8 @@
 		} else if (downIdx == absIdx - 1) {
 			[config setAbsenceIndex:absIdx - 1];
 		}
-		[absenceTable setNeedsDisplay:YES];
-		[absenceTable selectRow:index+1 byExtendingSelection:NO];
+		[absenceTable reloadData];
+		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
 		[[NSApp delegate] buildAbsenceMenu];
 	}
 	// 不在定義初期化ボタン
@@ -360,9 +364,10 @@
 				[[MessageCenter sharedCenter] broadcastAbsence];
 			}
 		}
-		[absenceTable setNeedsDisplay:YES];
+		[absenceTable reloadData];
 		[absenceTable deselectAll:self];
-		[absenceTable selectRow:((index == -1) ? 0 : (index)) byExtendingSelection:NO];
+		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:((index == -1) ? 0 : (index))]
+				  byExtendingSelection:NO];
 		[[NSApp delegate] buildAbsenceMenu];
 		[NSApp endSheet:absenceSheet returnCode:NSOKButton];
 	}
@@ -402,7 +407,7 @@
 	// 通知拒否削除ボタン
 	else if (sender == refuseDeleteButton) {
 		[[Config sharedConfig] removeRefuseInfoAtIndex:[refuseTable selectedRow]];
-		[refuseTable setNeedsDisplay:YES];
+		[refuseTable reloadData];
 		[refuseTable deselectAll:self];
 // broadcast entry?
 	}
@@ -410,16 +415,16 @@
 	else if (sender == refuseUpButton) {
 		int index = [refuseTable selectedRow];
 		[[Config sharedConfig] upRefuseInfoAtIndex:index];
-		[refuseTable setNeedsDisplay:YES];
-		[refuseTable selectRow:index-1 byExtendingSelection:NO];
+		[refuseTable reloadData];
+		[refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index-1] byExtendingSelection:NO];
 // broadcast entry?
 	}
 	// 通知拒否下へボタン	
 	else if (sender == refuseDownButton) {
 		int index = [refuseTable selectedRow];
 		[[Config sharedConfig] downRefuseInfoAtIndex:index];
-		[refuseTable setNeedsDisplay:YES];
-		[refuseTable selectRow:index+1 byExtendingSelection:NO];
+		[refuseTable reloadData];
+		[refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
 // broadcast entry?
 	}
 	// 通知拒否シートOKボタン
@@ -444,7 +449,7 @@
 			// 変更
 			[[Config sharedConfig] setRefuseInfo:info atIndex:refuseEditIndex];
 		}
-		[refuseTable setNeedsDisplay:YES];
+		[refuseTable reloadData];
 		[NSApp endSheet:refuseSheet returnCode:NSOKButton];
 	}
 	// 通知拒否シートCancelボタン
@@ -456,7 +461,7 @@
 		int index = [userlistSortTable selectedRow];
 		[[Config sharedConfig] moveSortRuleFromIndex:index toIndex:index-1];
 		[userlistSortTable reloadData];
-		[userlistSortTable selectRow:index-1 byExtendingSelection:NO];
+		[userlistSortTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index-1] byExtendingSelection:NO];
 		[[UserManager sharedManager] sortUsers];
 	}
 	// ユーザソートルール下へボタン
@@ -464,7 +469,7 @@
 		int index = [userlistSortTable selectedRow];
 		[[Config sharedConfig] moveSortRuleFromIndex:index toIndex:index+1];
 		[userlistSortTable reloadData];
-		[userlistSortTable selectRow:index+1 byExtendingSelection:NO];
+		[userlistSortTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
 		[[UserManager sharedManager] sortUsers];
 	}
 	// 標準ログファイル参照ボタン／重要ログファイル参照ボタン
@@ -489,7 +494,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"unknwon button pressed. %@", sender);
+		ERR(@"unknwon button pressed. %@", sender);
 	}	
 }
 
@@ -499,15 +504,8 @@
  
 - (IBAction)matrixChanged:(id)sender {
 	Config* config = [Config sharedConfig];
-	// 全般：ホスト名取得元
-	if (sender == baseMachineNameMatrix) {
-		[config setMachineNameType:[baseMachineNameMatrix selectedRow]];
-		[baseHostDomainRmoveCheck setEnabled:([config machineNameType] == 0)];
-		[baseMachineNameField setStringValue:[config machineName]];
-		[[MessageCenter sharedCenter] broadcastAbsence];
-	}
 	// 受信：ノンポップアップ受信モード
-	else if (sender == receiveNonPopupModeMatrix) {
+	if (sender == receiveNonPopupModeMatrix) {
 		[config setNonPopupWhenAbsence:([receiveNonPopupModeMatrix selectedRow] == 1)];
 	}
 	// 受信：ノンポップアップ時アイコンバウンド設定
@@ -520,7 +518,7 @@
 	}
 	// その他
 	else {
-		ERR1(@"unknown matrix changed. %@", sender);
+		ERR(@"unknown matrix changed. %@", sender);
 	}
 }
 
@@ -581,7 +579,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"unknwon text end edit. %@", obj);
+		ERR(@"unknwon text end edit. %@", obj);
 	}
 }
 
@@ -591,14 +589,8 @@
 
 - (IBAction)checkboxChanged:(id)sender {
 	Config* config = [Config sharedConfig];
-	// 全般：ドメインサフィックスを除去
-	if (sender == baseHostDomainRmoveCheck) {
-		[config setHostnameRemoveDomain:[baseHostDomainRmoveCheck state]];
-		[baseMachineNameField setStringValue:[config machineName]];
-		[[MessageCenter sharedCenter] broadcastAbsence];
-	}
 	// 全般：ステータスバーを使用するか
-	else if (sender == receiveStatusBarCheckBox) {
+	if (sender == receiveStatusBarCheckBox) {
 		AppControl* appCtl = (AppControl*)[NSApp delegate];
 		[config setUseStatusBar:[receiveStatusBarCheckBox state]];
 		if ([config useStatusBar]) {
@@ -706,7 +698,7 @@
 	}
 	// 不明（バグ）
 	else {
-		ERR1(@"unknwon chackbox changed. %@", sender);
+		ERR(@"unknwon chackbox changed. %@", sender);
 	}
 }
  
@@ -731,7 +723,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"unknown popup changed. %@", sender);
+		ERR(@"unknown popup changed. %@", sender);
 	}
 }
 
@@ -770,7 +762,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"unknown table selection changed (%@)", tbl);
+		ERR(@"unknown table selection changed (%@)", tbl);
 	}
 }
 
@@ -791,7 +783,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"unknown table double clicked (%@)", sender);
+		ERR(@"unknown table double clicked (%@)", sender);
 	}
 }
 
@@ -804,7 +796,7 @@
 	if (info == absenceResetButton) {
 		if (code == NSOKButton) {
 			[[Config sharedConfig] resetAllAbsences];
-			[absenceTable setNeedsDisplay:YES];
+			[absenceTable reloadData];
 			[absenceTable deselectAll:self];
 			[[NSApp delegate] buildAbsenceMenu];
 		}
@@ -853,7 +845,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"number of rows in unknown table (%@)", aTableView);
+		ERR(@"number of rows in unknown table (%@)", aTableView);
 	}
 	return 0;
 }
@@ -907,7 +899,7 @@
 	}
 	// その他（バグ）
 	else {
-		ERR1(@"object in unknown table (%@)", aTableView);
+		ERR(@"object in unknown table (%@)", aTableView);
 	}
 	return nil;
 }
@@ -931,6 +923,11 @@
  *  その他
  *----------------------------------------------------------------------------*/
 
+- (void)dealloc {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[super dealloc];
+}
+
 // 初期化
 - (void)awakeFromNib {	
 	NSTableColumn*		column;
@@ -944,7 +941,14 @@
 
 	for (i = 0; i < [dirs count]; i++) {
 		NSString*	dir		= [[dirs objectAtIndex:i] stringByAppendingPathComponent:@"Sounds"];
+	#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
+		NSArray*	files	= [fm contentsOfDirectoryAtPath:dir error:NULL];		
+	#else
 		NSArray*	files	= [fm directoryContentsAtPath:dir];
+	#endif
+		if (!files) {
+			continue;
+		}
 		for (j = 0; j < [files count]; j++) {
 			[receiveSoundPopup addItemWithTitle:[[files objectAtIndex:j] stringByDeletingPathExtension]];
 		}
@@ -977,6 +981,11 @@
 
 	// 画面中央に移動
 	[panel center];
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self 
+											 selector:@selector(hostNameChanged:)
+												 name:NOTICE_HOSTNAME_CHANGED
+											   object:nil];
 }
 
 // ウィンドウ表示時
@@ -988,6 +997,10 @@
 - (void)windowWillClose:(NSNotification *)aNotification {
 	// 設定を保存
 	[[Config sharedConfig] save];
+}
+
+- (void)hostNameChanged:(NSNotification*)aNotification {
+	[baseMachineNameField setStringValue:[[MessageCenter sharedCenter] myHostName]];
 }
 
 @end

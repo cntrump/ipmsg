@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2009 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: NSStringIPMessenger.h
@@ -19,11 +19,5 @@
 
 // IPMessenger用送受信文字列変換
 - (const char*)ipmsgCString;
-
-// FSSpec獲得（Carbon）
-- (BOOL)getFSSpec:(FSSpec*)fsSpec;
-
-// FInfo獲得（Carbon）
-- (BOOL)getFInfo:(FInfo*)fInfo;
 
 @end

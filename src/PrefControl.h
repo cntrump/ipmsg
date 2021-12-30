@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: PrefControl.h
@@ -20,8 +20,6 @@
 	IBOutlet NSTextField*		baseGroupNameField;
 	IBOutlet NSTextField*		baseLogOnNameField;
 	IBOutlet NSTextField*		baseMachineNameField;
-	IBOutlet NSMatrix*			baseMachineNameMatrix;
-	IBOutlet NSButton*			baseHostDomainRmoveCheck;
 	IBOutlet NSButton*			basePasswordButton;
 	IBOutlet NSPanel*			pwdSheet;
 	IBOutlet NSSecureTextField*	pwdSheetOldPwdField;

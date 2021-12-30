@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: Config.m
@@ -10,9 +10,6 @@
 #import "Config.h"
 #import "RefuseInfo.h"
 #import "DebugLog.h"
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 /*============================================================================*
  * 定数定義
@@ -155,7 +152,7 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 			else if ([targetStr isEqualToString:@"LogOnName"]) {	target = IP_REFUSE_LOGON;	}
 			else if ([targetStr isEqualToString:@"IPAddress"]) {	target = IP_REFUSE_ADDRESS;	}
 			else {
-				WRN1(@"拒否対象不正(%@)", targetStr);
+				WRN(@"invalid refuse target(%@)", targetStr);
 				continue;
 			}
 			if ([string length] <= 0) {
@@ -166,7 +163,7 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 			else if ([conditionStr isEqualToString:@"Start"]) {		condition = IP_REFUSE_START;	}
 			else if ([conditionStr isEqualToString:@"End"]) {		condition = IP_REFUSE_END;		}
 			else {
-				WRN1(@"拒否条件不正(%@)", conditionStr);
+				WRN(@"invalid refuse condition(%@)", conditionStr);
 				continue;
 			}
 
@@ -191,7 +188,7 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 		case IP_REFUSE_LOGON:	target = @"LogOnName";		break;
 		case IP_REFUSE_ADDRESS:	target = @"IPAddress";		break;
 		default:
-			WRN1(@"拒否対象不正(%d)", [info target]);
+			WRN(@"invalid refuse target(%d)", [info target]);
 			continue;
 		}
 		switch ([info condition]) {
@@ -200,7 +197,7 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 		case IP_REFUSE_START:	condition = @"Start";		break;
 		case IP_REFUSE_END:		condition = @"End";			break;
 		default:
-			WRN1(@"拒否条件不正(%d)", [info condition]);
+			WRN(@"invalid refuse condition(%d)", [info condition]);
 			continue;
 		}
 		[dict setObject:target			forKey:@"Target"];
@@ -209,59 +206,6 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 		[newArray addObject:dict];
 	}
 	return newArray;
-}
-
-// AppleTalkホスト名を取得
-static int hex2bin(char c) {
-	switch (c) {
-	case '0': case '1': case '2': case '3': case '4':
-	case '5': case '6': case '7': case '8': case '9':
-		return c - '0';
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-		return c - 'A' + 10;
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-		return c - 'a' + 10;
-	default:
-		return -1;
-	}
-}
-
-- (NSString*)appleTalkHostname {
-// 本来取得のためのAPIがあるはずだが、わからないため
-// 暫定的処理として/etc/hostconfigを直接参照する
-	if (!appleTalkHostname) {
-		NSString*		string		= [NSString stringWithContentsOfFile:@"/etc/hostconfig"];
-		NSArray*		strings		= [string componentsSeparatedByString:@"\n"];
-		NSEnumerator*	enumerator	= [strings objectEnumerator];
-		while ((string = [enumerator nextObject])) {
-			if ([string length] > 0) {
-				NSRange range = [string rangeOfString:@"APPLETALK_HOSTNAME=*"];
-				if (range.location != NSNotFound) {
-					char*	ptr;
-					char	name[129];
-					int		i;
-					int		len;
-					range.length	= [string length] - 20 - 1;
-					range.location	= 20;
-					ptr				= (char*)[[string substringWithRange:range] cString];
-					len				= (range.length > 256) ? 128 : (range.length / 2);
-					for (i = 0; i < len; i++) {
-						if (isxdigit(ptr[i*2]) && isxdigit(ptr[i*2+1])) {
-							name[i] = hex2bin(ptr[i*2]) << 4 | hex2bin(ptr[i*2+1]);
-						} else {
-							name[i] = ' ';
-						}
-						if (name[i] == ':') {
-							name[i] = ' ';
-						}
-					}
-					name[i] = '\0';	
-					appleTalkHostname = [[NSString stringWithCString:name] retain];
-				}
-			}
-		}
-	}
-	return appleTalkHostname;
 }
 
 /*----------------------------------------------------------------------------*
@@ -280,14 +224,16 @@ static int hex2bin(char c) {
 
 	self = [super init];
 	
+	// 過去バージョンのキーの削除
+	[defaults removeObjectForKey:GEN_MACHINENAME_TYPE];
+	[defaults removeObjectForKey:GEN_HOSTDOMAIN_DEL];
+	
 	// デフォルト値の設定
 	dic = [[NSMutableDictionary alloc] init];
 	// 全般
 	[dic setObject:NSFullUserName()						forKey:GEN_USER_NAME];
 	[dic setObject:@""									forKey:GEN_GROUP_NAME];
 	[dic setObject:@""									forKey:GEN_PASSWORD];
-	[dic setObject:[NSNumber numberWithInt:0]			forKey:GEN_MACHINENAME_TYPE];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:GEN_HOSTDOMAIN_DEL];
 	[dic setObject:[NSNumber numberWithBool:NO]			forKey:GEN_USE_STATUS_BAR];
 	// ネットワーク
 	[dic setObject:[NSNumber numberWithInt:2425]		forKey:NET_PORT_NO];
@@ -356,16 +302,6 @@ static int hex2bin(char c) {
 	userName				= [[defaults stringForKey:	GEN_USER_NAME] copy];
 	groupName				= [[defaults stringForKey:	GEN_GROUP_NAME] copy];
 	password				= [[defaults stringForKey:	GEN_PASSWORD] copy];
-	machineName				= nil;
-	unixHostname			= [[[NSHost currentHost] name] copy];
-	appleTalkHostname		= nil;
-	[self appleTalkHostname];
-	machineNameType			= [defaults integerForKey:	GEN_MACHINENAME_TYPE];
-	hostnameRemoveDomain	= [defaults boolForKey:		GEN_HOSTDOMAIN_DEL];
-	if (!appleTalkHostname && (machineNameType == 1)) {
-		// コンピュータ名が指定されていない場合、UNIXホスト名に強制変更する
-		machineNameType = 0;
-	}
 	useStatusBar			= [defaults boolForKey:		GEN_USE_STATUS_BAR];
 	// ネットワーク
 	portNo					= [defaults integerForKey:	NET_PORT_NO];
@@ -435,9 +371,6 @@ static int hex2bin(char c) {
 - (void)dealloc {
 	[userName			release];
 	[groupName			release];
-	[machineName		release];
-	[unixHostname		release];
-	[appleTalkHostname	release];
 	[password			release];
 	[broadcastHostList	release];
 	[broadcastIPList	release];
@@ -469,8 +402,6 @@ static int hex2bin(char c) {
 	[def setObject:	userName				forKey:GEN_USER_NAME];
 	[def setObject:	groupName				forKey:GEN_GROUP_NAME];
 	[def setObject:	password				forKey:GEN_PASSWORD];
-	[def setInteger:machineNameType			forKey:GEN_MACHINENAME_TYPE];
-	[def setBool:	hostnameRemoveDomain	forKey:GEN_HOSTDOMAIN_DEL];
 	[def setBool:	useStatusBar			forKey:GEN_USE_STATUS_BAR];
 	
 	// ネットワーク
@@ -570,58 +501,6 @@ static int hex2bin(char c) {
 - (void)setPassword:(NSString*)pass {
 	[password autorelease];
 	password = [pass copy];
-}
-
-// マシン名
-- (NSString*)machineName {
-	if (!machineName) {
-		// AppleTalk
-		if (machineNameType == 1) {
-			machineName = [appleTalkHostname retain];
-		}
-		// ドメイン削除ホスト
-		if (!machineName && hostnameRemoveDomain) {
-			NSRange range = [unixHostname rangeOfString:@"."];
-			if (range.location != NSNotFound) {
-				machineName = [[unixHostname substringToIndex:range.location] retain];
-			}
-		}
-		// ホスト
-		if (!machineName) {
-			machineName = [unixHostname retain];
-		}
-	}
-	return machineName;
-}
-
-- (BOOL)canUseAppleTalkHostname {
-	return ([self appleTalkHostname] != nil);
-}
-
-// マシン名入手元
-- (int)machineNameType {
-	return machineNameType;
-}
-
-- (void)setMachineNameType:(int)type {
-	if (machineNameType != type) {
-		machineNameType = type;
-		[machineName autorelease];
-		machineName = nil;
-	}
-}
-
-// ホスト名からドメインを削除
-- (BOOL)hostnameRemoveDomain {
-	return hostnameRemoveDomain;
-}
-
-- (void)setHostnameRemoveDomain:(BOOL)flag {
-	if (hostnameRemoveDomain != flag) {
-		hostnameRemoveDomain = flag;
-		[machineName autorelease];
-		machineName = nil;
-	}
 }
 
 // ステータスバー

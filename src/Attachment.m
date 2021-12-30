@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: Attachment.m
@@ -68,7 +68,7 @@
 	// File ID
 	work = strchr(ptr, ':');
 	if (!work) {
-		ERR1(@"file ID error(%s)", ptr);
+		ERR(@"file ID error(%s)", ptr);
 		[self release];
 		return nil;
 	}
@@ -79,7 +79,7 @@
 	// ファイルオブジェクト
 	file = [[AttachmentFile fileWithMessageAttachment:ptr] retain];
 	if (!file) {
-		ERR1(@"file attach parse error(%s)", ptr);
+		ERR(@"file attach parse error(%s)", ptr);
 		[self release];
 		return nil;
 	}

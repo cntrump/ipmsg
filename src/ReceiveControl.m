@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: ReceiveControl.m
@@ -20,6 +20,10 @@
 #import "DebugLog.h"
 
 #include <unistd.h>
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
+typedef unsigned int NSUInteger;
+#endif
 
 /*============================================================================*
  * クラス実装
@@ -83,30 +87,43 @@
 		NSMutableAttributedString*	attrStr;
 		NSScanner*					scanner;
 		NSCharacterSet*				charSet;
+		NSArray*					schemes;
 		attrStr	= [messageArea textStorage];
 		scanner	= [NSScanner scannerWithString:[msg appendix]];
 		charSet	= [NSCharacterSet characterSetWithCharactersInString:NSLocalizedString(@"RecvDlg.URL.Delimiter", nil)];
+		schemes = [NSArray arrayWithObjects:@"http://", @"https://", @"ftp://", @"file://", @"rtsp://", @"afp://", @"mailto:", nil];
 		while (![scanner isAtEnd]) {
-			NSString* sentence;
-			if ([scanner scanUpToCharactersFromSet:charSet intoString:&sentence]) {
-				NSRange range;
-				range = [sentence rangeOfString:@"://"];
+			NSString*	sentence;
+			NSRange		range;
+			unsigned	i;
+			if (![scanner scanUpToCharactersFromSet:charSet intoString:&sentence]) {
+				continue;
+			}
+			for (i = 0; i < [schemes count]; i++) {
+				range = [sentence rangeOfString:[schemes objectAtIndex:i]];
 				if (range.location != NSNotFound) {
-					range.location	= [scanner scanLocation] - [sentence length];
+					if (range.location > 0) {
+						sentence	= [sentence substringFromIndex:range.location];
+					}
 					range.length	= [sentence length];
+					range.location	= [scanner scanLocation] - [sentence length];
 					[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];						
 					[attrStr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range];
 					[attrStr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:1] range:range];
-				} else {
-					range = [sentence rangeOfString:@"mailto:"];
-					if (range.location == 0) {
-						range.location	= [scanner scanLocation] - [sentence length];
-						range.length	= [sentence length];
-						[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];
-						[attrStr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range];
-						[attrStr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:1] range:range];
-					}
+					break;
 				}
+			}
+			if (i < [schemes count]) {
+				continue;
+			}
+			range = [sentence rangeOfString:@"://"];
+			if (range.location != NSNotFound) {
+				range.location	= [scanner scanLocation] - [sentence length];
+				range.length	= [sentence length];
+				[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];						
+				[attrStr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range];
+				[attrStr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:1] range:range];
+				continue;
 			}
 		}
 	}
@@ -183,7 +200,7 @@
 	} else if (sender == attachSheetCancelButton) {
 		[downloader stopDownload];
 	} else {
-		DBG1(@"Unknown button pressed(%@)", sender);
+		DBG(@"Unknown button pressed(%@)", sender);
 	}
 }
 
@@ -199,15 +216,17 @@
 		if (code == NSOKButton) {
 			NSFileManager*	fileManager	= [NSFileManager defaultManager];
 			NSString*		directory	= [(NSOpenPanel*)sheet directory];
-			NSEnumerator*	enumerator	= [attachTable selectedRowEnumerator];
-			NSNumber*		row;
+			NSIndexSet*		indexes		= [attachTable selectedRowIndexes];
+			NSUInteger		index;
 			[downloader release];
 			downloader = [[AttachmentClient alloc] initWithRecvMessage:recvMsg saveTo:directory];
-			while ((row = [enumerator nextObject])) {
+			index = [indexes firstIndex];
+			while (index != NSNotFound) {
 				NSString*	path;
 				Attachment*	attach;
-				attach = [[recvMsg attachments] objectAtIndex:[row intValue]];
+				attach = [[recvMsg attachments] objectAtIndex:index];
 				if (!attach) {
+					index = [indexes indexGreaterThanIndex:index];
 					continue;
 				}
 				path = [directory stringByAppendingPathComponent:[[attach file] name]];
@@ -215,7 +234,7 @@
 				if ([fileManager fileExistsAtPath:path]) {
 					// 上書き確認
 					int result;
-					WRN1(@"file exists(%@)", path);
+					WRN(@"file exists(%@)", path);
 					if ([[attach file] isDirectory]) {
 						result = NSRunAlertPanel(	NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Title", nil),
 													NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Msg", nil),
@@ -237,7 +256,8 @@
 						break;
 					case NSAlertAlternateReturn:
 						DBG0(@"overwrite canceled.");
-						[attachTable deselectRow:[row intValue]];	// 選択解除
+						[attachTable deselectRow:index];	// 選択解除
+						index = [indexes indexGreaterThanIndex:index];
 						continue;
 					default:
 						ERR0(@"inernal error.");
@@ -245,6 +265,7 @@
 					}
 				}
 				[downloader addTarget:attach];
+				index = [indexes indexGreaterThanIndex:index];
 			}
 			[sheet orderOut:self];
 			if ([downloader numberOfTargets] == 0) {
@@ -411,7 +432,7 @@
 				[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"RecvDlg.PwdChk.NoPwd", nil)];
 				return;
 			}
-			if (![password isEqualToString:[NSString stringWithCString:crypt([input cString], "IP")]] &&
+			if (![password isEqualToString:[NSString stringWithCString:crypt([input UTF8String], "IP")]] &&
 				![password isEqualToString:input]) {
 				// 平文とも比較するのはv0.4までとの互換性のため
 				[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"RecvDlg.PwdChk.PwdErr", nil)];
@@ -609,7 +630,7 @@
 	if (aTableView == attachTable) {
 		return [[recvMsg attachments] count];
 	} else {
-		ERR1(@"Unknown TableView(%@)", aTableView);
+		ERR(@"Unknown TableView(%@)", aTableView);
 	}
 	return 0;
 }
@@ -623,12 +644,12 @@
 		NSFileWrapper*				fileWrapper;
 		NSTextAttachment*			textAttachment;
 		if (rowIndex >= [[recvMsg attachments] count]) {
-			ERR1(@"invalid index(row=%d)", rowIndex);
+			ERR(@"invalid index(row=%d)", rowIndex);
 			return nil;
 		}
 		attach = [[recvMsg attachments] objectAtIndex:rowIndex];
 		if (!attach) {
-			ERR1(@"no attachments(row=%d)", rowIndex);
+			ERR(@"no attachments(row=%d)", rowIndex);
 			return nil;
 		}
 		fileWrapper		= [[NSFileWrapper alloc] initRegularFileWithContents:nil];
@@ -644,7 +665,7 @@
 		[fileWrapper release];
 		return cellValue;
 	} else {
-		ERR1(@"Unknown TableView(%@)", aTableView);
+		ERR(@"Unknown TableView(%@)", aTableView);
 	}
 	return nil;
 }
@@ -654,21 +675,19 @@
 	NSTableView* table = [aNotification object];
 	if (table == attachTable) {
 		float			size	= 0;
-		int				num		= 0;
-		NSEnumerator*	selects = [attachTable selectedRowEnumerator];
+		NSUInteger		index;
+		NSIndexSet*		selects = [attachTable selectedRowIndexes];
 		Attachment*		attach	= nil;
-		while (TRUE) {
-			NSNumber* row = [selects nextObject];
-			if (row == nil) {
-				break;
-			}
-			attach	= [[recvMsg attachments] objectAtIndex:[row intValue]];
+		
+		index = [selects firstIndex];
+		while (index != NSNotFound) {
+			attach	= [[recvMsg attachments] objectAtIndex:index];
 			size	+= (float)[[attach file] size] / 1024;
-			num++;
+			index	= [selects indexGreaterThanIndex:index];
 		}
-		[attachSaveButton setEnabled:(num > 0)];
+		[attachSaveButton setEnabled:([selects count] > 0)];
 	} else {
-		ERR1(@"Unknown TableView(%@)", table);
+		ERR(@"Unknown TableView(%@)", table);
 	}
 }
 

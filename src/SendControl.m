@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: SendControl.m
@@ -22,6 +22,10 @@
 #import "WindowManager.h"
 #import "ReceiveControl.h"
 #import "DebugLog.h"
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
+typedef unsigned int NSUInteger;
+#endif
 
 static NSImage* attachmentImage		= nil;
 static NSDate*	lastTimeOfEntrySent	= nil;
@@ -57,9 +61,9 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 		if ([msg length] > 0) {
 			// 引用文字列行末の改行がなければ追加
 			if ([msg characterAtIndex:[msg length] - 1] != '\n') {
-				[messageArea setString:[msg stringByAppendingString:@"\n"]];
+				[messageArea insertText:[msg stringByAppendingString:@"\n"]];
 			} else {
-				[messageArea setString:msg];
+				[messageArea insertText:msg];
 			}
 		}
 	}
@@ -75,9 +79,10 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 
 	// 送信先ユーザの選択
 	if (receiveMessage) {
-		int index = [[UserManager sharedManager] indexOfUser:[receiveMessage fromUser]];
+		NSUInteger index = [[UserManager sharedManager] indexOfUser:[receiveMessage fromUser]];
 		if (index != NSNotFound) {
-			[userTable selectRow:index byExtendingSelection:[[Config sharedConfig] allowSendingToMultiUser]];
+			[userTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
+				   byExtendingSelection:[[Config sharedConfig] allowSendingToMultiUser]];
 			[userTable scrollRowToVisible:index];
 		}
 	}
@@ -90,7 +95,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	// ユーザリスト変更の通知登録
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(userListChanged:)
-												 name:NOTICE_USER_LIST_CHANGE
+												 name:NOTICE_USER_LIST_CHANGED
 											   object:nil];
 	// ウィンドウ表示
 	[window makeKeyAndOrderFront:self];
@@ -145,7 +150,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 			[self setAttachHeader];
 		}
 	} else {
-		ERR1(@"unknown button pressed(%@)", sender);
+		ERR(@"unknown button pressed(%@)", sender);
 	}
 }
 
@@ -174,7 +179,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	else if (sender == passwordCheck) {
 		// nop
 	} else {
-		ERR1(@"Unknown button pressed(%@)", sender);
+		ERR(@"Unknown button pressed(%@)", sender);
 	}		
 }
 
@@ -206,13 +211,14 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 
 // 送信ボタン押下／送信メニュー選択時処理
 - (IBAction)sendPressed:(id)sender {
-	SendMessage*		info;
+	SendMessage*	info;
 	NSMutableArray*	to;
 	NSString*		msg;
 	BOOL			sealed;
 	BOOL			locked;
-	NSEnumerator*	users;
+	NSIndexSet*		users;
 	Config*			config = [Config sharedConfig];
+	NSUInteger		index;
 	
 	if ([config isAbsence]) {
 		// 不在モードを解除して送信するか確認
@@ -235,13 +241,11 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	sealed	= [sealCheck state];
 	locked	= [passwordCheck state];
 	to		= [[[NSMutableArray alloc] init] autorelease];
-	users	= [userTable selectedRowEnumerator];
-	while (TRUE) {
-		NSNumber* row = [users nextObject];
-		if (row == nil) {
-			break;
-		}
-		[to addObject:[[UserManager sharedManager] userAtIndex:[row intValue]]];
+	users	= [userTable selectedRowIndexes];
+	index	= [users firstIndex];
+	while (index != NSNotFound) {
+		[to addObject:[[UserManager sharedManager] userAtIndex:index]];
+		index = [users indexGreaterThanIndex:index];
 	}
 	// 送信情報構築
 	info = [SendMessage messageWithMessage:msg
@@ -266,12 +270,14 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 // 選択ユーザ一覧の更新
 - (void)updateSelectedUsers {
 	if ([selectedUsersLock tryLock]) {
-		NSEnumerator*	select	= [userTable selectedRowEnumerator];
+		NSIndexSet*		select	= [userTable selectedRowIndexes];
 		UserManager*	manager	= [UserManager sharedManager];
-		NSNumber*		index;
+		NSUInteger		index;
 		[selectedUsers removeAllObjects];
-		while ((index = [select nextObject])) {
-			[selectedUsers addObject:[manager userAtIndex:[index intValue]]];
+		index = [select firstIndex];
+		while (index != NSNotFound) {
+			[selectedUsers addObject:[manager userAtIndex:index]];
+			index = [select indexGreaterThanIndex:index];
 		}
 		[selectedUsersLock unlock];
 	}
@@ -327,7 +333,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	} else if (aTableView == attachTable) {
 		return [attachments count];
 	} else {
-		ERR1(@"Unknown TableView(%@)", aTableView);
+		ERR(@"Unknown TableView(%@)", aTableView);
 	}
 	return 0;
 }
@@ -345,7 +351,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 		} else if ([iden isEqualToString:@"Encrypt"]) {
 			return ([info encryptSupport] ? @"E" : @"");
 		} else {
-			ERR1(@"Unknown TableColumn(%@)", iden);
+			ERR(@"Unknown TableColumn(%@)", iden);
 		}
 	} else if (aTableView == attachTable) {
 		Attachment*					attach;
@@ -354,7 +360,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 		NSTextAttachment*			textAttachment;
 		attach = [attachments objectAtIndex:rowIndex];
 		if (!attach) {
-			ERR1(@"no attachments(row=%d)", rowIndex);
+			ERR(@"no attachments(row=%d)", rowIndex);
 			return nil;
 		}
 		fileWrapper		= [[NSFileWrapper alloc] initRegularFileWithContents:nil];
@@ -370,7 +376,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 		[fileWrapper release];
 		return cellValue;
 	} else {
-		ERR1(@"Unknown TableView(%@)", aTableView);
+		ERR(@"Unknown TableView(%@)", aTableView);
 	}
 	return nil;
 }
@@ -389,7 +395,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	} else if (table == attachTable) {
 		[attachDelButton setEnabled:([attachTable numberOfSelectedRows] > 0)];
 	} else {
-		ERR1(@"Unknown TableView(%@)", table);
+		ERR(@"Unknown TableView(%@)", table);
 	}
 }
 
@@ -402,16 +408,16 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	Attachment*		attach;
 	file = [AttachmentFile fileWithPath:path];
 	if (!file) {
-		WRN1(@"file invalid(%@)", path);
+		WRN(@"file invalid(%@)", path);
 		return;
 	}
 	attach = [Attachment attachmentWithFile:file];
 	if (!attach) {
-		WRN1(@"attachement invalid(%@)", path);
+		WRN(@"attachement invalid(%@)", path);
 		return;
 	}
 	if ([attachmentsDic objectForKey:path]) {
-		WRN1(@"already contains attachment(%@)", path);
+		WRN(@"already contains attachment(%@)", path);
 		return;
 	}
 	[attachments addObject:attach];
@@ -432,7 +438,7 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 		[sendAllCheck setState:NO];
 		[[MessageCenter sharedCenter] broadcastEntry];
 	} else {
-		DBG1(@"Cancel Refresh User(%f)", [lastTimeOfEntrySent timeIntervalSinceNow]);
+		DBG(@"Cancel Refresh User(%f)", [lastTimeOfEntrySent timeIntervalSinceNow]);
 	}
 	[lastTimeOfEntrySent release];
 	lastTimeOfEntrySent = [[NSDate date] retain];
@@ -450,9 +456,10 @@ static NSDate*	lastTimeOfEntrySent	= nil;
 	// 再選択
 	[userTable deselectAll:self];
 	for (i = 0; i < [selectedUsers count]; i++) {
-		int index = [[UserManager sharedManager] indexOfUser:[selectedUsers objectAtIndex:i]];
+		NSUInteger index = [[UserManager sharedManager] indexOfUser:[selectedUsers objectAtIndex:i]];
 		if (index != NSNotFound) {
-			[userTable selectRow:index byExtendingSelection:[[Config sharedConfig] allowSendingToMultiUser]];
+			[userTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
+				   byExtendingSelection:[[Config sharedConfig] allowSendingToMultiUser]];
 		}
 	}
 	[selectedUsersLock unlock];

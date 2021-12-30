@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: AppControl.h
@@ -11,11 +11,18 @@
 @class RecvMessage;
 @class SendControl;
 
+#ifndef MAC_OS_X_VERSION_10_6
+#define MAC_OS_X_VERSION_10_6	1060
+#endif
+
 /*============================================================================*
  * クラス定義
  *============================================================================*/
 
 @interface AppControl : NSObject
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+<NSApplicationDelegate>
+#endif
 {
 	IBOutlet NSMenu*		absenceMenu;					// 不在メニュー
 	IBOutlet NSMenuItem*	absenceOffMenuItem;				// 不在解除メニュー項目

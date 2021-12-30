@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: SendMessage.m
@@ -95,7 +95,7 @@
 		newObj->sealed		= sealed;
 		newObj->locked		= locked;
 	} else {
-		ERR1(@"copy error(%@)", self);
+		ERR(@"copy error(%@)", self);
 	}
 	
 	return newObj;

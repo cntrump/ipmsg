@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: Config.h
@@ -60,8 +60,6 @@ typedef enum {
 	NSString*			userName;				// ユーザ名
 	NSString*			groupName;				// グループ名
 	NSString*			password;				// パスワード
-	int					machineNameType;		// マシン名取得元（0:hostname/1:AppleTalk）
-	BOOL				hostnameRemoveDomain;	// ドメインサフィックスを除去
 	BOOL				useStatusBar;			// メニューバーの右端にアイコンを追加するか
 	// ネットワーク
 	int					portNo;					// ポート番号
@@ -113,9 +111,6 @@ typedef enum {
 	NSSize				rcvWinSize;				// 受信ウィンドウサイズ
 
 	//-------- 揮発の設定値（永続化不要）　------------------------------
-	NSString*			machineName;			// ホスト名
-	NSString*			unixHostname;			// ホスト名（UNIX）
-	NSString*			appleTalkHostname;		// ホスト名（AppleTalk）
 	NSMutableArray*		defaultAbsences;		// 不在定義の初期値
 	int					absenceIndex;			// 不在モード
 	NSFont*				defaultMessageFont;		// 送受信ウィンドウメッセージ標準フォント
@@ -137,15 +132,6 @@ typedef enum {
 
 - (NSString*)password;
 - (void)setPassword:(NSString*)pass;
-
-- (NSString*)machineName;
-- (BOOL)canUseAppleTalkHostname;
-
-- (int)machineNameType;
-- (void)setMachineNameType:(int)type;
-
-- (BOOL)hostnameRemoveDomain;
-- (void)setHostnameRemoveDomain:(BOOL)flag;
 
 - (BOOL)useStatusBar;
 - (void)setUseStatusBar:(BOOL)use;

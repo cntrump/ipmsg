@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2009 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: DebugLog.m
@@ -37,17 +37,17 @@ void IPMsgLog(NSString* level, char* file, int line, NSString* msg) {
 	[writeLock lock];
 NS_DURING
 #if LOG_TO_CONSOLE
-	printf("%s%s %s[%d] %s\n", [level cString], [str cString], pFile, line, [msg UTF8String]);
+	printf("%s%s %s[%d] %s\n", [level UTF8String], [str UTF8String], pFile, line, [msg UTF8String]);
 #else
 	{
 		NSString*	dir	= [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
 		NSString*	log	= [dir stringByAppendingPathComponent:@"DebugLog.txt"];
 		FILE*		fp	= fopen([log fileSystemRepresentation], "a");
 		if (fp) {
-			fprintf(fp, "%s%s %s[%d] %s\n", [level cString], [str cString], pFile, line, [msg cString]);
+			fprintf(fp, "%s%s %s[%d] %s\n", [level UTF8String], [str UTF8String], pFile, line, [msg UTF8String]);
 			fflush(fp);
 		} else {
-			printf("%s%s %s[%d] %s\n", [level cString], [str cString], pFile, line, [msg UTF8String]);
+			printf("%s%s %s[%d] %s\n", [level UTF8String], [str UTF8String], pFile, line, [msg UTF8String]);
 		}
 	}
 #endif

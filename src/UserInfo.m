@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: UserInfo.m
@@ -108,7 +108,7 @@
 		return nil;
 	}
 	// アドレス（数値）
-	addressNumber = inet_addr([address cString]);
+	addressNumber = ntohl(inet_addr([address UTF8String]));
 	// ポート番号
 	int port = [[itemArray objectAtIndex:index + 4] intValue];
 	portNo = (((port & 0xFF00) >> 8) | ((port & 0xFF) << 8));
@@ -150,7 +150,7 @@
 	user			= [userName retain];
 	group			= [groupName retain];
 	address			= [ipAddress retain];
-	addressNumber	= inet_addr([address cString]);
+	addressNumber	= ntohl(inet_addr([address UTF8String]));
 	portNo			= port;
 	host			= [machineName retain];
 	logOnUser		= [logOnUserName retain];
@@ -317,7 +317,7 @@
 		newObj->encrypt			= encrypt;
 		newObj->version			= [version retain];		
 	} else {
-		ERR1(@"copy error(%@)", self);
+		ERR(@"copy error(%@)", self);
 	}
 	return newObj;
 }

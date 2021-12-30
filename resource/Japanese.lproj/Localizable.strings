@@ -4,7 +4,6 @@
 "Version.Msg.string"		= "MacOS X版 Ver%@";
 
 /* General */
-"IPMsg.DateFormat"			= "%Y年%m月%d日%a %H:%M:%S";
 "Message.DefaultFontName"	= "Osaka-Mono";
 "IPMsg.HomePage"			= "http://ishwt.net/software/ipmsg/";
 
@@ -101,6 +100,8 @@
 "Refuse.Desc.End"			= "で終わる";
 
 /* Error Alert Panel Strings */
+"Err.DynStoreCreate.title"	= "システム情報取得設定エラー";
+"Err.DynStoreCreate.msg"	= "DynamicStore 生成エラーです。";
 "Err.UDPSocketOpen.title"	= "ネットワーク初期化エラー";
 "Err.UDPSocketOpen.msg"		= "UDP ソケットオープンエラーです。";
 "Err.UDPSocketBind.title"	= "ネットワーク初期化エラー（バインドエラー）";

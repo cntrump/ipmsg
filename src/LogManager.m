@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: LogManager.m
@@ -65,7 +65,10 @@ static NSString* LogMsgStart	= @"-------------------------------------\n";
 	}
 
 	filePath	= [[path stringByExpandingTildeInPath] retain];
-	dateFormat	= [[NSDateFormatter alloc] initWithDateFormat:NSLocalizedString(@"IPMsg.DateFormat", nil) allowNaturalLanguage:NO];
+	dateFormat	= [[NSDateFormatter alloc] init];
+	[dateFormat setFormatterBehavior:NSDateFormatterBehavior10_4];
+	[dateFormat setDateStyle:NSDateFormatterFullStyle];
+	[dateFormat setTimeStyle:NSDateFormatterMediumStyle];
 
 	return self;
 }
@@ -102,7 +105,7 @@ static NSString* LogMsgStart	= @"-------------------------------------\n";
 	// メッセージ編集
 	[msg appendString:LogHeadStart];
 	[msg appendFormat:@" From: %@\n", [[info fromUser] summeryString]];
-	[msg appendFormat:@"  at %@", [dateFormat stringForObjectValue:[info receiveDate]]];
+	[msg appendFormat:@"  at %@", [dateFormat stringFromDate:[info receiveDate]]];
 	if ([info broadcast]) {
 		[msg appendString:NSLocalizedString(@"Log.Type.Broadcast", nil)];
 	}
@@ -138,7 +141,7 @@ static NSString* LogMsgStart	= @"-------------------------------------\n";
 	for (i = 0; i < [to count]; i++) {
 		[msg appendFormat:@" To: %@\n", [[to objectAtIndex:i] summeryString]];
 	}
-	[msg appendFormat:@"  at %@", [dateFormat stringForObjectValue:[NSCalendarDate date]]];
+	[msg appendFormat:@"  at %@", [dateFormat stringFromDate:[NSCalendarDate date]]];
 	if ([to count] > 1) {
 		[msg appendString:NSLocalizedString(@"Log.Type.Multicast", nil)];
 	}
@@ -180,7 +183,7 @@ static NSString* LogMsgStart	= @"-------------------------------------\n";
 	}
 	if (![fileMgr fileExistsAtPath:filePath]) {
 		if (![fileMgr createFileAtPath:filePath contents:nil attributes:nil]) {
-			ERR1(@"LogFile Create Error.(%@)", filePath);
+			ERR(@"LogFile Create Error.(%@)", filePath);
 			return;
 		}
 	}
@@ -212,7 +215,7 @@ static NSString* LogMsgStart	= @"-------------------------------------\n";
 		}
 		[file closeFile];
 	} else {
-		ERR1(@"LogFile open Error.(%@)", filePath);
+		ERR(@"LogFile open Error.(%@)", filePath);
 	}
 }
 

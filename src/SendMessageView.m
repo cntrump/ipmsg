@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: SendMessageView.m
@@ -15,6 +15,7 @@
 
 - (id)initWithFrame:(NSRect)frameRect {
 	self = [super initWithFrame:frameRect];
+	[self setRichText:NO];
 	duringDragging = NO;
 	// ファイルのドラッグを受け付ける
 	if ([AttachmentServer isAvailable]) {
@@ -80,17 +81,23 @@
 }
 
 - (void)keyDown:(NSEvent*)theEvent {
-	// タブキーはフォーカス移動にする
-	if ([theEvent keyCode] == 48) {
-		[[self window] makeFirstResponder:[self nextValidKeyView]];
-	}
 	// enterキーは送信に使うので無視（親Viewに中継）する
-	else if ([theEvent keyCode] == 52) {
+	if ([theEvent keyCode] == 52) {
 		[[self superview] keyDown:theEvent];
 	}
 	else {
 		[super keyDown:theEvent];
 	}
+}
+
+- (void)insertText:(id)insertString {
+	// タブ文字の入力時はフォーカス移動にする
+	// （文字の入力にすることによって日本語変換中のタブキーには反応しなくなる）
+	if ([insertString isEqualToString:@"\t"]) {
+		[[self window] makeFirstResponder:[self nextValidKeyView]];
+		return;
+	}
+	[super insertText:insertString];
 }
 
 @end

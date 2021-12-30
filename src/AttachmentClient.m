@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: AttachmentClient.m
@@ -177,7 +177,7 @@
  *----------------------------------------------------------------------------*/
 
 // 添付ダウンロードスレッド
-- (void)downloadThread:(NSArray*)portArray {
+- (void)downloadThread:(id)portArray {
 	NSAutoreleasePool*	pool	= [[NSAutoreleasePool alloc] init];
 	int					num 	= [targets count];
 	DownloadResult		result	= DL_SUCCESS;
@@ -205,7 +205,7 @@
 		char				buf[256];
 		
 		if (!attach) {
-			ERR1(@"download:internal error(attach is nil,index=%d)", indexOfTarget);
+			ERR(@"download:internal error(attach is nil,index=%d)", indexOfTarget);
 			result = DL_INTERNAL_ERROR;
 			break;
 		}
@@ -223,7 +223,7 @@
 		// 接続
 		memset(&addr, 0, sizeof(addr));
 		addr.sin_family			= AF_INET;
-		addr.sin_port			= htons([[MessageCenter sharedCenter] portNo]);
+		addr.sin_port			= htons([[MessageCenter sharedCenter] myPortNo]);
 		addr.sin_addr.s_addr	= htonl([[message fromUser] addressNumber]);	
 		if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
 			ERR0(@"download:connect error");
@@ -233,7 +233,7 @@
 		}
 		/*
 		if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
-			ERR1(@"download:socket option set error(errorno=%d)", errno);
+			ERR(@"download:socket option set error(errorno=%d)", errno);
 			result = DL_SOCKET_ERROR;
 			break;
 		}
@@ -244,19 +244,19 @@
 						IPMSG_VERSION,
 						[MessageCenter nextMessageID],
 						[NSUserName() ipmsgCString],
-						[[[Config sharedConfig] machineName] ipmsgCString],
+						[[[MessageCenter sharedCenter] myHostName] ipmsgCString],
 						([[attach file] isRegularFile]) ? IPMSG_GETFILEDATA : IPMSG_GETDIRFILES,
 						[message packetNo],
 						[[attach fileID] intValue],
 						0U);
 		// リクエスト送信
 		if (send(sock, buf, strlen(buf) + 1, 0) < 0) {
-			ERR1(@"file:attach request send error.(%s)", buf);
+			ERR(@"file:attach request send error.(%s)", buf);
 			close(sock);
 			result = DL_COMMUNICATION_ERROR;
 			break;
 		}
-//		DBG1(@"send file/dir request=%s", buf);
+//		DBG(@"send file/dir request=%s", buf);
 
 		// ファイルダウンロード
 		if ([[attach file] isRegularFile]) {
@@ -264,7 +264,7 @@
 			if (result == DL_SUCCESS) {
 				[attach setDownloadComplete:YES];
 			} else {
-				ERR1(@"download file error.(%@)", [[attach file] name]);
+				ERR(@"download file error.(%@)", [[attach file] name]);
 				close(sock);
 				break;
 			}
@@ -276,7 +276,7 @@
 			if (result == DL_SUCCESS) {
 				[attach setDownloadComplete:YES];
 			} else {
-				ERR1(@"download dir error.(%@)", [[attach file] name]);
+				ERR(@"download dir error.(%@)", [[attach file] name]);
 				close(sock);
 				break;
 			}
@@ -285,7 +285,7 @@
 		// リソースフォーク（未実装）
 		// その他（未サポート）
 		else {
-			ERR1(@"unsupported file type(%@)", [[attach file] path]);
+			ERR(@"unsupported file type(%@)", [[attach file] path]);
 		}
 		
 		// ソケットクローズ
@@ -314,7 +314,7 @@
 	[self newFileDownloadStart:[file name]];
 	// 保存先ディレクトリ指定
 	[file setDirectory:savePath];
-	DBG1(@"file:start download file(%@)", [file name]);
+	DBG(@"file:start download file(%@)", [file name]);
 	
 	/*------------------------------------------------------------------------*
 	 * データ受信
@@ -322,7 +322,7 @@
 	
 	// ファイルオープン／作成
 	if (![file openFileForWrite]) {
-		ERR1(@"file:open/create file error(%@)", [file path]);
+		ERR(@"file:open/create file error(%@)", [file path]);
 		return DL_FILE_OPEN_ERROR;
 	}
 	// ファイル受信
@@ -331,11 +331,15 @@
 		size = MIN(sizeof(buf), remain);
 		ret = [self receiveFrom:sock to:buf maxLength:size];
 		if ((ret != DL_SUCCESS) && (ret != DL_STOP)) {
-			WRN2(@"file:file receive error(%d,%@)", ret, [file name]);
+			WRN(@"file:file receive error(%d,%@)", ret, [file name]);
 			// ファイルクローズ
 			[file closeFile];
 			// 書きかけのファイルを削除
+		#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
+			[[NSFileManager defaultManager] removeItemAtPath:[file path] error:NULL];
+		#else
 			[[NSFileManager defaultManager] removeFileAtPath:[file path] handler:nil];
+		#endif
 			return ret;
 		}
 		[self newDataDownload:size];
@@ -360,7 +364,7 @@
 	DownloadResult		result		= DL_SUCCESS;
 	AttachmentFile*		file;
 	unsigned long long	remain;
-	DBG1(@"dir:start download directory(%@)", [dir name]);
+	DBG(@"dir:start download directory(%@)", [dir name]);
 	
 	/*------------------------------------------------------------------------*
 	 * 各ファイル受信ループ
@@ -369,20 +373,20 @@
 		// ヘッダサイズ受信
 		result = [self receiveFrom:sock to:buf maxLength:5];
 		if (result != DL_SUCCESS) {
-			ERR1(@"dir:headerSize receive error(ret=%d)", result);
+			ERR(@"dir:headerSize receive error(ret=%d)", result);
 			break;
 		}
 		buf[4] = '\0';
 		headerSize = strtol(buf, NULL, 16);
 		if (headerSize == 0) {
-			DBG1(@"dir:download complete1(%@)", savePath);
+			DBG(@"dir:download complete1(%@)", savePath);
 			break;
 		} else if (headerSize < 0) {
-			ERR2(@"dir:download internal error(headerSize=%d,buf=%s)", headerSize, buf);
+			ERR(@"dir:download internal error(headerSize=%d,buf=%s)", headerSize, buf);
 			result = DL_INVALID_DATA;
 			break;
 		} else if (headerSize >= sizeof(buf)) {
-			ERR2(@"dir:headerSize overflow(%d,max=%d)", headerSize, sizeof(buf));
+			ERR(@"dir:headerSize overflow(%d,max=%d)", headerSize, sizeof(buf));
 			result = DL_INTERNAL_ERROR;
 			break;
 		}
@@ -395,21 +399,21 @@
 		// ヘッダ受信
 		result = [self receiveFrom:sock to:buf maxLength:headerSize];
 		if (result != DL_SUCCESS) {
-			ERR2(@"dir:header receive error(ret=%d,size=%u)", result, headerSize);
+			ERR(@"dir:header receive error(ret=%d,size=%u)", result, headerSize);
 			break;
 		}
 		buf[headerSize] = '\0';
-//		DBG1(@"dir:recv Header=%s", buf);
+//		DBG(@"dir:recv Header=%s", buf);
 		file = [AttachmentFile fileWithDirectory:currentDir header:buf];
 		if (!file) {
-			ERR1(@"dir:parse dir header error(%s)", buf);
+			ERR(@"dir:parse dir header error(%s)", buf);
 			result = DL_INVALID_DATA;
 			break;
 		}
 		
 		// ファイルオープン／作成
 		if (![file openFileForWrite]) {
-			ERR1(@"dir:open/create file error(%@)", [file path]);
+			ERR(@"dir:open/create file error(%@)", [file path]);
 			result = DL_FILE_OPEN_ERROR;
 			break;
 		}
@@ -419,10 +423,10 @@
 		} else if ([file isDirectory]) {
 			[self newFileDownloadStart:[file name]];
 			currentDir = [file path];
-			DBG1(@"dir:chdir to child (-> \"%@\")", [currentDir substringFromIndex:[savePath length] + 1]);
+			DBG(@"dir:chdir to child (-> \"%@\")", [currentDir substringFromIndex:[savePath length] + 1]);
 		} else if ([file isParentDirectory]) {
 			currentDir = [file path];
-			DBG1(@"dir:chdir to parent(<- \"%@\")",
+			DBG(@"dir:chdir to parent(<- \"%@\")",
 					([currentDir length] > [savePath length]) ? [currentDir substringFromIndex:[savePath length] + 1] : @"");
 		}
 		// ファイル受信
@@ -434,7 +438,7 @@
 				unsigned size = MIN(sizeof(buf), remain);
 				result = [self receiveFrom:sock to:buf maxLength:size];
 				if (result != DL_SUCCESS) {
-					ERR2(@"dir:file receive error(%d,remain=%d)", result, remain);
+					ERR(@"dir:file receive error(%d,remain=%d)", result, remain);
 					break;
 				}
 				[self newDataDownload:size];
@@ -451,7 +455,7 @@
 		}
 		if (remain > 0) {
 			// 受信しきれていない（エラー）
-			ERR1(@"dir:file remain data exist(%d)", remain);
+			ERR(@"dir:file remain data exist(%d)", remain);
 			result = DL_SIZE_NOT_ENOUGH;
 			break;
 		}
@@ -464,7 +468,7 @@
 		
 		// 終了判定
 		if ([currentDir isEqualToString:savePath]) {
-			DBG1(@"dir:download complete2(%@)", savePath);
+			DBG(@"dir:download complete2(%@)", savePath);
 			break;
 		}
 	}
@@ -478,7 +482,7 @@
 	if ((result != DL_SUCCESS) && (result != DL_STOP)) {
 		// エラーの場合削除（ユーザの停止は除く）
 		NSString* dir = [savePath stringByAppendingPathComponent:[file name]];
-		DBG1(@"dir:rmdir because of stop or error.(%@)", dir);
+		DBG(@"dir:rmdir because of stop or error.(%@)", dir);
 		[[NSFileManager defaultManager] removeFileAtPath:dir handler:nil];
 	}
 */
@@ -508,7 +512,7 @@
 		ret = select(sock + 1, &fdSet, NULL, NULL, &tv);
 		if (ret == 0) {
 			// 受信なし
-			DBG2(@"timeout(sock=%d,count=%d)", sock, timeout);
+			DBG(@"timeout(sock=%d,count=%d)", sock, timeout);
 			continue;
 		}
 		if (ret < 0) {
@@ -520,7 +524,7 @@
 		timeout = -1;
 		size = recv(sock, &(((char*)ptr)[recvSize]), len - recvSize, 0);
 		if (size < 0) {
-			ERR1(@"socket error(recv=%d,maybe disconnected.)", size);
+			ERR(@"socket error(recv=%d,maybe disconnected.)", size);
 			return DL_DISCONNECTED;
 		}
 		recvSize += size;
@@ -531,7 +535,7 @@
 		return DL_SUCCESS;
 	}
 	
-	WRN2(@"receive timeout(%dsec,sock=%d)", timeout/2, sock);
+	WRN(@"receive timeout(%dsec,sock=%d)", timeout/2, sock);
 	
 	return DL_TIMEOUT;
 }

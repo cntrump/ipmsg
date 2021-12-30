@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: MessageCenter.h
@@ -7,14 +7,28 @@
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
+#import <SystemConfiguration/SCDynamicStore.h>
 
 @class RecvMessage;
 @class SendMessage;
-@class UserInfo;
-@class AttachmentInfo;
+
+/*============================================================================*
+ * Notification キー
+ *============================================================================*/
+
+// ホスト名変更
+#define NOTICE_HOSTNAME_CHANGED		@"IPMsgHostNameChanged"
+// ネットワーク検出/喪失
+#define NOTICE_NETWORK_GAINED		@"IPMsgNetworkGained"
+#define NOTICE_NETWORK_LOST			@"IPMsgNetworkLost"
+
+/*============================================================================*
+ * 構造体定義
+ *============================================================================*/
 
 // IPMsg受信パケット解析構造体
-typedef struct {
+typedef struct
+{
 	unsigned	version;			// バージョン番号
 	unsigned	packetNo;			// パケット番号
 	char		userName[256];		// ログインユーザ名
@@ -28,19 +42,36 @@ typedef struct {
  * クラス定義
  *============================================================================*/
 
-@interface MessageCenter : NSObject {
-	unsigned long			localAddr;		// ローカルホストアドレス
-	int						portNo;			// ソケットポート番号
-	int						sockUDP;		// ソケットディスクリプタ（UDP/通常メッセージ用）
-	NSLock*					sockLock;		// 送信排他ロック
-	NSFileHandle*			handle;			// 読み込みハンドル
-	NSMutableDictionary*	sendList;		// 応答待ちメッセージ一覧（再送用）
-	NSConnection*			connection;		// メッセージ受信スレッドとのコネクション
+@interface MessageCenter : NSObject
+{
+	// 送受信関連
+	int						sockUDP;			// ソケットディスクリプタ
+	NSLock*					sockLock;			// ソケット送信排他ロック
+	NSMutableDictionary*	sendList;			// 応答待ちメッセージ一覧（再送用）
+	// 受信サーバ関連
+	NSConnection*			serverConnection;	// メッセージ受信スレッドとのコネクション
+	NSLock*					serverLock;			// サーバ待ち合わせ用ロック
+	BOOL					serverShutdown;		// サーバ停止フラグ
+	// 現在値
+	NSString*				primaryNIC;			// 有線ネットワークインタフェース
+	unsigned long			myIPAddress;		// ローカルホストアドレス
+	int						myPortNo;			// ソケットポート番号
+	NSString*				myHostName;			// コンピュータ名
+	// DynamicStore関連
+	CFRunLoopSourceRef		runLoopSource;		// Run Loop Source Obj for SC Notification
+	SCDynamicStoreRef		scDynStore;			// DynamicStore
+	SCDynamicStoreContext	scDSContext;		// DynamicStoreContext
+	NSString*				scKeyHostName;		// DynamicStore Key [for LocalHostName]
+	NSString*				scKeyNetIPv4;		// DynamicStore Key [for Global IPv4]
+	NSString*				scKeyIFIPv4;		// DynamicStore Key [for IF IPv4 Address]	
 }
 
 // ファクトリ
 + (MessageCenter*)sharedCenter;
+
+// クラスメソッド
 + (long)nextMessageID;
++ (BOOL)isNetworkLinked;
 
 // 受信Rawデータの分解
 + (BOOL)parseReceiveData:(char*)buffer length:(int)len into:(IPMsgData*)data;
@@ -55,9 +86,8 @@ typedef struct {
 - (void)sendOpenSealMessage:(RecvMessage*)info;
 - (void)sendReleaseAttachmentMessage:(RecvMessage*)info;
 
-// その他
-+ (BOOL)valid;
-- (UserInfo*)localUser;
-- (int)portNo;
+// 情報取得
+- (int)myPortNo;
+- (NSString*)myHostName;
 
 @end

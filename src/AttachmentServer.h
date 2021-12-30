@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: AttachmentServer.h
@@ -16,7 +16,7 @@
  *============================================================================*/
 
 // ユーザ一覧変更
-#define NOTICE_ATTACH_LIST_CHANGE		@"IPMsgAttachmentListChange"
+#define NOTICE_ATTACH_LIST_CHANGED		@"IPMsgAttachmentListChanged"
 
 /*============================================================================*
  * クラス定義

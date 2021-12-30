@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: ReceiveWindow.m
@@ -19,14 +19,16 @@
 
 - (void)keyDown:(NSEvent*)theEvent {
 	// Enterキー入力時、返信処理を行う
-	if (([theEvent keyCode] == 52) &&
-		([[self delegate] respondsToSelector:@selector(replyMessage:)])) {
-//		DBG0(@"reply!(byEnter)");
-		[[self delegate] replyMessage:self];
+	if ([theEvent keyCode] == 52) {
+		id obj = [self delegate];
+		if ([obj respondsToSelector:@selector(replyMessage:)]) {
+//			DBG0(@"reply!(byEnter)");
+			[obj replyMessage:self];
+		}
 	} else {
 		[super keyDown:theEvent];
 	}
-//	DBG1(@"keycode=%d", [theEvent keyCode]);
+//	DBG(@"keycode=%d", [theEvent keyCode]);
 }
 
 @end

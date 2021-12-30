@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for MacOS X
  *	File		: AttachStatusControl.m
@@ -22,16 +22,17 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 @implementation AttachStatusControl
 
 - (id)init {
-	self	= [super self];
-	
-	// データのロード
-	[attachTable reloadData];
-	
-	// 添付リスト変更の通知登録
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(attachListChanged:)
-												 name:NOTICE_ATTACH_LIST_CHANGE
-											   object:nil];
+	self = [super init];
+	if (self) {
+		// データのロード
+		[attachTable reloadData];
+		
+		// 添付リスト変更の通知登録
+		[[NSNotificationCenter defaultCenter] addObserver:self
+												 selector:@selector(attachListChanged:)
+													 name:NOTICE_ATTACH_LIST_CHANGED
+												   object:nil];
+	}
 	return self;
 }
 
@@ -83,7 +84,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 			}
 		}
 	} else {
-		ERR1(@"Unknown Button Pressed(%@)", sender);
+		ERR(@"Unknown Button Pressed(%@)", sender);
 	}
 }
 
@@ -91,7 +92,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 	if (sender == dispAlwaysCheck) {
 		[panel setHidesOnDeactivate:([dispAlwaysCheck state] == NSOffState)];
 	} else {
-		ERR1(@"Unknown Checkbox Changed(%@)", sender);
+		ERR(@"Unknown Checkbox Changed(%@)", sender);
 	}
 }
 
@@ -111,7 +112,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 	} else if ([item isKindOfClass:[Attachment class]]) {
 		return [item numberOfUsers];
 	} else {
-		WRN1(@"not yet(number of children of %@)", item);
+		WRN(@"not yet(number of children of %@)", item);
 	}
 	return 0;
 }
@@ -128,7 +129,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 	} else if ([item isKindOfClass:[Attachment class]]) {
 		return [item userAtIndex:index];
 	} else {
-		WRN2(@"not yet(#%d child of %@)", index, item);
+		WRN(@"not yet(#%d child of %@)", index, item);
 	}
 	return nil;
 }
@@ -148,9 +149,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 
 - (BOOL)outlineView:(NSOutlineView *)outlineView isItemExpandable:(id)item {
 	if (!item) {
-		if ([MessageCenter valid]) {
-			return ([[AttachmentServer sharedServer] numberOfMessageIDs] > 0);
-		}
+		return ([[AttachmentServer sharedServer] numberOfMessageIDs] > 0);
 	} else if ([item isKindOfClass:[NSNumber class]]) {
 		return YES;
 	} else if ([item isKindOfClass:[Attachment class]]) {
@@ -158,7 +157,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 	} else if ([item isKindOfClass:[UserInfo class]]) {
 		return NO;
 	} else {
-		WRN1(@"not yet(isExpandable %@)", item);
+		WRN(@"not yet(isExpandable %@)", item);
 	}
 	return NO;
 }

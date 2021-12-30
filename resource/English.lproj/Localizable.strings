@@ -4,7 +4,6 @@
 "Version.Msg.string"		= "MacOS X Ver%@";
 
 /* General */
-"IPMsg.DateFormat"			= "at %a %b %d %H:%M:%S %Y";
 "Message.DefaultFontName"	= "Helvetica";
 "IPMsg.HomePage"			= "http://ishwt.net/en/software/ipmsg/";
 
@@ -101,6 +100,8 @@ Release and send now?";
 "Refuse.Desc.End"			= "ends with";
 
 /* Error Alert Panel Strings */
+"Err.DynStoreCreate.title"	= "SystemConfiguration initialization error";
+"Err.DynStoreCreate.msg"	= "DynamicStore create error.";
 "Err.UDPSocketOpen.title"	= "Network initialization error";
 "Err.UDPSocketOpen.msg"		= "UDP Socket open error.";
 "Err.UDPSocketBind.title"	= "Network initialization error (bind)";
