@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: SendControl.m
@@ -145,18 +145,21 @@ static NSRecursiveLock*		userListColsLock	= nil;
 	}
 	// 添付追加ボタン
 	else if (sender == attachAddButton) {
-		NSOpenPanel* op = [NSOpenPanel openPanel];;
 		// 添付追加／削除ボタンを押せなくする
 		[attachAddButton setEnabled:NO];
 		[attachDelButton setEnabled:NO];
 		// シート表示
-		[op setCanChooseDirectories:YES];
-		[op beginSheetForDirectory:nil
-							  file:nil
-					modalForWindow:window
-					 modalDelegate:self
-					didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-					   contextInfo:sender];
+		NSOpenPanel* op = [NSOpenPanel openPanel];
+		op.canChooseDirectories = YES;
+		[op beginSheetModalForWindow:window completionHandler:^(NSInteger result) {
+			if (result == NSOKButton) {
+				for (NSURL* url in op.URLs) {
+					[self appendAttachmentByPath:url.path];
+				}
+			}
+			[attachAddButton setEnabled:YES];
+			[attachDelButton setEnabled:([attachTable numberOfSelectedRows] > 0)];
+		}];
 	}
 	// 添付削除ボタン
 	else if (sender == attachDelButton) {
@@ -201,15 +204,6 @@ static NSRecursiveLock*		userListColsLock	= nil;
 			[[NSApp delegate] setAbsenceOff];
 			[self sendMessage:self];
 		}
-	} else if (info == attachAddButton) {
-		if (code == NSOKButton) {
-			NSOpenPanel*	op = (NSOpenPanel*)sheet;
-			NSString*		fn = [op filename];
-			[self appendAttachmentByPath:fn];
-		}
-		[sheet orderOut:self];
-		[attachAddButton setEnabled:YES];
-		[attachDelButton setEnabled:([attachTable numberOfSelectedRows] > 0)];
 	}
 }
 
@@ -571,14 +565,19 @@ static NSRecursiveLock*		userListColsLock	= nil;
 - (IBAction)searchUser:(id)sender
 {
 	NSResponder* firstResponder = [window firstResponder];
-	if ([firstResponder isKindOfClass:[NSText class]] &&
-		([(NSText*)firstResponder delegate] == searchField)) {
-		// 検索フィールドにフォーカスがある場合はメッセージ領域に移動
-		[window makeFirstResponder:messageArea];
-	} else {
-		// 検索フィールドにフォーカスがなければフォーカスを移動
-		[window makeFirstResponder:searchField];
+	if ([firstResponder isKindOfClass:[NSTextView class]]) {
+		NSTextView* tv = (NSTextView*)firstResponder;
+		if ([[tv delegate] isKindOfClass:[NSTextField class]]) {
+			NSTextField* tf = (NSTextField*)[tv delegate];
+			if (tf == searchField) {
+				// 検索フィールド（セル内の部品）にフォーカスがある場合はメッセージ領域に移動
+				[window makeFirstResponder:messageArea];
+				return;
+			}
+		}
 	}
+	// 検索フィールドにフォーカスがなければフォーカスを移動
+	[window makeFirstResponder:searchField];
 }
 
 - (IBAction)updateUserSearch:(id)sender

@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentFile.m
@@ -77,7 +77,6 @@
 	_nameEscaped	= nil;
 	hfsFileType		= 0;
 	hfsCreator		= 0;
-	finderFlags		= 0;
 	permission		= 0;
 	handle			= nil;
 
@@ -99,7 +98,6 @@
 	// 初期化
 	NSMutableString* uncomp = [NSMutableString stringWithString:[path lastPathComponent]];
 	CFStringNormalize((CFMutableStringRef)uncomp, kCFStringNormalizationFormC);
-//	CFStringFold((CFMutableStringRef)uncomp, kCFCompareCaseInsensitive | kCFCompareDiacriticInsensitive | kCFCompareWidthInsensitive, NULL);
 	self.name		= [[NSString alloc] initWithString:uncomp];
 	self.path		= [path copy];
 	self.size		= [[attrs objectForKey:NSFileSize] unsignedLongLongValue];
@@ -127,33 +125,28 @@
 	if ([[attrs objectForKey:NSFileImmutable] boolValue]) {
 		self.attribute |= IPMSG_FILE_RONLYOPT;
 	}
-	// ファイル属性取得（FinderInfo）
-	if (![self isDirectory]) {
-		FSRef		fsRef;
-		OSStatus	osStatus;
-		osStatus = FSPathMakeRef((const UInt8*)[self.path UTF8String], &fsRef, NULL);
-		if (osStatus != noErr) {
-			ERR(@"FSRef make error(%@,status=%d)", self.path, osStatus);
-		} else {
-			FSCatalogInfo	catInfo;
-			OSErr			osError;
-			osError = FSGetCatalogInfo(&fsRef, kFSCatInfoFinderInfo, &catInfo, NULL, NULL, NULL);
-			if (osError != noErr) {
-				ERR(@"FSCatalogInfo get error(err=%d,%@)", osError, self.path);
-			} else {
-				FInfo* info = (FInfo*)(&catInfo.finderInfo[0]);
-				finderFlags = info->fdFlags;
-				// エイリアスファイルは除く
-				if (finderFlags & kIsAlias) {
-					ERR(@"file is hfs Alias(%@)", self.path);
-					[self release];
-					return nil;
-				}
-				// 非表示ファイル
-				if (finderFlags & kIsInvisible) {
-					self.attribute |= IPMSG_FILE_HIDDENOPT;
-				}
-			}
+	NSURL* fileURL = [NSURL fileURLWithPath:path];
+	id value;
+	if ([fileURL getResourceValue:&value forKey:NSURLIsAliasFileKey error:NULL]) {
+		if ([value boolValue]) {
+			// エイリアスファイルは除く
+			ERR(@"file is hfs Alias(%@)", self.path);
+			[self release];
+			return nil;
+		}
+	}
+	if ([fileURL getResourceValue:&value forKey:NSURLIsSymbolicLinkKey error:NULL]) {
+		if ([value boolValue]) {
+			// シンボリックリンクは除く
+			ERR(@"file is Symbolic link(%@)", self.path);
+			[self release];
+			return nil;
+		}
+	}
+	if ([fileURL getResourceValue:&value forKey:NSURLIsHiddenKey error:NULL]) {
+		if ([value boolValue]) {
+			// 非表示ファイル
+			self.attribute |= IPMSG_FILE_HIDDENOPT;
 		}
 	}
 	// ファイル名エスケープ（":"→"::"）
@@ -172,54 +165,6 @@
 	} else {
 		_nameEscaped = [self.name retain];
 	}
-	// リソースフォーク確認
-	/*
-	{
-		FSSpec	fsSpec;
-		OSErr	osErr;
-		if (![path getFSSpec:&fsSpec]) {
-			WRN(@"FSSpec get error(%@)", path);
-		} else {
-			SInt16 resFile;
-			if (!resourceLock) {
-				resourceLock = [[NSLock alloc] init];
-			}
-			[resourceLock lock];
-			resFile = FSpOpenResFile(&fsSpec, fsRdPerm);
-			osErr	= ResError();
-			if ((resFile != -1) && (osErr == noErr)) {
-				SInt16 numOfTypes = Count1Types();
-				SInt16 i;
-				DBG(@"ResFork has %d Types(%@)", numOfTypes, path);
-				for (i = 0; i < numOfTypes; i++) {
-					ResType resType;
-					SInt16 numOfRes;
-					SInt16 j;
-					Get1IndType(&resType, i);
-					DBG5(@"  Type[%d] is '%c%c%c%c'", i, ((char*)&resType)[0], ((char*)&resType)[1], ((char*)&resType)[2], ((char*)&resType)[3]);
-					numOfRes = Count1Resources(resType);
-					DBG(@"  (has %d resources)", numOfRes);
-					for (j = 0; j < numOfRes; j++) {
-						Handle resHandle;
-						unsigned long size;
-						SInt16 workID = -256;
-						ResType workType;
-						char workName[256];
-						resHandle = GetIndResource(resType, j);
-						size = GetHandleSize(resHandle);
-						workName[0] = 0;
-						GetResInfo(resHandle, &workID, &workType, workName);
-						DBG3(@"    id=%5d,name=%s,size=%u", workID, workName, size);
-					}
-				}
-				CloseResFile(resFile);
-			} else {
-				DBG(@"no ResFork(%@)", path);
-			}
-			[resourceLock unlock];
-		}
-	}
-	*/
 
 	return self;
 }
@@ -416,7 +361,7 @@
 		WRN(@"dir:type[resfork] not support yet.(%@)", self.name);
 		break;
 	default:					// 未知
-		WRN(@"dir:unknown type(%@,attr=0x%08X)", self.name, self.attribute);
+		WRN(@"dir:unknown type(%@,attr=0x%08X)", self.name, (unsigned int)self.attribute);
 		break;
 	}
 
@@ -459,33 +404,11 @@
 		[newDic addEntriesFromDictionary:[self fileAttributes]];
 		[newDic setObject:[NSNumber numberWithBool:((self.attribute&IPMSG_FILE_RONLYOPT) != 0)] forKey:NSFileImmutable];
 		[fileManager setAttributes:newDic ofItemAtPath:self.path error:NULL];
-		// FinderInfoの設定
-		if (finderFlags != 0) {
-			FSRef		fsRef;
-			OSStatus	osStatus;
-			osStatus = FSPathMakeRef((const UInt8*)[self.path UTF8String], &fsRef, NULL);
-			if (osStatus != noErr) {
-				ERR(@"FSRef make error(%@,status=%d)", self.path, osStatus);
-			} else {
-				FSCatalogInfo	catInfo;
-				FSSpec			fsSpec;
-				OSErr			osError;
-				osError = FSGetCatalogInfo(&fsRef, kFSCatInfoFinderInfo, &catInfo, NULL, &fsSpec, NULL);
-				if (osError != noErr) {
-					ERR(@"FSCatalogInfo get error(err=%d,%@)", osError, self.path);
-				} else {
-					FInfo* info = (FInfo*)(&catInfo.finderInfo[0]);
-					info->fdFlags =	finderFlags;
-					if (self.attribute & IPMSG_FILE_HIDDENOPT) {
-						info->fdFlags |= kIsInvisible;
-					}
-					osError = FSSetCatalogInfo(&fsRef, kFSCatInfoFinderInfo, &catInfo);
-					if (osError != noErr) {
-						ERR(@"FSCatalogInfo set error(0x%02X,err=%d,%@)", info->fdFlags, osError, self.path);
-					} else {
-						FSFlushVolume(fsSpec.vRefNum);
-					}
-				}
+		if (self.attribute & IPMSG_FILE_HIDDENOPT) {
+			NSURL* fileURL = [NSURL fileURLWithPath:self.path];
+			NSError* error = nil;
+			if (![fileURL setResourceValue:[NSNumber numberWithBool:YES] forKey:NSURLIsHiddenKey error:&error]) {
+				ERR(@"Hidden set error(%@,%@)", self.path, error);
 			}
 		}
 	}
@@ -511,7 +434,6 @@
 	_nameEscaped	= nil;
 	hfsFileType		= 0;
 	hfsCreator		= 0;
-	finderFlags		= 0;
 	permission		= 0;
 	handle			= nil;
 
@@ -625,23 +547,20 @@
 	NSMutableArray* array = [NSMutableArray arrayWithCapacity:10];
 	if (self.createTime) {
 		unsigned val = (unsigned)[self.createTime timeIntervalSince1970];
-		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_CREATETIME, val]];
+		[array addObject:[NSString stringWithFormat:@"%lX=%X", IPMSG_FILE_CREATETIME, val]];
 	}
 	if (self.modifyTime) {
 		unsigned val = (unsigned)[self.modifyTime timeIntervalSince1970];
-		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_MTIME, val]];
+		[array addObject:[NSString stringWithFormat:@"%lX=%X", IPMSG_FILE_MTIME, val]];
 	}
 	if (permission != 0) {
-		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_PERM, permission]];
+		[array addObject:[NSString stringWithFormat:@"%lX=%X", IPMSG_FILE_PERM, permission]];
 	}
 	if (hfsFileType != 0) {
-		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_FILETYPE, hfsFileType]];
+		[array addObject:[NSString stringWithFormat:@"%lX=%X", IPMSG_FILE_FILETYPE, (unsigned int)hfsFileType]];
 	}
 	if (hfsCreator != 0) {
-		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_CREATOR, hfsCreator]];
-	}
-	if (finderFlags != 0) {
-		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_FINDERINFO, finderFlags]];
+		[array addObject:[NSString stringWithFormat:@"%lX=%X", IPMSG_FILE_CREATOR, (unsigned int)hfsCreator]];
 	}
 	if ([array count] > 0) {
 		return [array componentsJoinedByString:@":"];
@@ -732,8 +651,7 @@
 										((char*)&val)[2], ((char*)&val)[3]);
 			break;
 		case IPMSG_FILE_FINDERINFO:
-			finderFlags = val;
-			TRC(@"extAttr:FINDERINFO = 0x%04X('%c%c')", finderFlags,
+			WRN(@"extAttr:FINDERINFO   unsupported(0x%04X['%c%c'])", val,
 										((char*)&val)[0], ((char*)&val)[1]);
 			break;
 		case IPMSG_FILE_ACL:

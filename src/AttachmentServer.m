@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentServer.m
@@ -668,7 +668,7 @@ typedef struct {
 				}
 				break;
 			default:	// その他
-				ERR(@"invalid command([0x%08X],%@)", GET_MODE(recvData.command), file.path);
+				ERR(@"invalid command([0x%08lX],%@)", GET_MODE(recvData.command), file.path);
 				break;
 			}
 			break;
@@ -758,7 +758,7 @@ typedef struct {
 	NSString*	dh1	= [NSString stringWithFormat:@"%@:%llX:%X:%@:",
 											   file.name,
 											   file.size,
-											   file.attribute,
+											   (unsigned int)file.attribute,
 											   [file makeExtendAttribute]];
 	NSUInteger	len	= strlen((utf8 ? [dh1 UTF8String] : [dh1 SJISString]));
 	NSString*	dh2	= [NSString stringWithFormat:@"%04X:%@", len + 5, dh1];
@@ -766,7 +766,7 @@ typedef struct {
 
 	// ファイルヘッダ送信
 	if (send(sock, dat, strlen(dat), 0) < 0) {
-		ERR(@"header send error(%s)", dh2);
+		ERR(@"header send error(%@)", dh2);
 		return NO;
 	}
 

@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: Config.m
@@ -553,7 +553,7 @@ static NSString* SNDSEARCH_LOGON		= @"SendWindowSearchByLogOnName";
 		[_broadcastIPList sortUsingSelector:@selector(compare:)];
 		[self updateBroadcastAddresses];
 	} @catch (NSException* exception) {
-		ERR(@"%@(index=%u)", exception, index);
+		ERR(@"%@(index=%@)", exception, address);
 	}
 }
 
@@ -564,7 +564,7 @@ static NSString* SNDSEARCH_LOGON		= @"SendWindowSearchByLogOnName";
 		[_broadcastHostList sortUsingSelector:@selector(compare:)];
 		[self updateBroadcastAddresses];
 	} @catch (NSException* exception) {
-		ERR(@"%@(index=%u)", exception, index);
+		ERR(@"%@(index=%@)", exception, host);
 	}
 }
 
@@ -729,7 +729,7 @@ static NSString* SNDSEARCH_LOGON		= @"SendWindowSearchByLogOnName";
 			}
 		}
 	} @catch (NSException* exception) {
-		ERR(@"%@(index=%u)", exception, index);
+		ERR(@"%@(index=%@)", exception, title);
 	}
 	return NO;
 }

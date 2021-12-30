@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: AppControl.m
@@ -595,11 +595,11 @@
 			title	= NSLocalizedString(@"Log.ConvFail.Title", nil);
 			message	= NSLocalizedString(@"Log.ConvFail.Message", nil);
 			ok		= NSLocalizedString(@"Log.ConvFail.OK", nil);
-			alert = [NSAlert alertWithMessageText:title
-									defaultButton:ok 
-								  alternateButton:nil
-									  otherButton:nil
-						informativeTextWithFormat:message];
+			alert = [[NSAlert alloc] init];
+			alert.alertStyle		= NSCriticalAlertStyle;
+			alert.messageText		= title;
+			alert.informativeText	= message;
+			[alert addButtonWithTitle:ok];
 			[alert setAlertStyle:NSCriticalAlertStyle];
 			[alert runModal];
 		}
@@ -612,11 +612,11 @@
 	if ([converter.backupPath length] > 0) {
 		title	= NSLocalizedString(@"Log.Backup.Title", nil);
 		ok		= NSLocalizedString(@"Log.Backup.OK", nil);
-		alert = [NSAlert alertWithMessageText:title
-								defaultButton:ok
-							  alternateButton:nil
-								  otherButton:nil
-					informativeTextWithFormat:converter.backupPath];
+		alert = [[NSAlert alloc] init];
+		alert.alertStyle		= NSInformationalAlertStyle;
+		alert.messageText		= title;
+		alert.informativeText	= converter.backupPath;
+		[alert addButtonWithTitle:ok];
 		[alert setAlertStyle:NSInformationalAlertStyle];
 		[alert runModal];
 	}

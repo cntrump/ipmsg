@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentClient.m
@@ -384,11 +384,11 @@
 			DBG(@"dir:download complete1(%@)", savePath);
 			break;
 		} else if (headerSize < 0) {
-			ERR(@"dir:download internal error(headerSize=%d,buf=%s)", headerSize, buf);
+			ERR(@"dir:download internal error(headerSize=%ld,buf=%s)", headerSize, buf);
 			result = DL_INVALID_DATA;
 			break;
 		} else if (headerSize >= sizeof(buf)) {
-			ERR(@"dir:headerSize overflow(%d,max=%d)", headerSize, sizeof(buf));
+			ERR(@"dir:headerSize overflow(%ld,max=%lu)", headerSize, sizeof(buf));
 			result = DL_INTERNAL_ERROR;
 			break;
 		}
@@ -401,7 +401,7 @@
 		// ヘッダ受信
 		result = [self receiveFrom:sock to:buf maxLength:headerSize];
 		if (result != DL_SUCCESS) {
-			ERR(@"dir:header receive error(ret=%d,size=%u)", result, headerSize);
+			ERR(@"dir:header receive error(ret=%d,size=%ld)", result, headerSize);
 			break;
 		}
 		buf[headerSize] = '\0';
@@ -446,7 +446,7 @@
 				unsigned size = MIN(sizeof(buf), remain);
 				result = [self receiveFrom:sock to:buf maxLength:size];
 				if (result != DL_SUCCESS) {
-					ERR(@"dir:file receive error(%d,remain=%d)", result, remain);
+					ERR(@"dir:file receive error(%d,remain=%llu)", result, remain);
 					break;
 				}
 				[self newDataDownload:size];
@@ -463,7 +463,7 @@
 		}
 		if (remain > 0) {
 			// 受信しきれていない（エラー）
-			ERR(@"dir:file remain data exist(%d)", remain);
+			ERR(@"dir:file remain data exist(%llu)", remain);
 			result = DL_SIZE_NOT_ENOUGH;
 			break;
 		}

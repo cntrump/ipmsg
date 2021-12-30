@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: ReceiveControl.m
@@ -186,17 +186,92 @@
 
 - (IBAction)buttonPressed:(id)sender {
 	if (sender == attachSaveButton) {
+		attachSaveButton.enabled = NO;
 		NSOpenPanel* op = [NSOpenPanel openPanel];
-		[attachSaveButton setEnabled:NO];
-		[op setCanChooseFiles:NO];
-		[op setCanChooseDirectories:YES];
-		[op setPrompt:NSLocalizedString(@"RecvDlg.Attach.SelectBtn", nil)];
-		[op beginSheetForDirectory:nil
-							  file:nil
-					modalForWindow:window
-					 modalDelegate:self
-					didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-					   contextInfo:sender];
+		op.canChooseFiles = NO;
+		op.canChooseDirectories = YES;
+		op.prompt = NSLocalizedString(@"RecvDlg.Attach.SelectBtn", nil);
+		[op beginSheetModalForWindow:window completionHandler:^(NSInteger result) {
+			if (result == NSOKButton) {
+				NSFileManager*	fileManager	= [NSFileManager defaultManager];
+				NSURL*			directory	= op.directoryURL;
+				NSIndexSet*		indexes		= [attachTable selectedRowIndexes];
+				[downloader release];
+				downloader = [[AttachmentClient alloc] initWithRecvMessage:recvMsg saveTo:directory.path];
+				[recvMsg.attachments enumerateObjectsAtIndexes:indexes options:NSEnumerationConcurrent usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+					Attachment* attach = obj;
+					NSString* path;
+					path = [directory.path stringByAppendingPathComponent:[[attach file] name]];
+					// ファイル存在チェック
+					if ([fileManager fileExistsAtPath:path]) {
+						// 上書き確認
+						int result;
+						WRN(@"file exists(%@)", path);
+						if ([[attach file] isDirectory]) {
+							result = NSRunAlertPanel(NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Title", nil),
+													 NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Msg", nil),
+													 NSLocalizedString(@"RecvDlg.AttachDirOverwrite.OK", nil),
+													 NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Cancel", nil),
+													 nil,
+													 [[attach file] name]);
+						} else {
+							result = NSRunAlertPanel(NSLocalizedString(@"RecvDlg.AttachFileOverwrite.Title", nil),
+													 NSLocalizedString(@"RecvDlg.AttachFileOverwrite.Msg", nil),
+													 NSLocalizedString(@"RecvDlg.AttachFileOverwrite.OK", nil),
+													 NSLocalizedString(@"RecvDlg.AttachFileOverwrite.Cancel", nil),
+													 nil,
+													 [[attach file] name]);
+						}
+						switch (result) {
+							case NSAlertDefaultReturn:
+								DBG(@"overwrite ok.");
+								break;
+							case NSAlertAlternateReturn:
+								DBG(@"overwrite canceled.");
+								[attachTable deselectRow:idx];	// 選択解除
+								return;
+							default:
+								ERR(@"inernal error.");
+								break;
+						}
+					}
+					[downloader addTarget:attach];
+				}];
+				if ([downloader numberOfTargets] == 0) {
+					WRN(@"downloader has no targets");
+					[downloader release];
+					downloader = nil;
+					return;
+				}
+				// ダウンロード準備（UI）
+				[attachSaveButton setEnabled:NO];
+				[attachTable setEnabled:NO];
+				[attachSheetProgress setIndeterminate:NO];
+				[attachSheetProgress setMaxValue:[downloader totalSize]];
+				[attachSheetProgress setDoubleValue:0];
+				// シート表示
+				[NSApp beginSheet:attachSheet
+				   modalForWindow:window
+					modalDelegate:self
+				   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
+					  contextInfo:nil];
+				// ダウンロード（スレッド）開始
+				attachSheetRefreshTitle			= NO;
+				attachSheetRefreshFileName		= NO;
+				attachSheetRefreshPercentage	= NO;
+				attachSheetRefreshFileNum		= NO;
+				attachSheetRefreshDirNum		= NO;
+				attachSheetRefreshSize			= NO;
+				[downloader startDownload:self];
+				attachSheetRefreshTimer = [NSTimer scheduledTimerWithTimeInterval:0.1
+																		   target:self
+																		 selector:@selector(downloadSheetRefresh:)
+																		 userInfo:nil
+																		  repeats:YES];
+			} else {
+				[attachSaveButton setEnabled:([attachTable numberOfSelectedRows] > 0)];
+			}
+		}];
 	} else if (sender == attachSheetCancelButton) {
 		[downloader stopDownload];
 	} else {
@@ -212,97 +287,7 @@
 
 // シート終了処理
 - (void)sheetDidEnd:(NSWindow*)sheet returnCode:(int)code contextInfo:(void*)info {
-	if (info == attachSaveButton) {
-		if (code == NSOKButton) {
-			NSFileManager*	fileManager	= [NSFileManager defaultManager];
-			NSString*		directory	= [(NSOpenPanel*)sheet directory];
-			NSIndexSet*		indexes		= [attachTable selectedRowIndexes];
-			NSUInteger		index;
-			[downloader release];
-			downloader = [[AttachmentClient alloc] initWithRecvMessage:recvMsg saveTo:directory];
-			index = [indexes firstIndex];
-			while (index != NSNotFound) {
-				NSString*	path;
-				Attachment*	attach;
-				attach = [[recvMsg attachments] objectAtIndex:index];
-				if (!attach) {
-					index = [indexes indexGreaterThanIndex:index];
-					continue;
-				}
-				path = [directory stringByAppendingPathComponent:[[attach file] name]];
-				// ファイル存在チェック
-				if ([fileManager fileExistsAtPath:path]) {
-					// 上書き確認
-					int result;
-					WRN(@"file exists(%@)", path);
-					if ([[attach file] isDirectory]) {
-						result = NSRunAlertPanel(	NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Title", nil),
-													NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Msg", nil),
-													NSLocalizedString(@"RecvDlg.AttachDirOverwrite.OK", nil),
-													NSLocalizedString(@"RecvDlg.AttachDirOverwrite.Cancel", nil),
-													nil,
-													[[attach file] name]);
-					} else {
-						result = NSRunAlertPanel(	NSLocalizedString(@"RecvDlg.AttachFileOverwrite.Title", nil),
-													NSLocalizedString(@"RecvDlg.AttachFileOverwrite.Msg", nil),
-													NSLocalizedString(@"RecvDlg.AttachFileOverwrite.OK", nil),
-													NSLocalizedString(@"RecvDlg.AttachFileOverwrite.Cancel", nil),
-													nil,
-													[[attach file] name]);
-					}
-					switch (result) {
-					case NSAlertDefaultReturn:
-						DBG(@"overwrite ok.");
-						break;
-					case NSAlertAlternateReturn:
-						DBG(@"overwrite canceled.");
-						[attachTable deselectRow:index];	// 選択解除
-						index = [indexes indexGreaterThanIndex:index];
-						continue;
-					default:
-						ERR(@"inernal error.");
-						break;
-					}
-				}
-				[downloader addTarget:attach];
-				index = [indexes indexGreaterThanIndex:index];
-			}
-			[sheet orderOut:self];
-			if ([downloader numberOfTargets] == 0) {
-				WRN(@"downloader has no targets");
-				[downloader release];
-				downloader = nil;
-				return;
-			}
-			// ダウンロード準備（UI）
-			[attachSaveButton setEnabled:NO];
-			[attachTable setEnabled:NO];
-			[attachSheetProgress setIndeterminate:NO];
-			[attachSheetProgress setMaxValue:[downloader totalSize]];
-			[attachSheetProgress setDoubleValue:0];
-			// シート表示
-			[NSApp beginSheet:attachSheet
-			   modalForWindow:window
-				modalDelegate:self
-			   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-				  contextInfo:nil];
-			// ダウンロード（スレッド）開始
-			attachSheetRefreshTitle			= NO;
-			attachSheetRefreshFileName		= NO;
-			attachSheetRefreshPercentage	= NO;
-			attachSheetRefreshFileNum		= NO;
-			attachSheetRefreshDirNum		= NO;
-			attachSheetRefreshSize			= NO;
-			[downloader startDownload:self];
-			attachSheetRefreshTimer = [NSTimer scheduledTimerWithTimeInterval:0.1
-																	   target:self
-																	 selector:@selector(downloadSheetRefresh:)
-																	 userInfo:nil
-																	  repeats:YES];
-		} else {
-			[attachSaveButton setEnabled:([attachTable numberOfSelectedRows] > 0)];
-		}
-	} else if (sheet == attachSheet) {
+	if (sheet == attachSheet) {
 		[attachSheetRefreshTimer invalidate];
 		attachSheetRefreshTimer = nil;
 		[recvMsg removeDownloadedAttachments];

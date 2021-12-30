@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: PrefControl.m
@@ -488,14 +488,25 @@
 		} else {
 			orgPath = [Config sharedConfig].alternateLogFile;
 		}
-		[sp setPrompt:NSLocalizedString(@"Log.File.SaveSheet.OK", nil)];
+		sp.prompt				= NSLocalizedString(@"Log.File.SaveSheet.OK", nil);
+		sp.directoryURL			= [NSURL fileURLWithPath:[orgPath stringByDeletingLastPathComponent]];
+		sp.nameFieldStringValue = [orgPath lastPathComponent];
 		// シート表示
-		[sp beginSheetForDirectory:[orgPath stringByDeletingLastPathComponent]
-							  file:[orgPath lastPathComponent]
-					modalForWindow:panel
-					 modalDelegate:self
-					didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-					   contextInfo:sender];
+		[sp beginSheetModalForWindow:panel completionHandler:^(NSInteger result) {
+			if (result == NSOKButton) {
+				NSString* fn = [sp.URL.path stringByAbbreviatingWithTildeInPath];
+				// 標準ログ選択
+				if (sender == logStdPathRefButton) {
+					[Config sharedConfig].standardLogFile = fn;
+					[logStdPathField setStringValue:fn];
+				}
+				// 重要ログ選択
+				else {
+					[Config sharedConfig].alternateLogFile = fn;
+					[logAltPathField setStringValue:fn];
+				}
+			}
+		}];
 	}
 	// その他（バグ）
 	else {
@@ -795,24 +806,6 @@
 			[absenceTable reloadData];
 			[absenceTable deselectAll:self];
 			[[NSApp delegate] buildAbsenceMenu];
-		}
-	}
-	// 標準ログ選択
-	else if (info == logStdPathRefButton) {
-		if (code == NSOKButton) {
-			NSSavePanel*	sp = (NSSavePanel*)sheet;
-			NSString*		fn = [[sp filename] stringByAbbreviatingWithTildeInPath];
-			[Config sharedConfig].standardLogFile = fn;
-			[logStdPathField setStringValue:fn];
-		}
-	}
-	// 重要ログ選択
-	else if (info == logAltPathRefButton) {
-		if (code == NSOKButton) {
-			NSSavePanel*	sp = (NSSavePanel*)sheet;
-			NSString*		fn = [[sp filename] stringByAbbreviatingWithTildeInPath];
-			[Config sharedConfig].alternateLogFile = fn;
-			[logAltPathField setStringValue:fn];
 		}
 	}
 	[sheet orderOut:self];

@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentFile.h
@@ -24,7 +24,6 @@
 
 	OSType				hfsFileType;		// ファイルタイプ
 	OSType				hfsCreator;			// クリエータコード
-	UInt16				finderFlags;		// Finder属性フラグ（Carbon）
 	unsigned			permission;			// POSIXファイルアクセス権
 	NSFileHandle*		handle;				// 出力ハンドル
 }

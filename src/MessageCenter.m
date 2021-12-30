@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: MessageCenter.m
@@ -306,7 +306,7 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 
 	// メッセージヘッダ部編集
 	NSString*	header	= [NSString stringWithFormat:@"%d:%ld:%@:%@:%ld:",
-								IPMSG_VERSION, mid, NSUserName(), myHostName, cmd];
+								IPMSG_VERSION, (long)mid, NSUserName(), myHostName, cmd];
 	const char*	str		= [header SJISString];
 	NSUInteger	len		= strlen(str);
 
@@ -453,8 +453,8 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 								count,
 								info.file.name,
 								info.file.size,
-								(UInt32)[info.file.modifyTime timeIntervalSince1970],
-								info.file.attribute];
+								(unsigned int)[info.file.modifyTime timeIntervalSince1970],
+								(unsigned int)info.file.attribute];
 			NSString* ext = [info.file makeExtendAttribute];
 			if ([ext length] > 0) {
 				[buffer appendString:ext];
@@ -1173,7 +1173,7 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 	CFRelease(value);
 
 	if (myIPAddress != newAddr) {
-		DBG(@"IPAddress changed (%d.%d.%d.%d -> %d.%d.%d.%d)",
+		DBG(@"IPAddress changed (%lu.%lu.%lu.%lu -> %lu.%lu.%lu.%lu)",
 				((oldAddr >> 24) & 0x00FF), ((oldAddr >> 16) & 0x00FF),
 				((oldAddr >> 8) & 0x00FF), (oldAddr & 0x00FF),
 				((newAddr >> 24) & 0x00FF), ((newAddr >> 16) & 0x00FF),

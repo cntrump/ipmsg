@@ -127,7 +127,7 @@
 	TRC(@"  -> succeeded(%@)", bakPath);
 
 	TRC(@"rename file (%@ -> %@)", self.path, bakPath);
-	[_fileManager movePath:self.path toPath:bakPath handler:nil];
+	[_fileManager moveItemAtPath:self.path toPath:bakPath error:NULL];
 
 	self.backupPath = bakPath;
 
@@ -269,9 +269,9 @@
 	TRC(@"  -> succeeded(%@)", bakPath);
 
 	TRC(@"rename file (%@ -> %@)", self.path, bakPath);
-	[_fileManager movePath:self.path toPath:bakPath handler:nil];
+	[_fileManager moveItemAtPath:self.path toPath:bakPath error:NULL];
 	TRC(@"rename file (%@ -> %@)", newPath, self.path);
-	[_fileManager movePath:newPath toPath:self.path handler:nil];
+	[_fileManager moveItemAtPath:newPath toPath:self.path error:NULL];
 	self.backupPath	= bakPath;
 
 	TRC(@"Finish convert(%@)", self.path);

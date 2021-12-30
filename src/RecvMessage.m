@@ -1,5 +1,5 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
  *
  *	Project		: IP Messenger for Mac OS X
  *	File		: RecvMessage.m
@@ -125,7 +125,7 @@
 		return nil;
 	}
 	if (strtol(tok, NULL, 10) != IPMSG_VERSION) {
-		ERR(@"msg:version invalid(%d)", strtol(tok, NULL, 10));
+		ERR(@"msg:version invalid(%ld)", strtol(tok, NULL, 10));
 		[self release];
 		return nil;
 	}
@@ -292,7 +292,7 @@
 					if (attach) {
 						[array addObject:attach];
 					} else {
-						ERR(@"attach str parse error.(%s)", str);
+						ERR(@"attach str parse error.(%@)", str);
 					}
 				}
 				if ([array count] > 0) {
@@ -481,7 +481,7 @@
 
 // オブジェクト文字列表現
 - (NSString*)description {
-	return [NSString stringWithFormat:@"RecvMessage:command=0x%08X,PacketNo=%d,from=%@", command, self.packetNo, fromUser];
+	return [NSString stringWithFormat:@"RecvMessage:command=0x%08lX,PacketNo=%d,from=%@", command, self.packetNo, fromUser];
 }
 
 // オブジェクトコピー
