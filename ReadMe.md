@@ -4,7 +4,11 @@
 
 It’s a port of [Windows Version](https://www.ipmsg.org/).
 
-![](https://ishwt.net/wp-content/uploads/2009/09/ipmsg_0B0.png)
+Compatible with Windows version.
+
+![](osx.png)
+
+![](win.png)
 
 ## Licence
 
