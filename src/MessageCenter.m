@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: MessageCenter.m
- *	Module		: メッセージ送受信管理クラス		
+ *	Module		: メッセージ送受信管理クラス
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -37,9 +37,8 @@
  * 定数定義
  *============================================================================*/
 
-#define MY_NAME_BUF				256
-#define RETRY_INTERVAL			2.0
-#define RETRY_MAX				3
+#define RETRY_INTERVAL	(2.0)
+#define RETRY_MAX		(3)
 
 typedef enum
 {
@@ -49,14 +48,15 @@ typedef enum
 	_NET_LINK_LOST,
 	_NET_PRIMARY_IF_CHANGED,
 	_NET_IP_ADDRESS_CHANGED
-	
+
 } _NetUpdateState;
 
 /*============================================================================*
- * プライベートメソッド（カテゴリ）
+ * プライベートメソッド
  *============================================================================*/
- 
-@interface MessageCenter(Private)
+
+@interface MessageCenter()
+- (NSData*)entryMessageData;
 - (void)shutdownServer;
 - (void)serverThread:(NSArray*)portArray;
 - (BOOL)updateHostName;
@@ -85,7 +85,8 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
  *----------------------------------------------------------------------------*/
 
 // 共有インスタンスを返す
-+ (MessageCenter*)sharedCenter {
++ (MessageCenter*)sharedCenter
+{
 	static MessageCenter* sharedCenter = nil;
 	if (!sharedCenter) {
 		sharedCenter = [[MessageCenter alloc] init];
@@ -113,12 +114,13 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
  *----------------------------------------------------------------------------*/
 
 // 初期化
-- (id)init {
+- (id)init
+{
 	Config*				config	= [Config sharedConfig];
 	NSArray*			keys	= nil;
 	int					sockopt	= 1;
 	struct sockaddr_in	addr;
-	
+
 	self				= [super init];
 	sockUDP				= -1;
 	sockLock			= [[NSLock alloc] init];
@@ -133,14 +135,14 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 	scKeyIFIPv4			= nil;
 	primaryNIC			= nil;
 	myIPAddress			= 0;
-	myPortNo			= [config portNo];
+	myPortNo			= config.portNo;
 	myHostName			= nil;
 	memset(&scDSContext, 0, sizeof(scDSContext));
-	
+
 	if (myPortNo <= 0) {
 		myPortNo = IPMSG_DEFAULT_PORT;
 	}
-	
+
 	// DynaimcStore生成
 	scDSContext.info	= self;
 	scDynStore	= SCDynamicStoreCreate(NULL,
@@ -159,19 +161,19 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 		[self autorelease];
 		return nil;
 	}
-	
+
 	// DynamicStore更新通知設定
 	scKeyHostName	= (NSString*)SCDynamicStoreKeyCreateHostNames(NULL);
 	scKeyNetIPv4	= (NSString*)SCDynamicStoreKeyCreateNetworkGlobalEntity(
 								NULL, kSCDynamicStoreDomainState, kSCEntNetIPv4);
 	keys = [NSArray arrayWithObjects:scKeyHostName, scKeyNetIPv4, nil];
-	
+
 	if (!SCDynamicStoreSetNotificationKeys(scDynStore, (CFArrayRef)keys, NULL)) {
-		ERR0(@"dynamic store notification set error");
+		ERR(@"dynamic store notification set error");
 	}
 	runLoopSource = SCDynamicStoreCreateRunLoopSource(NULL, scDynStore, 0);
 	CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopDefaultMode);
-	
+
 	// DynamicStoreからの情報取得
 	[self updateHostName];
 	[self updateIPAddress];
@@ -186,7 +188,7 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 
 	// 乱数初期化
 	srand(time(NULL));
-	
+
 	// ソケットオープン
 	if ((sockUDP = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		// Dockアイコンバウンド
@@ -227,7 +229,7 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 			return nil;
 		}
 		[[[PortChangeControl alloc] init] autorelease];
-		myPortNo		= [config portNo];
+		myPortNo		= config.portNo;
 		addr.sin_port	= htons(myPortNo);
 	}
 
@@ -238,7 +240,7 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 	sockopt = MAX_SOCKBUF;
 	setsockopt(sockUDP, SOL_SOCKET, SO_SNDBUF, &sockopt, sizeof(sockopt));
 	setsockopt(sockUDP, SOL_SOCKET, SO_RCVBUF, &sockopt, sizeof(sockopt));
-	
+
 	// 受信スレッド起動
 	{
 		NSPort*		port1	= [NSPort port];
@@ -253,7 +255,8 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
 }
 
 // 解放
--(void)dealloc {
+-(void)dealloc
+{
 	[sockLock release];
 	[sendList release];
 	[serverConnection release];
@@ -280,212 +283,141 @@ static void _DynamicStoreCallback(SCDynamicStoreRef	store,
  * プライベート使用
  *----------------------------------------------------------------------------*/
 
-// ログインユーザ名
-static NSString* loginUser() {
-	static NSString* loginUserName = nil;
-	if (!loginUserName) {
-		loginUserName = NSUserName();
-	}
-	return loginUserName;
-}
-
-// メンバ認識系パケットで使用する起動ユーザのユーザ名／グループ名文字列の編集
-static void myName(char* nameBuf, char* groupBuf) {
-	Config* 	config	= [Config sharedConfig];
-	NSString*	user	= [config userName];
-#ifdef IPMSG_DEBUG
-	// 開発中(developmentビルド)はグループ名をバージョン番号にしてしまう
-	NSString*	group	= [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-#else
-	NSString*	group	= [config groupName];
-#endif
-	NSString*	absence	= @"";
-
-	nameBuf[0]	= '\0';
-	groupBuf[0]	= '\0';
-	
-	if (!user) {
-		user = loginUser();
-	} else if ([user length] <= 0) {
-		user = loginUser();
-	}
-	if (group) {
-		if ([group length] <= 0) {
-			group = nil;
-		}
-	}
-	if ([config isAbsence]) {
-		absence = [config absenceTitleAtIndex:[config absenceIndex]];
-	}
-
-	if ([config isAbsence]) {
-		sprintf(nameBuf, "%s[%s]", [user ipmsgCString], [absence ipmsgCString]);
-	} else {
-		strcpy(nameBuf, [user ipmsgCString]);
-	}
-	
-	if (group) {
-		strcpy(groupBuf, [group ipmsgCString]);
-	}
-	
-	return;
-}
-
 // データ送信実処理
-- (int)sendTo:(struct sockaddr_in*)toAddr messageID:(long)mid command:(long)cmd data:(char*)data option:(char*)opt {
+- (NSInteger)sendTo:(struct sockaddr_in*)toAddr messageID:(NSInteger)mid command:(UInt32)cmd data:(NSData*)data
+{
 	Config*	config = [Config sharedConfig];
-	char	buffer[MAX_SOCKBUF];
-	int		len;
-	int		dataLen	= (data) ? strlen(data) : 0;
-	int		optLen	= (opt) ? strlen(opt) : 0; 
-	
+
 	// 不在モードチェック
-	if ([config isAbsence]) {
+	if (config.inAbsence) {
 		cmd |= IPMSG_ABSENCEOPT;
 	}
 	// ダイアルアップチェック
-	if ([config dialup]) {
+	if (config.dialup) {
 		cmd |= IPMSG_DIALUPOPT;
 	}
-	
+
 	[sockLock lock];	// ソケットロック
-	
+
 	// メッセージID採番
-	mid = (mid < 0) ? [MessageCenter nextMessageID] : mid;
-	
+	if (mid < 0) {
+		mid = [MessageCenter nextMessageID];
+	}
+
 	// メッセージヘッダ部編集
-	memset(buffer, 0, sizeof(buffer));
-	sprintf(buffer, "%d:%ld:%s:%s:%ld:",
-						IPMSG_VERSION,
-						mid,
-						[loginUser() ipmsgCString],
-						[myHostName ipmsgCString],
-						cmd);
-	len = strlen(buffer);
-	
+	NSString*	header	= [NSString stringWithFormat:@"%d:%ld:%@:%@:%ld:",
+								IPMSG_VERSION, mid, NSUserName(), myHostName, cmd];
+	const char*	str		= [header SJISString];
+	NSUInteger	len		= strlen(str);
+
+	// 送信データ作成
+	NSMutableData* sendData = [NSMutableData dataWithCapacity:len + [data length]];
+	[sendData appendBytes:str length:len];
+	if ([data length] > 0) {
+		[sendData appendData:data];
+	}
+
 	// パケットサイズあふれ調整
-	if (len + dataLen + optLen > sizeof(buffer) - 1) {
-		// メッセージ本文を削る
-		dataLen = sizeof(buffer) - 1 - len - optLen;
+	len = [sendData length];
+	if (len > MAX_SOCKBUF) {
+		len = MAX_SOCKBUF;
 	}
-	if (dataLen >= 0) {
-		// メッセージ本文設定
-		if (dataLen > 0) {
-			strncpy(&buffer[len], data, dataLen);
-			len += dataLen;
-		}
-		// 追加部設定（メッセージ本文との間に'\0'が必要）
-		if (optLen > 0) {
-			strncpy(&buffer[len + 1], opt, optLen);
-			len += (optLen + 1);
-		}
-		// 送信
-		sendto(sockUDP, buffer, len + 1, 0, (struct sockaddr*)toAddr, sizeof(struct sockaddr_in));
-	} else {
-		ERR(@"buffer overflow.(len=%d,dataLen=%d,optLen=%d)", len, dataLen, optLen);
-		mid = -1;
-	}
-	
+	// 送信
+	sendto(sockUDP, [sendData bytes], len, 0, (struct sockaddr*)toAddr, sizeof(struct sockaddr_in));
+
 	[sockLock unlock];	// ロック解除
 
 	return mid;
 }
 
-- (int)sendTo:(struct sockaddr_in*)toAddr messageID:(int)mid command:(int)cmd {
-	return [self sendTo:toAddr messageID:mid command:cmd data:NULL option:NULL];
-}
+- (NSInteger)sendTo:(UserInfo*)toUser messageID:(NSInteger)mid command:(UInt32)cmd message:(NSString*)msg option:(NSString*)opt
+{
+	struct sockaddr_in	addr		= toUser.address;
+	NSData*				sendData	= nil;
 
-- (int)sendTo:(struct sockaddr_in*)toAddr messageID:(int)mid command:(int)cmd data:(char*)data {
-	return [self sendTo:toAddr messageID:mid command:cmd data:data option:NULL];
-}
-
-- (int)sendTo:(struct sockaddr_in*)toAddr messageID:(int)mid command:(int)cmd numberData:(int)data {
-	char buf[32];
-	sprintf(buf, "%d", data);
-	return [self sendTo:toAddr messageID:mid command:cmd data:buf option:NULL];
-}
-
-// ブロードキャスト送信処理
-- (void)sendBroadcast:(int)cmd data:(char*)data option:(char*)opt {
-	struct sockaddr_in	bcast;		// ブロードキャストアドレス
-	NSMutableSet*		castSet;	// 個別ブロードキャストアドレス一覧
-	NSEnumerator*		castEnum;	// 個別ブロードキャスト列挙
-	NSString*			address;	// 個別ブロードキャストアドレス
-	
-	memset(&bcast, 0, sizeof(bcast));
-	// ブロードキャスト（ローカル）アドレスへ送信
-	bcast.sin_family		= AF_INET;
-	bcast.sin_port			= htons(myPortNo);
-	bcast.sin_addr.s_addr	= htonl(INADDR_BROADCAST);
-	[self sendTo:&bcast messageID:-1 command:cmd data:data option:opt];
-	
-	// 個別ブロードキャストアドレス一覧作成
-	castSet = [[[NSMutableSet alloc] init] autorelease];
-	[castSet addObjectsFromArray:[[Config sharedConfig] broadcastAddresses]];
-	[castSet addObjectsFromArray:[[UserManager sharedManager] dialupAddresses]];
-	
-	// 個別ブロードキャストへ送信
-	castEnum = [castSet objectEnumerator];
-	while ((address = [castEnum nextObject])) {
-		unsigned long	inetaddr = inet_addr([address UTF8String]);
-		if (inetaddr != INADDR_NONE) {
-			bcast.sin_addr.s_addr = inetaddr;
-			[self sendTo:&bcast messageID:-1 command:cmd data:data option:opt];
+	if (msg || opt) {
+		const char*	str1 = (toUser.supportsUTF8) ? [msg UTF8String] : [msg SJISString];
+		NSUInteger	len1 = strlen(str1);
+		if (opt) {
+			const char*		str2 = (toUser.supportsUTF8) ? [opt UTF8String] : [opt SJISString];
+			NSUInteger		len2 = strlen(str2);
+			NSMutableData*	data = [NSMutableData dataWithCapacity:len1 + 1 + len2 + 1];
+			[data appendBytes:str1 length:len1 + 1];
+			[data appendBytes:str2 length:len2 + 1];
+			sendData = data;
+		} else {
+			sendData = [NSData dataWithBytes:str1 length:len1 + 1];
+		}
+		if (toUser.supportsUTF8) {
+			cmd |= IPMSG_UTF8OPT;
 		}
 	}
+
+	return [self sendTo:&addr
+			  messageID:mid
+				command:cmd
+				   data:sendData];
 }
 
-// 全ユーザに送信
-- (void)sendAllUsers:(int)cmd data:(char*)data option:(char*)opt {
-	UserManager*		mgr;	// ユーザマネージャ
-	int					num;	// ユーザ数
-	struct sockaddr_in	to;		// 送信先アドレス
-	int					i;		// カウンタ
-	
-	mgr	= [UserManager sharedManager];
-	num = [mgr numberOfUsers];
-	to.sin_family	= AF_INET;
-	for (i = 0; i < num; i++) {
-		UserInfo*		user	= [mgr userAtIndex:i];
-		unsigned long	addr	= [user addressNumber];
-		if (addr != INADDR_NONE) {
-			to.sin_addr.s_addr	= htonl([user addressNumber]);
-			to.sin_port			= htons([user portNo]);
-			[self sendTo:&to messageID:-1 command:cmd data:data option:opt];
-		}
-	}
+- (NSInteger)sendTo:(UserInfo*)toUser messageID:(NSInteger)mid command:(UInt32)cmd number:(NSInteger)num
+{
+	return [self sendTo:toUser
+			  messageID:mid
+				command:cmd
+				message:[NSString stringWithFormat:@"%d", num]
+				 option:nil];
 }
-	
+
 /*----------------------------------------------------------------------------*
  * メッセージ送信（ブロードキャスト）
  *----------------------------------------------------------------------------*/
 
+// ブロードキャスト送信処理
+- (void)sendBroadcast:(UInt32)cmd data:(NSData*)data
+{
+	// ブロードキャスト（ローカル）アドレスへ送信
+	struct sockaddr_in	bcast;
+	memset(&bcast, 0, sizeof(bcast));
+	bcast.sin_family		= AF_INET;
+	bcast.sin_port			= htons(myPortNo);
+	bcast.sin_addr.s_addr	= htonl(INADDR_BROADCAST);
+	[self sendTo:&bcast messageID:-1 command:cmd data:data];
+
+	// 個別ブロードキャストへ送信
+	NSMutableSet* castSet = [NSMutableSet set];
+	[castSet addObjectsFromArray:[[Config sharedConfig] broadcastAddresses]];
+	[castSet addObjectsFromArray:[[UserManager sharedManager] dialupAddresses]];
+	for (NSString* address in castSet) {
+		bcast.sin_addr.s_addr = inet_addr([address UTF8String]);
+		if (bcast.sin_addr.s_addr != INADDR_NONE) {
+			[self sendTo:&bcast messageID:-1 command:cmd data:data];
+		}
+	}
+}
+
 // BR_ENTRYのブロードキャスト
-- (void)broadcastEntry {
-	char name[MY_NAME_BUF];
-	char group[MY_NAME_BUF];
-	myName(name, group);
-	[self sendBroadcast:IPMSG_NOOPERATION data:NULL option:NULL];
-	[self sendBroadcast:IPMSG_BR_ENTRY|IPMSG_FILEATTACHOPT data:name option:group];
-	DBG(@"broadcast entry(%s:%s).", name, group);
+- (void)broadcastEntry
+{
+	[self sendBroadcast:IPMSG_NOOPERATION data:nil];
+	[self sendBroadcast:IPMSG_BR_ENTRY|IPMSG_FILEATTACHOPT|IPMSG_CAPUTF8OPT
+				   data:[self entryMessageData]];
+	DBG(@"broadcast entry");
 }
 
 // BR_ABSENCEのブロードキャスト
-- (void)broadcastAbsence {
-	char name[MY_NAME_BUF];
-	char group[MY_NAME_BUF];
-	myName(name, group);
-	[self sendAllUsers:IPMSG_BR_ABSENCE|IPMSG_FILEATTACHOPT data:name option:group];
-	DBG(@"broadcast absence(%s:%s).", name, group);
+- (void)broadcastAbsence
+{
+	[self sendBroadcast:IPMSG_BR_ABSENCE|IPMSG_FILEATTACHOPT|IPMSG_CAPUTF8OPT
+				   data:[self entryMessageData]];
+	DBG(@"broadcast absence");
 }
 
 // BR_EXITをブロードキャスト
-- (void)broadcastExit {
-	char name[MY_NAME_BUF];
-	char group[MY_NAME_BUF];
-	myName(name, group);
-	[self sendBroadcast:IPMSG_BR_EXIT data:name option:group];
-	DBG0(@"broadcast exit.");
+- (void)broadcastExit
+{
+	[self sendBroadcast:IPMSG_BR_EXIT|IPMSG_CAPUTF8OPT
+				   data:[self entryMessageData]];
+	DBG(@"broadcast exit");
 }
 
 /*----------------------------------------------------------------------------*
@@ -493,78 +425,80 @@ static void myName(char* nameBuf, char* groupBuf) {
  *----------------------------------------------------------------------------*/
 
 // 通常メッセージの送信
-- (void)sendMessage:(SendMessage*)msg to:(NSArray*)toUsers {
-	int					i;
-	struct sockaddr_in	to;
-	unsigned int		command	= IPMSG_SENDMSG | IPMSG_SENDCHECKOPT;
-	NSArray*			attach	= [msg attachments];
-	int					num		= [toUsers count];
-	char				msgBuf[MAX_SOCKBUF];
-	char				attachBuf[MAX_SOCKBUF];
-	NSData*				body;
-	NSData*				opt;
+- (void)sendMessage:(SendMessage*)msg to:(NSArray*)toUsers
+{
+	AttachmentServer*	attachManager	= [AttachmentServer sharedServer];
+	UInt32				command			= IPMSG_SENDMSG | IPMSG_SENDCHECKOPT;
+	NSString*			option			= nil;
 
-	// メッセージ編集
-	strncpy(msgBuf, [[msg message] ipmsgCString], MAX_SOCKBUF - 1);
-	// 添付ファイル追加
-	attachBuf[0] = '\0';
-	if ([attach count] > 0) {
-		AttachmentServer*	attachManager	= [AttachmentServer sharedServer];
-		NSNumber*			messageID		= [NSNumber numberWithInt:[msg packetNo]];
-		char*				work			= &attachBuf[0];
-		command	|= IPMSG_FILEATTACHOPT;
-		for (i = 0; i < [attach count]; i++) {
-			Attachment* info = [attach objectAtIndex:i];
-			[info setFileID:i];
-			sprintf(work, "%s%c",
-				[[[info file] stringForMessageAttachment:[[info fileID] intValue]] ipmsgCString],
-				FILELIST_SEPARATOR);
-			work += strlen(work);
-			[attachManager addAttachment:info messageID:messageID];
-		}
-	}
-	
 	// コマンドの決定
-	if (num > 1) {
+	if ([toUsers count] > 1) {
 		command |= IPMSG_MULTICASTOPT;
 	}
-	if ([msg sealed]) {
+	if (msg.sealed) {
 		command |= IPMSG_SECRETOPT;
-		if ([msg locked]) {
+		if (msg.locked) {
 			command |= IPMSG_PASSWORDOPT;
 		}
 	}
 
-	body	= [[[NSData alloc] initWithBytes:msgBuf length:strlen(msgBuf) + 1] autorelease];
-	opt		= [[[NSData alloc] initWithBytes:attachBuf length:strlen(attachBuf) + 1] autorelease];
-	// 各ユーザに送信
-	for (i = 0; i < num; i++) {
-		UserInfo* info = [toUsers objectAtIndex:i];
-		if (info) {
-			int			mid;
-			RetryInfo*	retryInfo;
-			memset(&to, 0, sizeof(to));
-			to.sin_family		= AF_INET;
-			to.sin_addr.s_addr	= htonl([info addressNumber]);
-			to.sin_port			= htons([info portNo]);
-			// 送信
-			if (([attach count] > 0) && [info attachmentSupport]) {
-				mid = [self sendTo:&to messageID:[msg packetNo]
-										 command:command|IPMSG_FILEATTACHOPT
-											data:msgBuf
-										  option:attachBuf];
-				[[AttachmentServer sharedServer] addUser:info
-											   messageID:[NSNumber numberWithInt:mid]];
-			} else {
-				mid = [self sendTo:&to messageID:[msg packetNo] command:command data:msgBuf];
+	// 添付ファイルメッセージ編集
+	if ([msg.attachments count] > 0) {
+		NSInteger			count			= 0;
+		NSMutableString*	buffer			= [NSMutableString string];
+		NSNumber*			messageID		= [NSNumber numberWithInt:msg.packetNo];
+		for (Attachment* info in msg.attachments) {
+			info.fileID	= [NSNumber numberWithInteger:count];
+			[buffer appendFormat:@"%d:%@:%llX:%X:%X:",
+								count,
+								info.file.name,
+								info.file.size,
+								(UInt32)[info.file.modifyTime timeIntervalSince1970],
+								info.file.attribute];
+			NSString* ext = [info.file makeExtendAttribute];
+			if ([ext length] > 0) {
+				[buffer appendString:ext];
+				[buffer appendString:@":"];
 			}
+			[buffer appendString:@"\a"];
+			TRC(@"Attachment(%@)", buffer);
+			[attachManager addAttachment:info messageID:messageID];
+			count++;
+		}
+		if ([buffer length] > 0) {
+			option	= buffer;
+			command |= IPMSG_FILEATTACHOPT;
+		}
+	}
+
+	// 各ユーザに送信
+	for (UserInfo* info in toUsers) {
+		NSInteger mid = -1;
+		// 送信
+		if ((command & IPMSG_FILEATTACHOPT) && (info.supportsAttachment)) {
+			mid = [self sendTo:info
+					 messageID:msg.packetNo
+					   command:command
+					   message:msg.message
+						option:option];
+			if (mid >= 0) {
+				[attachManager addUser:info
+							 messageID:[NSNumber numberWithInteger:mid]];
+			}
+		} else {
+			mid = [self sendTo:info
+					 messageID:msg.packetNo
+					   command:command
+					   message:msg.message
+						option:nil];
+		}
+		if (mid >= 0) {
 			// 応答待ちメッセージ一覧に追加
-			retryInfo = [[RetryInfo alloc] initWithCommand:command
-														to:info
-												   message:body
-													attach:opt];
-			[sendList setObject:retryInfo forKey:[NSNumber numberWithInt:mid]];
-			[retryInfo release];
+			RetryInfo* retry = [RetryInfo infoWithCommand:command
+													   to:info
+												  message:msg.message
+												   option:option];
+			[sendList setObject:retry forKey:[NSNumber numberWithInteger:mid]];
 			// タイマ発行
 			[NSTimer scheduledTimerWithTimeInterval:RETRY_INTERVAL
 											 target:self
@@ -576,22 +510,18 @@ static void myName(char* nameBuf, char* groupBuf) {
 }
 
 // 応答タイムアウト時処理
-- (void)retryMessage:(NSTimer*)timer {
+- (void)retryMessage:(NSTimer*)timer
+{
 	NSNumber*	msgid		= [timer userInfo];
 	RetryInfo*	retryInfo	= [sendList objectForKey:msgid];
 	if (retryInfo) {
-		UserInfo*			user;
-		unsigned int		command;
-		struct sockaddr_in	to;
-		char*				message;
-		char*				attach;
-		if ([retryInfo retryCount] >= RETRY_MAX) {
-			int ret = NSRunCriticalAlertPanel(
-							NSLocalizedString(@"Send.Retry.Title", nil),
-							NSLocalizedString(@"Send.Retry.Msg", nil),
-							NSLocalizedString(@"Send.Retry.OK", nil),
-							NSLocalizedString(@"Send.Retry.Cancel", nil),
-							nil, [[retryInfo toUser] user]);
+		if (retryInfo.retryCount >= RETRY_MAX) {
+			NSInteger ret = NSRunCriticalAlertPanel(
+								NSLocalizedString(@"Send.Retry.Title", nil),
+								NSLocalizedString(@"Send.Retry.Msg", nil),
+								NSLocalizedString(@"Send.Retry.OK", nil),
+								NSLocalizedString(@"Send.Retry.Cancel", nil),
+								nil, [retryInfo toUser].userName);
 			if (ret == NSAlertAlternateReturn) {
 				// 再送キャンセル
 				// 応答待ちメッセージ一覧からメッセージのエントリを削除
@@ -604,24 +534,17 @@ static void myName(char* nameBuf, char* groupBuf) {
 				[timer invalidate];
 				return;
 			}
-			[retryInfo resetRetryCount];
+			// リトライ階数をリセットして再試行
+			retryInfo.retryCount = 0;
 		}
-		user	= [retryInfo toUser];
-		command = [retryInfo command];
-		message	= (char*)[[retryInfo messageBody] bytes];
-		attach	= (char*)[[retryInfo attachMessage] bytes];
-		// ユーザに送信
-		memset(&to, 0, sizeof(to));
-		to.sin_family		= AF_INET;
-		to.sin_addr.s_addr	= htonl([user addressNumber]);
-		to.sin_port			= htons([user portNo]);
-		// 送信
-		[self sendTo:&to
-		   messageID:[msgid intValue]
-			 command:command
-				data:message
-			  option:attach];
-		[retryInfo upRetryCount];
+		// 再送信
+		[self sendTo:retryInfo.toUser
+		   messageID:[msgid unsignedIntValue]
+			 command:retryInfo.command
+			 message:retryInfo.message
+			  option:retryInfo.option];
+		// リトライ回数インクリメント
+		retryInfo.retryCount++;
 	} else {
 		// タイマ解除
 		[timer invalidate];
@@ -629,27 +552,30 @@ static void myName(char* nameBuf, char* groupBuf) {
 }
 
 // 封書開封通知を送信
-- (void)sendOpenSealMessage:(RecvMessage*)info {
+- (void)sendOpenSealMessage:(RecvMessage*)info
+{
 	if (info) {
-		[self sendTo:[info fromAddress]
+		[self sendTo:[info fromUser]
 		   messageID:-1
 			 command:IPMSG_READMSG
-		  numberData:[info packetNo]];
+			  number:info.packetNo];
 	}
 }
 
 // 添付破棄通知を送信
-- (void)sendReleaseAttachmentMessage:(RecvMessage*)info {
+- (void)sendReleaseAttachmentMessage:(RecvMessage*)info
+{
 	if (info) {
-		[self sendTo:[info fromAddress]
+		[self sendTo:[info fromUser]
 		   messageID:-1
 			 command:IPMSG_RELEASEFILES
-		  numberData:[info packetNo]];
+			  number:info.packetNo];
 	}
 }
 
 // 一定時間後にENTRY応答を送信
-- (void)sendAnsEntryAfter:(NSTimeInterval)aSecond to:(UserInfo*)toUser {
+- (void)sendAnsEntryAfter:(NSTimeInterval)aSecond to:(UserInfo*)toUser
+{
 	[NSTimer scheduledTimerWithTimeInterval:aSecond
 									 target:self
 								   selector:@selector(sendAnsEntry:)
@@ -657,25 +583,23 @@ static void myName(char* nameBuf, char* groupBuf) {
 									repeats:NO];
 }
 
-- (void)sendAnsEntry:(NSTimer*)aTimer {
-	struct sockaddr_in	to;					// 送信先アドレス
-	char				name[MY_NAME_BUF];
-	char				group[MY_NAME_BUF];
-	UserInfo*			user = [aTimer userInfo];
-		
-	// メッセージ準備
-	memset(&to, 0, sizeof(to));
-	to.sin_family		= AF_INET;
-	to.sin_addr.s_addr	= htonl([user addressNumber]);
-	to.sin_port			= htons([user portNo]);
+- (void)sendAnsEntry:(NSTimer*)aTimer
+{
+	Config*		cfg			= [Config sharedConfig];
+	NSString*	userName	= cfg.userName;
+	NSString*	groupName	= cfg.groupName;
 
-	// 送信
-	myName(name, group);
-	[self sendTo:&to
+	if ([userName length] <= 0) {
+		userName = NSUserName();
+	}
+	if ([groupName length] <= 0) {
+		groupName = nil;
+	}
+	[self sendTo:[aTimer userInfo]
 	   messageID:-1
-		 command:IPMSG_ANSENTRY|IPMSG_FILEATTACHOPT
-			data:name
-		  option:group];
+		 command:IPMSG_ANSENTRY | IPMSG_FILEATTACHOPT | IPMSG_CAPUTF8OPT
+		 message:userName
+		  option:groupName];
 }
 
 /*----------------------------------------------------------------------------*
@@ -683,10 +607,11 @@ static void myName(char* nameBuf, char* groupBuf) {
  *----------------------------------------------------------------------------*/
 
 // 受信後実処理
-- (void)processReceiveMessage {
+- (void)processReceiveMessage
+{
 	Config*				config	= nil;
 	RecvMessage*		msg		= nil;
-	static char*		version	= NULL;
+	static NSString*	version	= nil;
 	unsigned long		command;
 	UserInfo*			fromUser;
 	struct sockaddr_in*	from;
@@ -696,50 +621,62 @@ static void myName(char* nameBuf, char* groupBuf) {
 	int					len;
 	struct sockaddr_in	addr;
 	socklen_t			addrLen = sizeof(addr);
-	
+
 	// 受信
 	len = recvfrom(sockUDP, buff, MAX_SOCKBUF, 0, (struct sockaddr*)&addr, &addrLen);
 	if (len == -1) {
-		ERR(@"processReceiveMessage:recvFrom error(sock=%d)", sockUDP);
+		ERR(@"recvFrom error(sock=%d)", sockUDP);
 		return;
 	}
+	TRC(@"recv %u bytes", len);
 
 	// 解析
-	msg = [RecvMessage messageWithBuffer:buff length:len from:&addr];
+	msg = [RecvMessage messageWithBuffer:buff length:len from:addr];
 	if (!msg) {
 		ERR(@"Receive Buffer parse error(%s)", buff);
 		return;
 	}
-	
+	TRC(@"recvdata parsed");
+	TRC(@"\tfrom      = %@", [msg fromUser]);
+	TRC(@"\tpacketNo  = %d", msg.packetNo);
+	TRC(@"\tcommand   = 0x%08X", [msg command]);
+	TRC(@"\tabsence   = %s", ([msg absence] ? "YES" : "NO"));
+	TRC(@"\tsealed    = %s", ([msg sealed] ? "YES" : "NO"));
+	TRC(@"\tlockec    = %s", ([msg locked] ? "YES" : "NO"));
+	TRC(@"\tmulticast = %s", ([msg multicast] ? "YES" : "NO"));
+	TRC(@"\tbroadcast = %s", ([msg broadcast] ? "YES" : "NO"));
+	TRC(@"\tappendix  = %@", [msg appendix]);
+
 	command		= [msg command];
 	fromUser	= [msg fromUser];
-	from		= [msg fromAddress];
-	packetNo	= [msg packetNo];
+	from		= &addr;
+	packetNo	= msg.packetNo;
 	appendix	= [msg appendix];
 	config		= [Config sharedConfig];
-	
+
 	// 受信メッセージに応じた処理
 	switch (GET_MODE(command)) {
 	/*-------- 無処理メッセージ ---------*/
 	case IPMSG_NOOPERATION:
 		// NOP
+		TRC(@"command=IPMSG_NOOPERATION > nop");
 		break;
 	/*-------- ユーザエントリ系メッセージ ---------*/
 	case IPMSG_BR_ENTRY:
 	case IPMSG_ANSENTRY:
 	case IPMSG_BR_ABSENCE:
-		if ([config refuseUser:fromUser]) {
+		if ([config matchRefuseCondition:fromUser]) {
 			// 通知拒否ユーザにはBR_EXITを送って相手からみえなくする
-			char name[MY_NAME_BUF];
-			char group[MY_NAME_BUF];
-			myName(name, group);
-			[self sendTo:from messageID:-1 command:IPMSG_BR_EXIT data:name option:group];
+			[self sendTo:from
+			   messageID:-1
+				 command:IPMSG_BR_EXIT|IPMSG_CAPUTF8OPT
+					data:[self entryMessageData]];
 		} else {
 			if (GET_MODE(command) == IPMSG_BR_ENTRY) {
 				if (ntohl(from->sin_addr.s_addr) != myIPAddress) {
 					// 応答を送信（自分自身以外）
 					NSTimeInterval	second	= 0.5;
-					int				userNum	= [[UserManager sharedManager] numberOfUsers];
+					NSUInteger		userNum	= [[UserManager sharedManager] numberOfUsers];
 					if ((userNum < 50) || ((myIPAddress ^ htonl(from->sin_addr.s_addr) << 8) == 0)) {
 						// ユーザ数50人以下またはアドレス上位24bitが同じ場合 0 〜 1023 ms
 						second = (1023 & rand()) / 1024.0;
@@ -756,7 +693,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 			// ユーザ一覧に追加
 			[[UserManager sharedManager] appendUser:fromUser];
 			// バージョン情報問い合わせ
-			[self sendTo:from messageID:-1 command:IPMSG_GETINFO];
+			[self sendTo:from messageID:-1 command:IPMSG_GETINFO data:nil];
 		}
 		break;
 	case IPMSG_BR_EXIT:
@@ -779,17 +716,17 @@ static void myName(char* nameBuf, char* groupBuf) {
 			int				i;
 			for (i = 0; i < [userArray count]; i++) {
 				UserInfo* newUser = [userArray objectAtIndex:i];
-				if (![config refuseUser:newUser]) {
+				if (![config matchRefuseCondition:newUser]) {
 					[userManager appendUser:newUser];
 				}
 			}
 		}
 		if ([msg hostListContinueCount] > 0) {
 			// 継続のGETLIST送信
-			[self sendTo:from
+			[self sendTo:fromUser
 			   messageID:-1
 				 command:IPMSG_GETLIST
-			  numberData:[msg hostListContinueCount]];
+				  number:[msg hostListContinueCount]];
 		} else {
 			// BR_ENTRY送信（受信したホストに教えるため）
 			[self broadcastEntry];
@@ -801,34 +738,29 @@ static void myName(char* nameBuf, char* groupBuf) {
 			!(command & IPMSG_AUTORETOPT) &&
 			!(command & IPMSG_BROADCASTOPT)) {
 			// RCVMSGを返す
-			[self sendTo:from
+			[self sendTo:fromUser
 			   messageID:-1
 				 command:IPMSG_RECVMSG
-			  numberData:packetNo];
+				  number:packetNo];
 		}
-		if ([config isAbsence] &&
+		if (config.inAbsence &&
 			!(command & IPMSG_AUTORETOPT) &&
 			!(command & IPMSG_BROADCASTOPT)) {
 			// 不在応答を返す
-			int			idx	= [config absenceIndex];
-			NSString*	msg = [config absenceMessageAtIndex:idx];
-			[self sendTo:from
+			[self sendTo:fromUser
 			   messageID:-1
 				 command:IPMSG_SENDMSG|IPMSG_AUTORETOPT
-					data:(char*)[msg ipmsgCString]];
+				 message:[config absenceMessageAtIndex:config.absenceIndex]
+				  option:nil];
 		}
 		if ([msg isUnknownUser]) {
 			// ユーザエントリ系メッセージをやりとりしていないユーザからの受信
 			if ((command & IPMSG_NOADDLISTOPT) == 0) {
 				// リストに追加するためにENTRYパケット送信
-				char name[MY_NAME_BUF];
-				char group[MY_NAME_BUF];
-				myName(name, group);
 				[self sendTo:from
 				   messageID:-1
-					 command:IPMSG_BR_ENTRY
-						data:name
-					  option:group];
+					 command:IPMSG_BR_ENTRY|IPMSG_FILEATTACHOPT|IPMSG_CAPUTF8OPT
+						data:[self entryMessageData]];
 			}
 		}
 		[[NSApp delegate] receiveMessage:msg];
@@ -840,12 +772,12 @@ static void myName(char* nameBuf, char* groupBuf) {
 	case IPMSG_READMSG:		// 封書開封通知パケット
 		if (command & IPMSG_READCHECKOPT) {
 			// READMSG受信確認通知をとばす
-			[self sendTo:from messageID:-1 command:IPMSG_ANSREADMSG numberData:packetNo];
+			[self sendTo:fromUser messageID:-1 command:IPMSG_ANSREADMSG number:packetNo];
 		}
-		if ([config noticeSealOpened]) {
+		if (config.noticeSealOpened) {
 			// 封書が開封されたダイアログを表示
 			[[NoticeControl alloc] initWithTitle:NSLocalizedString(@"SealOpenDlg.title", nil)
-										 message:[fromUser summeryString]
+										 message:[fromUser summaryString]
 											date:nil];
 		}
 		break;
@@ -860,38 +792,42 @@ static void myName(char* nameBuf, char* groupBuf) {
 		// バージョン情報のパケットを返す
 		if (!version) {
 			// なければ編集
-			id			ver	= [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-			NSString*	msg	= [NSString stringWithFormat:NSLocalizedString(@"Version.Msg.string", nil), ver];
-			const char*	str = [msg ipmsgCString];
-			version	= malloc(strlen(str) + 1);
-			strcpy(version, str);
+			NSString*	v1	= [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+			NSString*	v2	= [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+			NSString*	ver	= [NSString stringWithFormat:@"%@(%@)", v1, v2];
+			version	= [[NSString stringWithFormat:NSLocalizedString(@"Version.Msg.string", nil), ver] retain];
 		}
-		[self sendTo:from messageID:-1 command:IPMSG_SENDINFO data:version];
+		[self sendTo:fromUser
+		   messageID:-1
+			 command:IPMSG_SENDINFO
+			 message:version
+			  option:nil];
 		break;
 	case IPMSG_SENDINFO:	// バージョン情報
 		// バージョン情報をユーザ情報に設定
-		[fromUser setVersion:appendix];
-		DBG(@"%@:%@ = %@", [fromUser logOnUser], [fromUser host], appendix);
+		[[UserManager sharedManager] setVersion:appendix ofUser:fromUser];
+		DBG(@"%@:%@ = %@", fromUser.logOnName, fromUser.hostName, appendix);
 		break;
 	/*-------- 不在関連 ---------*/
 	case IPMSG_GETABSENCEINFO:
 		// 不在文のパケットを返す
-		if ([config isAbsence]) {
-			NSString* msg = [config absenceMessageAtIndex:[config absenceIndex]];
-			[self sendTo:from
+		if (config.inAbsence) {
+			[self sendTo:fromUser
 			   messageID:-1
 				 command:IPMSG_SENDABSENCEINFO
-					data:(char*)[msg ipmsgCString]];
+				 message:[config absenceMessageAtIndex:config.absenceIndex]
+				  option:nil];
 		} else {
-			[self sendTo:from
+			[self sendTo:fromUser
 			   messageID:-1
 				 command:IPMSG_SENDABSENCEINFO
-					data:"Not Absence Mode."];
+				 message:@"Not Absence Mode."
+				  option:nil];
 		}
 		break;
 	case IPMSG_SENDABSENCEINFO:
 		// 不在情報をダイアログに出す
-		[[NoticeControl alloc] initWithTitle:[fromUser summeryString]
+		[[NoticeControl alloc] initWithTitle:[fromUser summaryString]
 									 message:appendix
 										date:nil];
 		break;
@@ -902,36 +838,38 @@ static void myName(char* nameBuf, char* groupBuf) {
 		break;
 	/*-------- 暗号化関連 ---------*/
 	case IPMSG_GETPUBKEY:		// 公開鍵要求
-		DBG(@"IPMSG_GETPUBKEY:%@", appendix);
+		DBG(@"command=IPMSG_GETPUBKEY:%@", appendix);
 		break;
 	case IPMSG_ANSPUBKEY:
-		DBG(@"IPMSG_ANSPUBKEY:%@", appendix);
+		DBG(@"command~IPMSG_ANSPUBKEY:%@", appendix);
 		break;
 	/*-------- その他パケット／未知パケット（を受信） ---------*/
 	default:
-		ERR(@"Unknown Message Received(%@)", msg);
+		ERR(@"Unknown command Received(%@)", msg);
 		break;
 	}
 }
 
-- (void)shutdownServer {
+- (void)shutdownServer
+{
 	if (!serverShutdown) {
-		DBG0(@"Shutdown MessageRecvServer...");
+		DBG(@"Shutdown MessageRecvServer...");
 		serverShutdown = YES;
 		[serverLock lock];	// ロック獲得できるのはサーバスレッド終了後
-		DBG0(@"MessageRecvServer finished.");
+		DBG(@"MessageRecvServer finished.");
 		[serverLock unlock];
 		if (sockUDP != -1) {
 			close(sockUDP);
 			sockUDP = -1;
 		}
 	} else {
-		DBG0(@"Message Receive Server already down.");
+		DBG(@"Message Receive Server already down.");
 	}
 }
 
 // メッセージ受信スレッド
-- (void)serverThread:(NSArray*)portArray {
+- (void)serverThread:(NSArray*)portArray
+{
 	NSAutoreleasePool*	pool = [[NSAutoreleasePool alloc] init];
 	fd_set				fdSet;
 	struct timeval		tv;
@@ -939,10 +877,10 @@ static void myName(char* nameBuf, char* groupBuf) {
 	NSConnection*		conn = [[NSConnection alloc] initWithReceivePort:[portArray objectAtIndex:0]
 																sendPort:[portArray objectAtIndex:1]];
 	id					proxy = [conn rootProxy];
-	
+
 	[serverLock lock];
-	
-	DBG0(@"MessageRecvThread start.");
+
+	DBG(@"MessageRecvThread start.");
 	while (!serverShutdown) {
 		FD_ZERO(&fdSet);
 		FD_SET(sockUDP, &fdSet);
@@ -957,10 +895,14 @@ static void myName(char* nameBuf, char* groupBuf) {
 			// タイムアウト
 			continue;
 		}
-		[proxy processReceiveMessage];
+		@try {
+			[proxy processReceiveMessage];
+		} @catch (NSException* exception) {
+			ERR(@"%@", exception);
+		}
 	}
-	DBG0(@"MessageRecvThread end.");
-	
+	DBG(@"MessageRecvThread end.");
+
 	[serverLock unlock];
 
 	[conn release];
@@ -976,35 +918,39 @@ static void myName(char* nameBuf, char* groupBuf) {
 }
 
 - (NSString*)myHostName {
-	return myHostName;
+	if (myHostName) {
+		return myHostName;
+	}
+	return @"";
 }
 
 /*----------------------------------------------------------------------------*
  * メッセージ解析関連
  *----------------------------------------------------------------------------*/
- 
+
 // 受信Rawデータの分解
-+ (BOOL)parseReceiveData:(char*)buffer length:(int)len into:(IPMsgData*)data {
++ (BOOL)parseReceiveData:(char*)buffer length:(int)len into:(IPMsgData*)data
+{
 	char* work	= buffer;
 	char* ptr	= buffer;
 	if (!buffer || !data || (len <= 0)) {
 		return NO;
 	}
-	
+
 	// バージョン番号
 	data->version = strtoul(ptr, &work, 16);
 	if (*work != ':') {
 		return NO;
 	}
 	ptr = work + 1;
-	
+
 	// パケット番号
 	data->packetNo = strtoul(ptr, &work, 16);
 	if (*work != ':') {
 		return NO;
 	}
 	ptr = work + 1;
-	
+
 	// ログインユーザ名
 	work = strchr(ptr, ':');
 	if (!work) {
@@ -1013,7 +959,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 	*work = '\0';
 	strncpy(data->userName, ptr, sizeof(data->userName) - 1);
 	ptr = work + 1;
-	
+
 	// ホスト名
 	work = strchr(ptr, ':');
 	if (!work) {
@@ -1022,21 +968,73 @@ static void myName(char* nameBuf, char* groupBuf) {
 	*work = '\0';
 	strncpy(data->hostName, ptr, sizeof(data->hostName) - 1);
 	ptr = work + 1;
-	
+
 	// コマンド番号
 	data->command = strtoul(ptr, &work, 10);
 	if (*work != ':') {
 		return NO;
 	}
 	ptr = work + 1;
-	
+
 	// 拡張部
 	strncpy(data->extension, ptr, sizeof(data->extension) - 1);
-	
+
 	return YES;
 }
 
-- (BOOL)updateHostName {
+- (NSData*)entryMessageData
+{
+	Config*				config	= [Config sharedConfig];
+	NSMutableData*		data	= [NSMutableData dataWithCapacity:128];
+	NSString*			user	= config.userName;
+	NSString*			group	= config.groupName;
+	NSString*			absence	= @"";
+	const char*			str		= NULL;
+	NSMutableString*	utf8Str	= [NSMutableString stringWithCapacity:256];
+
+	if ([user length] <= 0) {
+		user = NSUserName();
+	}
+	if (config.inAbsence) {
+		absence = [NSString stringWithFormat:@"[%@]", [config absenceTitleAtIndex:config.absenceIndex]];
+	}
+
+	// ニックネーム
+	str = [user SJISString];
+	[data appendBytes:str length:strlen(str)];
+	if ([absence length] > 0) {
+		str = [absence SJISString];
+		[data appendBytes:str length:strlen(str)];
+	}
+
+	// グループ化拡張セパレータ
+	[data appendBytes:"\0" length:1];
+
+	// グループ名
+	if ([group length] > 0) {
+		str = [group SJISString];
+		[data appendBytes:str length:strlen(str)];
+	}
+
+	// UTF-8拡張セパレータ
+	[data appendBytes:"\0\n" length:2];
+
+	// UTF-8文字列
+	[utf8Str appendFormat:@"UN:%@\n", NSUserName()];
+	[utf8Str appendFormat:@"HN:%@\n", myHostName];
+	[utf8Str appendFormat:@"NN:%@%@\n", user, absence];
+	if ([group length] > 0) {
+		[utf8Str appendFormat:@"GN:%@\n", group];
+	}
+	str = [utf8Str UTF8String];
+	[data appendBytes:str length:strlen(str)];
+	[data appendBytes:"\0" length:1];
+
+	return data;
+}
+
+- (BOOL)updateHostName
+{
 	CFStringRef		key		= SCDynamicStoreKeyCreateHostNames(NULL);
 	NSDictionary*	newVal	= [(NSDictionary*)SCDynamicStoreCopyValue(scDynStore, key) autorelease];
 	CFRelease(key);
@@ -1053,7 +1051,8 @@ static void myName(char* nameBuf, char* groupBuf) {
 	return NO;
 }
 
-- (_NetUpdateState)updateIPAddress {
+- (_NetUpdateState)updateIPAddress
+{
 	_NetUpdateState	state;
 	CFStringRef		key;
 	CFDictionaryRef	value;
@@ -1064,7 +1063,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 #ifdef IPMSG_DEBUG
 	unsigned long	oldAddr = myIPAddress;
 #endif
-	
+
 	// PrimaryNetworkInterface更新
 	state = [self updatePrimaryNIC];
 	switch (state) {
@@ -1102,7 +1101,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 			}
 			break;
 	}
-	
+
 	// State:/Network/Interface/<PrimaryNetworkInterface>/IPv4 キー編集
 	if (!scKeyIFIPv4) {
 		key = SCDynamicStoreKeyCreateNetworkInterfaceEntity(NULL,
@@ -1146,7 +1145,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 		myIPAddress	= 0;
 		return _NET_LINK_LOST;
 	}
-	
+
 	// IPアドレス([0])取得
 	addr = (NSString*)CFArrayGetValueAtIndex(addrs, 0);
 	if (!addr) {
@@ -1170,9 +1169,9 @@ static void myName(char* nameBuf, char* groupBuf) {
 		return _NET_LINK_LOST;
 	}
 	newAddr = ntohl(inAddr.s_addr);
-	
+
 	CFRelease(value);
-	
+
 	if (myIPAddress != newAddr) {
 		DBG(@"IPAddress changed (%d.%d.%d.%d -> %d.%d.%d.%d)",
 				((oldAddr >> 24) & 0x00FF), ((oldAddr >> 16) & 0x00FF),
@@ -1197,10 +1196,11 @@ static void myName(char* nameBuf, char* groupBuf) {
 	return state;
 }
 
-- (_NetUpdateState)updatePrimaryNIC {
+- (_NetUpdateState)updatePrimaryNIC
+{
 	CFDictionaryRef	value		= NULL;
 	CFStringRef		primaryIF	= NULL;
-	
+
 	// State:/Network/Global/IPv4 を取得
 	value = (CFDictionaryRef)SCDynamicStoreCopyValue(scDynStore,
 													 (CFStringRef)scKeyNetIPv4);
@@ -1208,7 +1208,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 		// キー自体がないのは、すべてのネットワークI/FがUnlink状態
 		if (primaryNIC) {
 			// いままではあったのに無くなった
-			DBG0(@"All Network I/F becomes unlinked");
+			DBG(@"All Network I/F becomes unlinked");
 			[primaryNIC release];
 			primaryNIC = nil;
 			return _NET_LINK_LOST;
@@ -1216,7 +1216,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 		// もともと無いので変化なし
 		return _NET_NO_CHANGE_IN_UNLINK;
 	}
-	
+
 	// PrimaryNetwork プロパティを取得
 	primaryIF = (CFStringRef)CFDictionaryGetValue(value,
 												  kSCDynamicStorePropNetPrimaryInterface);
@@ -1226,7 +1226,7 @@ static void myName(char* nameBuf, char* groupBuf) {
 		CFRelease(value);
 		if (primaryNIC) {
 			// いままではあったのに無くなった
-			DBG0(@"All Network I/F becomes unlinked");
+			DBG(@"All Network I/F becomes unlinked");
 			[primaryNIC release];
 			primaryNIC = nil;
 			return _NET_LINK_LOST;
@@ -1234,17 +1234,17 @@ static void myName(char* nameBuf, char* groupBuf) {
 		// もともと無いので変化なし
 		return _NET_NO_CHANGE_IN_UNLINK;
 	}
-	
+
 	CFRetain(primaryIF);
 	CFRelease(value);
 
 	if (!primaryNIC) {
 		// ネットワークが無い状態からある状態になった
 		primaryNIC = (NSString*)primaryIF;
-		DBG0(@"A Network I/F becomes linked");
+		DBG(@"A Network I/F becomes linked");
 		return _NET_LINK_GAINED;
 	}
-	
+
 	if (![primaryNIC isEqualToString:(NSString*)primaryIF]) {
 		// 既にあるが変わった
 		DBG(@"Primary Network I/F changed(%@ -> %@)", primaryNIC, (NSString*)primaryIF);
@@ -1252,54 +1252,55 @@ static void myName(char* nameBuf, char* groupBuf) {
 		primaryNIC = (NSString*)primaryIF;
 		return _NET_PRIMARY_IF_CHANGED;
 	}
-	
+
 	// これまでと同じ（接続済みで変化なし）
 	CFRelease(primaryIF);
 
 	return _NET_NO_CHANGE_IN_LINK;
 }
 
-- (void)systemConfigurationUpdated:(NSArray*)changedKeys {
+- (void)systemConfigurationUpdated:(NSArray*)changedKeys
+{
 	unsigned i;
 	for (i = 0; i < [changedKeys count]; i++) {
 		NSString* key = (NSString*)[changedKeys objectAtIndex:i];
 		if ([key isEqualToString:scKeyNetIPv4]) {
 			_NetUpdateState			ret;
 			NSNotificationCenter*	nc;
-			DBG(@"<SC>NetIFStatus changed (key[%d]:%@)", i, key);			
+			DBG(@"<SC>NetIFStatus changed (key[%d]:%@)", i, key);
 			ret = [self updateIPAddress];
 			nc	= [NSNotificationCenter defaultCenter];
 			switch (ret) {
 				case _NET_NO_CHANGE_IN_LINK:
 					// なにもしない
-					DBG0(@" no effects (in link status)");
+					DBG(@" no effects (in link status)");
 					break;
 				case _NET_NO_CHANGE_IN_UNLINK:
 					// なにもしない
-					DBG0(@" no effects (in unlink status)");
+					DBG(@" no effects (in unlink status)");
 					break;
 				case _NET_PRIMARY_IF_CHANGED:
 					// NICが切り替わったたのでユーザリストを更新する
-					DBG0(@" NIC Changed -> Referesh UserList");
+					DBG(@" NIC Changed -> Referesh UserList");
 					[[UserManager sharedManager] removeAllUsers];
 					[self broadcastEntry];
 					break;
 				case _NET_IP_ADDRESS_CHANGED:
 					// IPに変更があったのでユーザリストを更新する
-					DBG0(@" IPAddress Changed -> Referesh UserList");
+					DBG(@" IPAddress Changed -> Referesh UserList");
 					[[UserManager sharedManager] removeAllUsers];
 					[self broadcastEntry];
 					break;
 				case _NET_LINK_GAINED:
 					// ネットワーク環境に繋がったので通知してユーザリストを更新する
 					[nc postNotificationName:NOTICE_NETWORK_GAINED object:nil];
-					DBG0(@" Network Gained -> Referesh UserList");
+					DBG(@" Network Gained -> Referesh UserList");
 					[self broadcastEntry];
 					break;
 				case _NET_LINK_LOST:
 					// つながっていたが接続がなくなったので通知
 					[nc postNotificationName:NOTICE_NETWORK_LOST object:nil];
-					DBG0(@" Network Lost -> Remove Users");
+					DBG(@" Network Lost -> Remove Users");
 					[[UserManager sharedManager] removeAllUsers];
 					break;
 				default:

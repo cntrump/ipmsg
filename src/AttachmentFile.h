@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentFile.h
- *	Module		: 添付ファイルオブジェクトクラス		
+ *	Module		: 添付ファイルオブジェクトクラス
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -14,37 +14,41 @@
 
 @interface AttachmentFile : NSObject
 {
-	NSString*			fileName;			// ファイル名
-	NSString*			escapedFileName;	// ファイル名（エスケープ済み）
-	NSString*			filePath;			// ファイルパス
-	unsigned long long	fileSize;			// ファイルサイズ
-	NSDate*				createTime;			// ファイル作成時刻
-	NSDate*				modTime;			// ファイル更新時刻
+	NSString*		_name;
+	NSString*		_nameEscaped;
+	NSString*		_path;
+	UInt64			_size;
+	UInt32			_attribute;
+	NSDate*			_createTime;
+	NSDate*			_modifyTime;
+
 	OSType				hfsFileType;		// ファイルタイプ
 	OSType				hfsCreator;			// クリエータコード
 	UInt16				finderFlags;		// Finder属性フラグ（Carbon）
 	unsigned			permission;			// POSIXファイルアクセス権
-	unsigned			fileAttribute;		// ファイル属性(IPMsg形式)
 	NSFileHandle*		handle;				// 出力ハンドル
 }
+
+@property(readonly)			NSString*	name;			// ファイル名
+@property(readonly)			NSString*	path;			// ファイルパス
+@property(readonly)			UInt64		size;			// ファイルサイズ
+@property(readonly)			UInt32		attribute;		// ファイル属性(IPMsg形式)
+@property(retain,readonly)	NSDate*		createTime;		// ファイル生成時刻
+@property(retain,readonly)	NSDate*		modifyTime;		// ファイル最終更新時刻(mtime)
 
 // ファクトリ
 + (id)fileWithPath:(NSString*)path;
 + (id)fileWithDirectory:(NSString*)dir file:(NSString*)file;
-+ (id)fileWithMessageAttachment:(char*)attach;
-+ (id)fileWithDirectory:(NSString*)dir header:(char*)header;
++ (id)fileWithMessage:(NSString*)str;
++ (id)fileWithDirectory:(NSString*)dir header:(NSString*)header;
 
-// 初期化／解放
+// 初期化
 - (id)initWithPath:(NSString*)path;
 - (id)initWithDirectory:(NSString*)dir file:(NSString*)file;
-- (id)initWithMessageAttachment:(char*)attach;
-- (id)initWithDirectory:(NSString*)dir header:(char*)header;
-- (void)dealloc;
+- (id)initWithMessage:(NSString*)str;
+- (id)initWithDirectory:(NSString*)dir header:(NSString*)header;
 
 // getter/setter
-- (NSString*)name;
-- (NSString*)path;
-- (unsigned long long)size;
 - (BOOL)isRegularFile;
 - (BOOL)isDirectory;
 - (BOOL)isParentDirectory;
@@ -61,7 +65,6 @@
 - (void)closeFile;
 
 // 添付処理関連
-- (NSString*)stringForMessageAttachment:(unsigned)fileID;
-- (NSString*)stringForDirectoryHeader;
+- (NSString*)makeExtendAttribute;
 
 @end

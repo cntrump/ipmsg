@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: WindowManager.m
- *	Module		: 送受信ウィンドウ管理クラス		
+ *	Module		: 送受信ウィンドウ管理クラス
  *============================================================================*/
 
 #import "WindowManager.h"
@@ -34,7 +34,7 @@
 /*----------------------------------------------------------------------------*
  * 初期化／解放
  *----------------------------------------------------------------------------*/
- 
+
 // 初期化
 - (id)init {
 	self = [super init];
@@ -59,8 +59,8 @@
 	int			i;
 	int			num;
 	NSArray*	keys;
-	
-	DBG0(msg);
+
+	DBG(msg);
 	num		= [receiveDic count];
 	keys	= [receiveDic allKeys];
 	DBG(@"  ReceiveWin:num=%d", num);
@@ -113,7 +113,7 @@
 	[self report:[NSString stringWithFormat:@"WinMng:ReceiveWindow remove(%@)", aKey]];
 #endif
 }
-	
+
 /*----------------------------------------------------------------------------*
  * 返信ウィンドウ管理
  *----------------------------------------------------------------------------*/
@@ -147,5 +147,5 @@
 	[self report:[NSString stringWithFormat:@"WinMng:ReplyWindow remove(%@)", aKey]];
 #endif
 }
-	
+
 @end

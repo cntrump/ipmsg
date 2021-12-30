@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: UserManager.h
- *	Module		: ユーザ一覧管理クラス		
+ *	Module		: ユーザ一覧管理クラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
@@ -31,18 +31,17 @@
 + (UserManager*)sharedManager;
 
 // ユーザ情報取得
+- (NSArray*)users;
 - (int)numberOfUsers;
-- (int)indexOfUser:(UserInfo*)user;
-- (UserInfo*)userAtIndex:(int)index;
-- (UserInfo*)userForLogOnUser:(NSString*)logOn address:(struct sockaddr_in*)addr;
+- (UserInfo*)userForLogOnUser:(NSString*)logOn address:(UInt32)addr port:(UInt16)port;
 
 // ユーザ情報追加／削除
 - (void)appendUser:(UserInfo*)info;
+- (void)setVersion:(NSString*)version ofUser:(UserInfo*)user;
 - (void)removeUser:(UserInfo*)info;
 - (void)removeAllUsers;
 
 // その他
-- (void)sortUsers;
 - (NSArray*)dialupAddresses;
 
 @end

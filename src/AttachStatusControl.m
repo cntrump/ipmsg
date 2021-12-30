@@ -1,11 +1,11 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachStatusControl.m
- *	Module		: 添付ファイル状況表示パネルコントローラ		
+ *	Module		: 添付ファイル状況表示パネルコントローラ
  *============================================================================*/
- 
+
 #import "AttachStatusControl.h"
 #import "UserInfo.h"
 #import "Attachment.h"
@@ -26,7 +26,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 	if (self) {
 		// データのロード
 		[attachTable reloadData];
-		
+
 		// 添付リスト変更の通知登録
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(attachListChanged:)
@@ -76,7 +76,7 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 							[[AttachmentServer sharedServer] removeUser:item messageID:val fileID:fid];
 							[attachTable deselectAll:self];
 						} else {
-							ERR0(@"Internal Error(fid is nil)");
+							ERR(@"Internal Error(fid is nil)");
 						}
 						break;
 					}
@@ -142,7 +142,8 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 		return [NSString stringWithFormat:@"%@ (Remain Users:%d)",
 						[[sendAttach file] name], [sendAttach numberOfUsers]];
 	} else if ([item isKindOfClass:[UserInfo class]]) {
-		return [item summeryString];
+		UserInfo* user = item;
+		return user.summaryString;
 	}
 	return item;
 }

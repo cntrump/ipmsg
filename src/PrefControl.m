@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: PrefControl.m
- *	Module		: 環境設定パネルコントローラ		
+ *	Module		: 環境設定パネルコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -20,13 +20,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-/*============================================================================*
- * プライベートメソッド（カテゴリ）
- *============================================================================*/
+#define	_BETA_MODE	(0)				// betaバージョン以外では無効(0)にすること
 
-@interface PrefControl(Private)
-- (void)hostNameChanged:(NSNotification*)aNotification;
-@end
+#define EVERY_DAY	(60 * 60 * 24)
+#define EVERY_WEEK	(EVERY_DAY * 7)
+#define EVERY_MONTH	(EVERY_DAY * 30)
 
 /*============================================================================*
  * クラス実装
@@ -37,68 +35,83 @@
 /*----------------------------------------------------------------------------*
  * 最新状態に更新
  *----------------------------------------------------------------------------*/
- 
+
 - (void)update {
 	Config*		config = [Config sharedConfig];
 	NSString*	work;
-	
+
 	// 全般タブ
-	[baseUserNameField			setStringValue:	[config userName]];
-	[baseGroupNameField 		setStringValue:	[config groupName]];
-	[baseLogOnNameField			setStringValue: NSUserName()];
-	[baseMachineNameField		setStringValue:	[[MessageCenter sharedCenter] myHostName]];
-	[receiveStatusBarCheckBox	setState:		[config useStatusBar]];
+	[baseUserNameField			setStringValue:	config.userName];
+	[baseGroupNameField 		setStringValue:	config.groupName];
+	[receiveStatusBarCheckBox	setState:		config.useStatusBar];
 
 	// 送信タブ
-	[sendQuotField				setStringValue:	[config quoteString]];
-	[sendSingleClickCheck		setState:		[config openNewOnDockClick]];
-	[sendDefaultSealCheck		setState:		[config sealCheckDefault]];
-	[sendHideWhenReplyCheck		setState:		[config hideReceiveWindowOnReply]];
-	[sendOpenNotifyCheck		setState:		[config noticeSealOpened]];
-	[sendAllUsersCheck			setState:		[config sendAllUsersCheckEnabled]];
-	[sendMultipleUserCheck		setState:		[config allowSendingToMultiUser]];
-	[sendAllUsersCheck			setEnabled:		[sendMultipleUserCheck state]];
+	[sendQuotField				setStringValue:	config.quoteString];
+	[sendSingleClickCheck		setState:		config.openNewOnDockClick];
+	[sendDefaultSealCheck		setState:		config.sealCheckDefault];
+	[sendHideWhenReplyCheck		setState:		config.hideReceiveWindowOnReply];
+	[sendOpenNotifyCheck		setState:		config.noticeSealOpened];
+	[sendMultipleUserCheck		setState:		config.allowSendingToMultiUser];
 	// 受信タブ
-	work = [config receiveSoundName];
+	work = config.receiveSoundName;
 	if (work && ([work length] > 0)) {
 		[receiveSoundPopup selectItemWithTitle:(work)];
 	} else {
 		[receiveSoundPopup selectItemAtIndex:0];
 	}
-	[receiveDefaultQuotCheck	setState:[config quoteCheckDefault]];
-	[receiveNonPopupCheck		setState:[config nonPopup]];
-	[receiveNonPopupModeMatrix	setEnabled:[config nonPopup]];
-	[receiveNonPopupBoundMatrix setEnabled:[config nonPopup]];
-	[receiveNonPopupBoundMatrix	selectCellWithTag:[config iconBoundModeInNonPopup]];
-	if ([config nonPopupWhenAbsence]) {
+	[receiveDefaultQuotCheck	setState:config.quoteCheckDefault];
+	[receiveNonPopupCheck		setState:config.nonPopup];
+	[receiveNonPopupModeMatrix	setEnabled:config.nonPopup];
+	[receiveNonPopupBoundMatrix setEnabled:config.nonPopup];
+	[receiveNonPopupBoundMatrix	selectCellWithTag:config.iconBoundModeInNonPopup];
+	if (config.nonPopupWhenAbsence) {
 		[receiveNonPopupModeMatrix selectCellAtRow:1 column:0];
 	}
-	[receiveClickableURLCheck	setState:[config useClickableURL]];
-	
+	[receiveClickableURLCheck	setState:config.useClickableURL];
+
 	// ネットワークタブ
-	[netPortNoField				setIntValue:	[config portNo]];
-	[netDialupCheck				setState:		[config dialup]];
-	
-	// ユーザリストタブ
-	[userlistLogonDispCheck		setState:		[config displayLogOnName]];
-	[userlistAddressDispCheck	setState:		[config displayIPAddress]];
-	[userlistIgnoreCaseCheck	setState:		[config sortByIgnoreCase]];
-	[userlistKanjiPriorityCheck	setState:		[config sortByKanjiPriority]];
+	[netPortNoField				setIntegerValue:config.portNo];
+	[netDialupCheck				setState:		config.dialup];
 
 	// ログタブ
-	[logStdEnableCheck			setState:		[config standardLogEnabled]];
-	[logStdWhenOpenChainCheck	setState:		[config logChainedWhenOpen]];
-	[logStdWhenOpenChainCheck	setEnabled:		[config standardLogEnabled]];
-	[logStdPathField			setStringValue:	[config standardLogFile]];
-	[logStdPathField			setEnabled:		[config standardLogEnabled]];
-	[logStdPathRefButton		setEnabled:		[config standardLogEnabled]];
-	[logAltEnableCheck			setState:		[config alternateLogEnabled]];
-	[logAltSelectionCheck		setState:		[config logWithSelectedRange]];
-	[logAltSelectionCheck		setEnabled:		[config alternateLogEnabled]];
-	[logAltPathField			setStringValue:	[config alternateLogFile]];
-	[logAltPathField			setEnabled:		[config alternateLogEnabled]];
-	[logAltPathRefButton		setEnabled:		[config alternateLogEnabled]];
-	[logLineEndingsPopup		selectItem:		[logLineEndingsPopup itemAtIndex:[config logLineEnding]]];
+	[logStdEnableCheck			setState:		config.standardLogEnabled];
+	[logStdWhenOpenChainCheck	setState:		config.logChainedWhenOpen];
+	[logStdWhenOpenChainCheck	setEnabled:		config.standardLogEnabled];
+	[logStdPathField			setStringValue:	config.standardLogFile];
+	[logStdPathField			setEnabled:		config.standardLogEnabled];
+	[logStdPathRefButton		setEnabled:		config.standardLogEnabled];
+	[logAltEnableCheck			setState:		config.alternateLogEnabled];
+	[logAltSelectionCheck		setState:		config.logWithSelectedRange];
+	[logAltSelectionCheck		setEnabled:		config.alternateLogEnabled];
+	[logAltPathField			setStringValue:	config.alternateLogFile];
+	[logAltPathField			setEnabled:		config.alternateLogEnabled];
+	[logAltPathRefButton		setEnabled:		config.alternateLogEnabled];
+
+#if _BETA_MODE
+	// 強制的にソフトウェアアップデートを行うように設定する
+	config.updateAutomaticCheck	= YES;
+	config.updateCheckInterval		= 60 * 60 * 12;
+#endif
+
+	// アップデートタブ
+	BOOL			autoCheck	= config.updateAutomaticCheck;
+	NSTimeInterval	interval	= config.updateCheckInterval;
+	[updateCheckAutoCheck setState:autoCheck];
+	[updateTypeMatrix setEnabled:autoCheck];
+	if (interval == EVERY_MONTH) {
+		[updateTypeMatrix selectCellWithTag:3];
+	} else if (interval == EVERY_WEEK) {
+		[updateTypeMatrix selectCellWithTag:2];
+	} else {
+		[updateTypeMatrix selectCellWithTag:1];
+	}
+#if _BETA_MODE
+	// 変更できないようにする
+	[updateCheckAutoCheck setEnabled:NO];
+	[updateTypeMatrix setEnabled:NO];
+#else
+	[updateBetaTestLabel setHidden:YES];
+#endif
 }
 
 /*----------------------------------------------------------------------------*
@@ -108,7 +121,7 @@
 - (IBAction)buttonPressed:(id)sender {
 	// パスワード変更ボタン（シートオープン）
 	if (sender == basePasswordButton) {
-		NSString* password = [[Config sharedConfig] password];
+		NSString* password = [Config sharedConfig].password;
 		// フィールドの内容を最新に
 		[pwdSheetOldPwdField setEnabled:NO];
 		[pwdSheet setInitialFirstResponder:pwdSheetNewPwdField1];
@@ -134,7 +147,7 @@
 		NSString*	oldPwd		= [pwdSheetOldPwdField stringValue];
 		NSString*	newPwd1		= [pwdSheetNewPwdField1 stringValue];
 		NSString*	newPwd2		= [pwdSheetNewPwdField2 stringValue];
-		NSString*	password	= [[Config sharedConfig] password];
+		NSString*	password	= [Config sharedConfig].password;
 		[pwdSheetErrorLabel setStringValue:@""];
 		// 旧パスワードチェック
 		if (password) {
@@ -143,7 +156,7 @@
 					[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.NoOldPwd", nil)];
 					return;
 				}
-				if (![password isEqualToString:[NSString stringWithCString:crypt([oldPwd UTF8String], "IP")]] &&
+				if (![password isEqualToString:[NSString stringWithCString:crypt([oldPwd UTF8String], "IP") encoding:NSUTF8StringEncoding]] &&
 					![password isEqualToString:oldPwd]) {
 					// 平文とも比較するのはv0.4までとの互換性のため
 					[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.OldPwdErr", nil)];
@@ -158,9 +171,9 @@
 		}
 		// ここまでくれば正しいのでパスワード値変更
 		if ([newPwd1 length] > 0) {
-			[[Config sharedConfig] setPassword:[NSString stringWithCString:crypt([newPwd1 UTF8String], "IP")]];
+			[Config sharedConfig].password	= [NSString stringWithCString:crypt([newPwd1 UTF8String], "IP") encoding:NSUTF8StringEncoding];
 		} else {
-			[[Config sharedConfig] setPassword:@""];
+			[Config sharedConfig].password	= @"";
 		}
 		[NSApp endSheet:pwdSheet returnCode:NSOKButton];
 	}
@@ -217,7 +230,7 @@
 				return;
 			}
 			addr.s_addr = inetaddr;
-			strAddr		= [NSString stringWithCString:inet_ntoa(addr)];
+			strAddr		= [NSString stringWithCString:inet_ntoa(addr) encoding:NSUTF8StringEncoding];
 			if ([config containsBroadcastWithAddress:strAddr]) {
 				[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.ExistIP", nil)];
 				return;
@@ -263,7 +276,7 @@
 		[absenceSheetMessageArea setString:msg];
 		[absenceSheetErrorLabel setStringValue:@""];
 		[absenceSheet setInitialFirstResponder:absenceSheetTitleField];
-		
+
 		// シート表示
 		[NSApp beginSheet:absenceSheet
 		   modalForWindow:panel
@@ -273,15 +286,15 @@
 	}
 	// 不在削除ボタン
 	else if (sender == absenceDeleteButton) {
-		Config* config	= [Config sharedConfig];
-		int		absIdx	= [config absenceIndex];
-		int		rmvIdx	= [absenceTable selectedRow];
+		Config*		config	= [Config sharedConfig];
+		NSInteger	absIdx	= config.absenceIndex;
+		NSInteger	rmvIdx	= [absenceTable selectedRow];
 		[config removeAbsenceAtIndex:rmvIdx];
 		if (rmvIdx == absIdx) {
-			[config setAbsenceIndex:-1];
+			config.absenceIndex = -1;
 			[[MessageCenter sharedCenter] broadcastAbsence];
 		} else if (rmvIdx < absIdx) {
-			[config setAbsenceIndex:absIdx - 1];
+			config.absenceIndex = absIdx - 1;
 		}
 		[absenceTable reloadData];
 		[absenceTable deselectAll:self];
@@ -289,30 +302,30 @@
 	}
 	// 不在上へボタン
 	else if (sender == absenceUpButton) {
-		Config* config	= [Config sharedConfig];
-		int		absIdx	= [config absenceIndex];
-		int		upIdx	= [absenceTable selectedRow];
+		Config*		config	= [Config sharedConfig];
+		NSInteger	absIdx	= config.absenceIndex;
+		NSInteger	upIdx	= [absenceTable selectedRow];
 		[config upAbsenceAtIndex:upIdx];
 		if (upIdx == absIdx) {
-			[config setAbsenceIndex:absIdx - 1];
+			config.absenceIndex = absIdx - 1;
 		} else if (upIdx == absIdx + 1) {
-			[config setAbsenceIndex:absIdx + 1];
+			config.absenceIndex = absIdx + 1;
 		}
 		[absenceTable reloadData];
 		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:upIdx-1] byExtendingSelection:NO];
 		[[NSApp delegate] buildAbsenceMenu];
 	}
-	// 不在下へボタン	
+	// 不在下へボタン
 	else if (sender == absenceDownButton) {
 		Config* config	= [Config sharedConfig];
-		int		absIdx	= [config absenceIndex];
-		int		downIdx	= [absenceTable selectedRow];
-		int index = [absenceTable selectedRow];
+		NSInteger	absIdx	= config.absenceIndex;
+		NSInteger	downIdx	= [absenceTable selectedRow];
+		NSInteger	index	= [absenceTable selectedRow];
 		[config downAbsenceAtIndex:downIdx];
 		if (downIdx == absIdx) {
-			[config setAbsenceIndex:absIdx + 1];
+			config.absenceIndex = absIdx + 1;
 		} else if (downIdx == absIdx - 1) {
-			[config setAbsenceIndex:absIdx - 1];
+			config.absenceIndex = absIdx - 1;
 		}
 		[absenceTable reloadData];
 		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
@@ -337,8 +350,8 @@
 		Config*		config	= [Config sharedConfig];
 		NSString*	title	= [absenceSheetTitleField stringValue];
 		NSString*	msg		= [NSString stringWithString:[absenceSheetMessageArea string]];
-		int			index	= [absenceTable selectedRow];
-		int			absIdx	= [config absenceIndex];
+		NSInteger	index	= [absenceTable selectedRow];
+		NSInteger	absIdx	= config.absenceIndex;
 		[absenceSheetErrorLabel setStringValue:@""];
 		// タイトルチェック
 		if ([title length] <= 0) {
@@ -354,9 +367,13 @@
 				[absenceSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Absence.ExistTitle", nil)];
 				return;
 			}
-			[config addAbsenceTitle:title message:msg atIndex:index];
+			if (index == -1) {
+				[config addAbsenceTitle:title message:msg];
+			} else {
+				[config insertAbsenceTitle:title message:msg atIndex:index];
+			}
 			if ((index != -1) && (absIdx != -1) && (index <= absIdx)) {
-				[config setAbsenceIndex:absIdx + 1];
+				config.absenceIndex = absIdx + 1;
 			}
 		} else {
 			[config setAbsenceTitle:title message:msg atIndex:index];
@@ -380,7 +397,7 @@
 		IPRefuseTarget		target		= 0;
 		NSString* 			string		= @"";
 		IPRefuseCondition	condition	= 0;
-		
+
 		refuseEditIndex	= -1;
 		if (sender == refuseEditButton) {
 			RefuseInfo*	info;
@@ -396,7 +413,7 @@
 		[refuseSheetCondPopup selectItemAtIndex:condition];
 		[refuseSheetErrorLabel setStringValue:@""];
 		[refuseSheet setInitialFirstResponder:refuseSheetTargetPopup];
-		
+
 		// シート表示
 		[NSApp beginSheet:refuseSheet
 		   modalForWindow:panel
@@ -419,7 +436,7 @@
 		[refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index-1] byExtendingSelection:NO];
 // broadcast entry?
 	}
-	// 通知拒否下へボタン	
+	// 通知拒否下へボタン
 	else if (sender == refuseDownButton) {
 		int index = [refuseTable selectedRow];
 		[[Config sharedConfig] downRefuseInfoAtIndex:index];
@@ -429,25 +446,30 @@
 	}
 	// 通知拒否シートOKボタン
 	else if (sender == refuseSheetOKButton) {
+		Config*				cfg			= [Config sharedConfig];
 		IPRefuseTarget		target		= [refuseSheetTargetPopup indexOfSelectedItem];
 		NSString*			string		= [refuseSheetField stringValue];
 		IPRefuseCondition	condition	= [refuseSheetCondPopup indexOfSelectedItem];
-		int					index		= [refuseTable selectedRow];
+		NSInteger			index		= [refuseTable selectedRow];
 		RefuseInfo*			info;
 		// 入力文字チェック
 		if ([string length] <= 0) {
 			[refuseSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Refuse.Error.NoInput", nil)];
 			return;
 		}
-		
+
 		info = [[[RefuseInfo alloc] initWithTarget:target string:string condition:condition] autorelease];
 		if (refuseEditIndex == -1) {
 			// 新規
-			[[Config sharedConfig] addRefuseInfo:info atIndex:index];
+			if (index == -1) {
+				[cfg addRefuseInfo:info];
+			} else {
+				[cfg insertRefuseInfo:info atIndex:index];
+			}
 			[refuseTable deselectAll:self];
 		} else {
 			// 変更
-			[[Config sharedConfig] setRefuseInfo:info atIndex:refuseEditIndex];
+			[cfg setRefuseInfo:info atIndex:refuseEditIndex];
 		}
 		[refuseTable reloadData];
 		[NSApp endSheet:refuseSheet returnCode:NSOKButton];
@@ -456,33 +478,16 @@
 	else if (sender == refuseSheetCancelButton) {
 		[NSApp endSheet:refuseSheet returnCode:NSCancelButton];
 	}
-	// ユーザソートルール上へボタン
-	else if (sender == userlistSortUpButton) {
-		int index = [userlistSortTable selectedRow];
-		[[Config sharedConfig] moveSortRuleFromIndex:index toIndex:index-1];
-		[userlistSortTable reloadData];
-		[userlistSortTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index-1] byExtendingSelection:NO];
-		[[UserManager sharedManager] sortUsers];
-	}
-	// ユーザソートルール下へボタン
-	else if (sender == userlistSortDownButton) {
-		int index = [userlistSortTable selectedRow];
-		[[Config sharedConfig] moveSortRuleFromIndex:index toIndex:index+1];
-		[userlistSortTable reloadData];
-		[userlistSortTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
-		[[UserManager sharedManager] sortUsers];
-	}
 	// 標準ログファイル参照ボタン／重要ログファイル参照ボタン
 	else if ((sender == logStdPathRefButton) || (sender == logAltPathRefButton)) {
 		NSSavePanel*	sp = [NSSavePanel savePanel];
 		NSString*		orgPath;
 		// SavePanel 設定
 		if (sender == logStdPathRefButton) {
-			orgPath = [[Config sharedConfig] standardLogFile];
+			orgPath = [Config sharedConfig].standardLogFile;
 		} else {
-			orgPath = [[Config sharedConfig] alternateLogFile];
+			orgPath = [Config sharedConfig].alternateLogFile;
 		}
-		[sp setRequiredFileType:@"log"];
 		[sp setPrompt:NSLocalizedString(@"Log.File.SaveSheet.OK", nil)];
 		// シート表示
 		[sp beginSheetForDirectory:[orgPath stringByDeletingLastPathComponent]
@@ -495,26 +500,40 @@
 	// その他（バグ）
 	else {
 		ERR(@"unknwon button pressed. %@", sender);
-	}	
+	}
 }
 
 /*----------------------------------------------------------------------------*
  *  Matrix変更時処理
  *----------------------------------------------------------------------------*/
- 
+
 - (IBAction)matrixChanged:(id)sender {
 	Config* config = [Config sharedConfig];
 	// 受信：ノンポップアップ受信モード
 	if (sender == receiveNonPopupModeMatrix) {
-		[config setNonPopupWhenAbsence:([receiveNonPopupModeMatrix selectedRow] == 1)];
+		config.nonPopupWhenAbsence = ([receiveNonPopupModeMatrix selectedRow] == 1);
 	}
 	// 受信：ノンポップアップ時アイコンバウンド設定
 	else if (sender == receiveNonPopupBoundMatrix) {
-		[config setIconBoundModeInNonPopup:[[sender selectedCell] tag]];
+		config.iconBoundModeInNonPopup = [[sender selectedCell] tag];
 	}
 	// ブロードキャスト種別
 	else if (sender == bcastSheetMatrix) {
 		[bcastSheetResolveCheck setEnabled:([bcastSheetMatrix selectedColumn] == 1)];
+	}
+	// アップデートチェック種別
+	else if (sender == updateTypeMatrix) {
+		switch ([[sender selectedCell] tag]) {
+			case 1:
+				config.updateCheckInterval = EVERY_DAY;
+				break;
+			case 2:
+				config.updateCheckInterval = EVERY_WEEK;
+				break;
+			case 3:
+				config.updateCheckInterval = EVERY_MONTH;
+				break;
+		}
 	}
 	// その他
 	else {
@@ -549,33 +568,41 @@
 	id		obj		= [aNotification object];
 	// 全般：ユーザ名
 	if (obj == baseUserNameField) {
-		[config setUserName:[baseUserNameField stringValue]];
+		config.userName	= [baseUserNameField stringValue];
 		[[MessageCenter sharedCenter] broadcastAbsence];
 	}
 	// 全般：グループ名
 	else if (obj == baseGroupNameField) {
-		[config setGroupName:[baseGroupNameField stringValue]];
+		config.groupName = [baseGroupNameField stringValue];
 		[[MessageCenter sharedCenter] broadcastAbsence];
 	}
 	// 全般：ポート番号
 	else if (obj == netPortNoField) {
-		[config setPortNo:[netPortNoField intValue]];
+		config.portNo = [netPortNoField integerValue];
 	}
 	// 送信：引用文字列
 	else if (obj == sendQuotField) {
-		[config setQuoteString:[sendQuotField stringValue]];
+		config.quoteString	= [sendQuotField stringValue];
 	}
 	// ログ：標準ログ
 	else if (obj == logStdPathField) {
 		NSString* path = [logStdPathField stringValue];
-		[config setStandardLogFile:path];
-		[[LogManager standardLog] setFilePath:path];
+		config.standardLogFile = path;
+		[LogManager standardLog].filePath	= path;
+		if (config.standardLogEnabled) {
+			AppControl* appCtl = (AppControl*)[NSApp delegate];
+			[appCtl checkLogConversion:YES path:path];
+		}
 	}
 	// ログ：重要ログ
 	else if (obj == logAltPathField) {
 		NSString* path = [logAltPathField stringValue];
-		[config setAlternateLogFile:path];
-		[[LogManager alternateLog] setFilePath:path];
+		config.alternateLogFile = path;
+		[LogManager alternateLog].filePath	= path;
+		if (config.alternateLogEnabled) {
+			AppControl* appCtl = (AppControl*)[NSApp delegate];
+			[appCtl checkLogConversion:NO path:path];
+		}
 	}
 	// その他（バグ）
 	else {
@@ -592,8 +619,8 @@
 	// 全般：ステータスバーを使用するか
 	if (sender == receiveStatusBarCheckBox) {
 		AppControl* appCtl = (AppControl*)[NSApp delegate];
-		[config setUseStatusBar:[receiveStatusBarCheckBox state]];
-		if ([config useStatusBar]) {
+		config.useStatusBar = [receiveStatusBarCheckBox state];
+		if (config.useStatusBar) {
 			[appCtl initStatusBar];
 		} else {
 			[appCtl removeStatusBar];
@@ -601,107 +628,86 @@
 	}
 	// 送信：DOCKのシングルクリックで新規送信ウィンドウ
 	else if (sender == sendSingleClickCheck) {
-		[config setOpenNewOnDockClick:[sendSingleClickCheck state]];
+		config.openNewOnDockClick = [sendSingleClickCheck state];
 	}
 	// 送信：引用チェックをデフォルト
 	else if (sender == sendDefaultSealCheck) {
-		[config setSealCheckDefault:[sendDefaultSealCheck state]];
+		config.sealCheckDefault = [sendDefaultSealCheck state];
 	}
 	// 送信：返信時に受信ウィンドウをクローズ
 	else if (sender == sendHideWhenReplyCheck) {
-		[config setHideReceiveWindowOnReply:[sendHideWhenReplyCheck state]];
+		config.hideReceiveWindowOnReply = [sendHideWhenReplyCheck state];
 	}
 	// 送信：開封通知を行う
 	else if (sender == sendOpenNotifyCheck) {
-		[config setNoticeSealOpened:[sendOpenNotifyCheck state]];
-	}
-	// 送信：全員に送信チェック有効
-	else if (sender == sendAllUsersCheck) {
-		[config setSendAllUsersCheckEnabled:[sendAllUsersCheck state]];
+		config.noticeSealOpened = [sendOpenNotifyCheck state];
 	}
 	// 送信：複数ユーザ宛送信を許可
 	else if (sender == sendMultipleUserCheck) {
-		[config setAllowSendingToMultiUser:[sendMultipleUserCheck state]];
-		[sendAllUsersCheck setEnabled:[sendMultipleUserCheck state]];
-		if (![sendMultipleUserCheck state]) {
-			[config setSendAllUsersCheckEnabled:NO];
-			[sendAllUsersCheck setState:NO];
-		}
+		config.allowSendingToMultiUser = [sendMultipleUserCheck state];
 	}
 	// 受信：引用チェックをデフォルト
 	else if (sender == receiveDefaultQuotCheck) {
-		[config setQuoteCheckDefault:[receiveDefaultQuotCheck state]];
+		config.quoteCheckDefault = [receiveDefaultQuotCheck state];
 	}
 	// 受信：ノンポップアップ受信
 	else if (sender == receiveNonPopupCheck) {
-		[config setNonPopup:[receiveNonPopupCheck state]];
+		config.nonPopup = [receiveNonPopupCheck state];
 		[receiveNonPopupModeMatrix setEnabled:[receiveNonPopupCheck state]];
 		[receiveNonPopupBoundMatrix setEnabled:[receiveNonPopupCheck state]];
 	}
 	// 受信：クリッカブルURL
 	else if (sender == receiveClickableURLCheck) {
-		[config setUseClickableURL:[receiveClickableURLCheck state]];
+		config.useClickableURL = [receiveClickableURLCheck state];
 	}
 	// ネットワーク：ダイアルアップ接続
 	else if (sender == netDialupCheck) {
-		[config setDialup:[netDialupCheck state]];
-	}
-	// ユーザリスト：ログオン名を表示する
-	else if (sender == userlistLogonDispCheck) {
-		[config setDisplayLogOnName:[userlistLogonDispCheck state]];
-		[[UserManager sharedManager] sortUsers];
-	}
-	// ユーザリスト：IPアドレスを表示する
-	else if (sender == userlistAddressDispCheck) {
-		[config setDisplayIPAddress:[userlistAddressDispCheck state]];
-		[[UserManager sharedManager] sortUsers];
-	}
-	// ユーザリスト：大文字小文字を無視する
-	else if (sender == userlistIgnoreCaseCheck) {
-		[config setSortByIgnoreCase:[userlistIgnoreCaseCheck state]];
-		[[UserManager sharedManager] sortUsers];
-	}
-	// ユーザリスト：漢字を優先する
-	else if (sender == userlistKanjiPriorityCheck) {
-		[config setSortByKanjiPriority:[userlistKanjiPriorityCheck state]];
-		[[UserManager sharedManager] sortUsers];
+		config.dialup = [netDialupCheck state];
 	}
 	// ログ：標準ログを使用する
 	else if (sender == logStdEnableCheck) {
 		BOOL enable = [logStdEnableCheck state];
-		[config setStandardLogEnabled:enable];
-		[logStdWhenOpenChainCheck setEnabled:enable];
-		[logStdPathField setEnabled:enable];
-		[logStdPathRefButton setEnabled:enable];
-		if (!enable) {
-			[logStdWhenOpenChainCheck setState:NO];
+		config.standardLogEnabled = enable;
+		if (enable) {
+			AppControl* appCtl = (AppControl*)[NSApp delegate];
+			[appCtl checkLogConversion:YES path:[logStdPathField stringValue]];
 		}
+		[logStdPathField setEnabled:enable];
+		[logStdWhenOpenChainCheck setEnabled:enable];
+		[logStdPathRefButton setEnabled:enable];
 	}
 	// ログ：錠前付きは開封後にログ
 	else if (sender == logStdWhenOpenChainCheck) {
-		[config setLogChainedWhenOpen:[logStdWhenOpenChainCheck state]];
+		config.logChainedWhenOpen = [logStdWhenOpenChainCheck state];
 	}
 	// ログ：重要ログを使用する
 	else if (sender == logAltEnableCheck) {
 		BOOL enable = [logAltEnableCheck state];
-		[config setAlternateLogEnabled:enable];
-		[logAltSelectionCheck setEnabled:enable];
-		[logAltPathField setEnabled:enable];
-		[logAltPathRefButton setEnabled:enable];
-		if (!enable) {
-			[logAltSelectionCheck setState:NO];
+		config.alternateLogEnabled	= enable;
+		if (enable) {
+			AppControl* appCtl = (AppControl*)[NSApp delegate];
+			[appCtl checkLogConversion:NO path:[logAltPathField stringValue]];
 		}
+		[logAltPathField setEnabled:enable];
+		[logAltSelectionCheck setEnabled:enable];
+		[logAltPathRefButton setEnabled:enable];
 	}
 	// ログ：選択範囲を記録
 	else if (sender == logAltSelectionCheck) {
-		[config setLogWithSelectedRange:[logAltSelectionCheck state]];
+		config.logWithSelectedRange = [logAltSelectionCheck state];
+	}
+	// アップデート：自動チェック
+	else if (sender == updateCheckAutoCheck) {
+		BOOL check = ([updateCheckAutoCheck state] == NSOnState);
+		config.updateAutomaticCheck = check;
+		[updateTypeMatrix setEnabled:check];
 	}
 	// 不明（バグ）
 	else {
 		ERR(@"unknwon chackbox changed. %@", sender);
 	}
 }
- 
+
 /*----------------------------------------------------------------------------*
  *  プルダウン変更時処理
  *----------------------------------------------------------------------------*/
@@ -711,15 +717,11 @@
 	// 受信音
 	if (sender == receiveSoundPopup) {
 		if ([receiveSoundPopup indexOfSelectedItem] > 0) {
-			[config setReceiveSoundWithName:[receiveSoundPopup titleOfSelectedItem]];
-			[[config receiveSound] play];
+			config.receiveSoundName = [receiveSoundPopup titleOfSelectedItem];
+			[config.receiveSound play];
 		} else {
-			[config setReceiveSoundWithName:nil];
+			config.receiveSoundName = nil;
 		}
-	}
-	// 改行コード
-	else if (sender == logLineEndingsPopup) {
-		[config setLogLineEnding:[logLineEndingsPopup indexOfSelectedItem]];
 	}
 	// その他（バグ）
 	else {
@@ -730,7 +732,7 @@
 /*----------------------------------------------------------------------------*
  *  リスト選択変更時処理
  *----------------------------------------------------------------------------*/
- 
+
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
 	id tbl = [aNotification object];
 	// ブロードキャストリスト
@@ -753,12 +755,6 @@
 		[refuseDeleteButton setEnabled:(index != -1)];
 		[refuseUpButton setEnabled:(index > 0)];
 		[refuseDownButton setEnabled:((index >= 0) && (index < [refuseTable numberOfRows] - 1))];
-	}
-	// ソートルール
-	else if (tbl == userlistSortTable) {
-		int index = [userlistSortTable selectedRow];
-		[userlistSortUpButton setEnabled:(index > 0)];
-		[userlistSortDownButton setEnabled:((index >= 0) && (index < [userlistSortTable numberOfRows] - 1))];
 	}
 	// その他（バグ）
 	else {
@@ -790,7 +786,7 @@
 /*----------------------------------------------------------------------------*
  *  シート終了時処理
  *----------------------------------------------------------------------------*/
- 
+
 - (void)sheetDidEnd:(NSWindow*)sheet returnCode:(int)code contextInfo:(void*)info {
 	// 不在定義リセット
 	if (info == absenceResetButton) {
@@ -806,7 +802,7 @@
 		if (code == NSOKButton) {
 			NSSavePanel*	sp = (NSSavePanel*)sheet;
 			NSString*		fn = [[sp filename] stringByAbbreviatingWithTildeInPath];
-			[[Config sharedConfig] setStandardLogFile:fn];
+			[Config sharedConfig].standardLogFile = fn;
 			[logStdPathField setStringValue:fn];
 		}
 	}
@@ -815,7 +811,7 @@
 		if (code == NSOKButton) {
 			NSSavePanel*	sp = (NSSavePanel*)sheet;
 			NSString*		fn = [[sp filename] stringByAbbreviatingWithTildeInPath];
-			[[Config sharedConfig] setAlternateLogFile:fn];
+			[Config sharedConfig].alternateLogFile = fn;
 			[logAltPathField setStringValue:fn];
 		}
 	}
@@ -839,10 +835,6 @@
 	else if (aTableView == refuseTable) {
 		return [[Config sharedConfig] numberOfRefuseInfo];
 	}
-	// ユーザリストソート
-	else if (aTableView == userlistSortTable) {
-		return [[Config sharedConfig] numberOfSortRules];
-	}
 	// その他（バグ）
 	else {
 		ERR(@"number of rows in unknown table (%@)", aTableView);
@@ -865,58 +857,11 @@
 	else if (aTableView == refuseTable) {
 		return [[Config sharedConfig] refuseInfoAtIndex:rowIndex];
 	}
-	// ユーザリストソート
-	else if (aTableView == userlistSortTable) {
-		NSString* key = [aTableColumn identifier];
-		if ([key isEqualToString:@"OnOff"]) {
-			return [NSNumber numberWithBool:[[Config sharedConfig] sortRuleEnabledAtIndex:rowIndex]];
-		}
-		else if ([key isEqualToString:@"ConditionName"]) {
-			switch ([[Config sharedConfig] sortRuleTypeAtIndex:rowIndex]) {
-			case IPMSG_SORT_NAME:
-				return NSLocalizedString(@"Sort.RuleName.Name", nil);
-			case IPMSG_SORT_GROUP:
-				return NSLocalizedString(@"Sort.RuleName.Group", nil);
-			case IPMSG_SORT_IP:
-				return NSLocalizedString(@"Sort.RuleName.Address", nil);
-			case IPMSG_SORT_MACHINE:
-				return NSLocalizedString(@"Sort.RuleName.Machine", nil);
-			case IPMSG_SORT_DESCRIPTION:
-				return NSLocalizedString(@"Sort.RuleName.Description", nil);
-			default:
-				return NSLocalizedString(@"Sort.RuleName.Unknown", nil);
-			}
-		}
-		else if ([key isEqualToString:@"SortOrder"]) {
-			switch ([[Config sharedConfig] sortRuleOrderAtIndex:rowIndex]) {
-			case IPMSG_SORT_DESC:
-				return [NSNumber numberWithInt:1];
-			case IPMSG_SORT_ASC:
-			default:
-				return [NSNumber numberWithInt:0];
-			}
-		}
-	}
 	// その他（バグ）
 	else {
 		ERR(@"object in unknown table (%@)", aTableView);
 	}
 	return nil;
-}
-
-- (void)tableView:(NSTableView *)aTableView setObjectValue:(id)value
-					forTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex {
-	if (aTableView == userlistSortTable) {
-		NSString* key = [aTableColumn identifier];
-		if ([key isEqualToString:@"OnOff"]) {
-			[[Config sharedConfig] setSortRuleEnabled:[value boolValue] atIndex:rowIndex];
-			[[UserManager sharedManager] sortUsers];
-		}
-		else if ([key isEqualToString:@"SortOrder"]) {
-			[[Config sharedConfig] setSortRuleOrder:(([value intValue] == 1) ? IPMSG_SORT_DESC : IPMSG_SORT_ASC) atIndex:rowIndex];
-			[[UserManager sharedManager] sortUsers];
-		}
-	}
 }
 
 /*----------------------------------------------------------------------------*
@@ -929,10 +874,7 @@
 }
 
 // 初期化
-- (void)awakeFromNib {	
-	NSTableColumn*		column;
-	NSButtonCell*		buttonCell;
-	NSPopUpButtonCell*	popupCell;
+- (void)awakeFromNib {
 
 	// サウンドプルダウンを準備
 	NSFileManager*	fm		= [NSFileManager defaultManager];
@@ -941,11 +883,7 @@
 
 	for (i = 0; i < [dirs count]; i++) {
 		NSString*	dir		= [[dirs objectAtIndex:i] stringByAppendingPathComponent:@"Sounds"];
-	#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-		NSArray*	files	= [fm contentsOfDirectoryAtPath:dir error:NULL];		
-	#else
-		NSArray*	files	= [fm directoryContentsAtPath:dir];
-	#endif
+		NSArray*	files	= [fm contentsOfDirectoryAtPath:dir error:NULL];
 		if (!files) {
 			continue;
 		}
@@ -954,38 +892,17 @@
 		}
 	}
 
-	// ソートリストdataCell設定
-	column		= [userlistSortTable tableColumnWithIdentifier:@"OnOff"];
-	buttonCell	= [[[NSButtonCell alloc] init] autorelease];
-	[buttonCell setButtonType:NSSwitchButton];
-	[buttonCell setTitle:@""];
-	[buttonCell setControlSize:NSSmallControlSize];
-	[column setDataCell:buttonCell];
-	column		= [userlistSortTable tableColumnWithIdentifier:@"SortOrder"];
-	popupCell	= [[[NSPopUpButtonCell alloc] init] autorelease];
-	[popupCell setBordered:NO];
-	[popupCell setControlSize:NSSmallControlSize];
-	[popupCell setImagePosition:NSImageLeft];
-	[popupCell addItemWithTitle:NSLocalizedString(@"Sort.RuleOrder.Ascending", nil)];
-	[popupCell addItemWithTitle:NSLocalizedString(@"Sort.RuleOrder.Descending", nil)];
-	[column setDataCell:popupCell];
-
 	// テーブルダブルクリック時設定
 	[absenceTable setDoubleAction:@selector(tableDoubleClicked:)];
 	[refuseTable setDoubleAction:@selector(tableDoubleClicked:)];
-	
+
 	// テーブルドラッグ設定
-	
+
 	// コントロールの設定値を最新状態に
 	[self update];
 
 	// 画面中央に移動
 	[panel center];
-	
-	[[NSNotificationCenter defaultCenter] addObserver:self 
-											 selector:@selector(hostNameChanged:)
-												 name:NOTICE_HOSTNAME_CHANGED
-											   object:nil];
 }
 
 // ウィンドウ表示時
@@ -997,10 +914,6 @@
 - (void)windowWillClose:(NSNotification *)aNotification {
 	// 設定を保存
 	[[Config sharedConfig] save];
-}
-
-- (void)hostNameChanged:(NSNotification*)aNotification {
-	[baseMachineNameField setStringValue:[[MessageCenter sharedCenter] myHostName]];
 }
 
 @end

@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: RecvMessage.h
- *	Module		: 受信メッセージクラス		
+ *	Module		: 受信メッセージクラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
@@ -14,12 +14,11 @@
 /*============================================================================*
  * クラス定義
  *============================================================================*/
-@interface RecvMessage : NSObject <NSCopying> {
-	NSDate*				receiveDate;	// 受信日時
+
+@interface RecvMessage : NSObject <NSCopying>
+{
 	UserInfo*			fromUser;		// 送信元ユーザ
 	BOOL				unknownUser;	// 未知のユーザフラグ
-	struct sockaddr_in	fromAddress;	// 送信元アドレス
-	long				packetNo;		// パケット番号
 	NSString*			logOnUser;		// ログイン名
 	NSString*			hostName;		// ホスト名
 	unsigned long		command;		// コマンド番号
@@ -29,28 +28,37 @@
 	NSMutableArray*		hostList;		// ホストリスト
 	int					continueCount;	// ホストリスト継続ユーザ番号
 	BOOL				needLog;		// ログ出力フラグ
+
+	NSInteger			_packetNo;
+	NSDate*				_date;
+	struct sockaddr_in	_address;
+
 }
 
+@property(readonly)	NSInteger			packetNo;		// パケット番号
+@property(readonly)	NSDate*				receiveDate;	// 受信日時
+//@property(readonly)	struct sockaddr_in	fromAddress;	// 送信元アドレス
+
 // ファクトリ
-+ (RecvMessage*)messageWithBuffer:(const void*)buf length:(size_t)len from:(struct sockaddr_in*)addr;
++ (RecvMessage*)messageWithBuffer:(const void*)buf
+						   length:(NSUInteger)len
+							 from:(struct sockaddr_in)addr;
 
 // 初期化／解放
-- (id)initWithBuffer:(const void*)buf length:(size_t)len from:(struct sockaddr_in*)addr;
-- (void)dealloc;
+- (id)initWithBuffer:(const void*)buf
+			  length:(NSUInteger)len
+				from:(struct sockaddr_in)addr;
 
 // getter（相手情報）
 - (UserInfo*)fromUser;
 - (BOOL)isUnknownUser;
-- (struct sockaddr_in*)fromAddress;
 
 // getter（共通）
-- (int)packetNo;
-- (NSDate*)receiveDate;
-- (NSString*)logOnUser;
-- (NSString*)hostName;
+//- (NSString*)logOnUser;
+//- (NSString*)hostName;
 - (unsigned long)command;
 - (NSString*)appendix;
-- (NSString*)appendixOption;
+//- (NSString*)appendixOption;
 
 // getter（IPMSG_SENDMSGのみ）
 - (BOOL)sealed;

@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: ReceiveMessageView.m
- *	Module		: 受信メッセージ表示View		
+ *	Module		: 受信メッセージ表示View
  *============================================================================*/
 
 #import "ReceiveMessageView.h"
@@ -15,32 +15,21 @@
 
 @implementation ReceiveMessageView
 
-- (id)initWithFrame:(NSRect)frameRect {
-	Config* config = [Config sharedConfig];
+- (id)initWithFrame:(NSRect)frameRect
+{
 	self = [super initWithFrame:frameRect];
-	[self setEditable:NO];
-	[self setBackgroundColor:[NSColor windowBackgroundColor]];
-	[self setFont:[config receiveMessageFont]];
-	[self setUsesRuler:YES];
+	if (self) {
+		[self setEditable:NO];
+		[self setBackgroundColor:[NSColor windowBackgroundColor]];
+		[self setFont:[Config sharedConfig].receiveMessageFont];
+		[self setUsesRuler:YES];
+	}
 	return self;
 }
 
-- (void)changeFont:(id)sender {
+- (void)changeFont:(id)sender
+{
 	[self setFont:[sender convertFont:[self font]]];
-}
-
-- (void)keyDown:(NSEvent*)theEvent {
-	// タブキーはフォーカス移動にする
-	if ([theEvent keyCode] == 48) {
-		[[self window] makeFirstResponder:[self nextValidKeyView]];
-	}
-	// enterキーは送信に使うので無視（親Viewに中継）する
-	else if ([theEvent keyCode] == 52) {
-		[[self superview] keyDown:theEvent];
-	}
-	else {
-		[super keyDown:theEvent];
-	}
 }
 
 @end

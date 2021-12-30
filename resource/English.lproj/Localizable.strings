@@ -1,7 +1,7 @@
 /* Localized versions of Localizable.strings keys */
 
 /* VersionMessage */
-"Version.Msg.string"		= "MacOS X Ver%@";
+"Version.Msg.string"		= "Mac OS X Ver%@";
 
 /* General */
 "Message.DefaultFontName"	= "Helvetica";
@@ -71,13 +71,20 @@ Do you want close the window?";
 "RecvDlg.DownloadError.OtherError"		= "Other error occurred. (%d)";
 
 /* SendDialog */
-"SendDlg.UserNumStr"		= "Member:%d";
-"SendDlg.AbsenceOff.Title"	= "Absence mode";
-"SendDlg.AbsenceOff.OK"		= "Release & Send";
-"SendDlg.AbsenceOff.Cancel"	= "Cancel";
-"SendDlg.AbsenceOff.Msg"	= "Absence mode(%@) now.
+"SendDlg.UserNumStr"					= "%d / %d";
+"SendDlg.Search.Target.User"			= "User";
+"SendDlg.Search.Target.Group"			= "Group";
+"SendDlg.Search.Target.Host"			= "Host";
+"SendDlg.Search.Target.LogOn"			= "Logon";
+"SendDlg.Search.Placeholder.Separator"	= ", ";
+"SendDlg.Search.Placeholder.Normal"		= "Search %@";
+"SendDlg.Search.Placeholder.Invalid"	= "No search categories";
+"SendDlg.AbsenceOff.Title"				= "Absence mode";
+"SendDlg.AbsenceOff.OK"					= "Release & Send";
+"SendDlg.AbsenceOff.Cancel"				= "Cancel";
+"SendDlg.AbsenceOff.Msg"				= "Absence mode(%@) now.
 Release and send now?";
-"SendDlg.Attach.Header"		= "Attachments (%d)";
+"SendDlg.Attach.Header"					= "Attachments (%d)";
 /* Send Retry out Confirm */
 "Send.Retry.Title"			= "Do you want send the message again?";
 "Send.Retry.Msg"			= "Sending message to %@ failed.";
@@ -88,7 +95,7 @@ Release and send now?";
 "SealOpenDlg.title"			= "Message Opened";
 
 /* RefuseCondition Info */
-"Refuse.Description.Format"	= "%@ %@ \"%@\"";
+"Refuse.Description.Format"	= "%1$@ %3$@ \"%2$@\"";
 "Refuse.Desc.Name"			= "User";
 "Refuse.Desc.Group"			= "Group";
 "Refuse.Desc.Machine"		= "Hostname";
@@ -165,15 +172,6 @@ All definitions you customized will be lost.";
 Please don't look for me...";
 	/* Refuse List */
 "Pref.Refuse.Error.NoInput"	= "No input";
-	/* Sort Rule */
-"Sort.RuleName.Name"		= "Name";
-"Sort.RuleName.Group"		= "Group";
-"Sort.RuleName.Address"		= "IPAddress";
-"Sort.RuleName.Machine"		= "Hostname";
-"Sort.RuleName.Description"	= "Display";
-"Sort.RuleName.Unknown"		= "Unknown";
-"Sort.RuleOrder.Ascending"	= "Ascend";
-"Sort.RuleOrder.Descending"	= "Decend";
 	/* Log */
 "Log.File.SaveSheet.OK"		= "Choose";
 "Log.Type.Broadcast"		= "(broadcast)";
@@ -182,7 +180,20 @@ Please don't look for me...";
 "Log.Type.Locked"			= "(locked)";
 "Log.Type.Sealed"			= "(sealed)";
 "Log.Type.Attachment"		= "(files)";
+	/* Log Convertion */
+"Log.Conv.StdLog"			= "Standerd Log";
+"Log.Conv.AltLog"			= "Alternate Log";
+"Log.Conv.Title"			= "%@ Conversion";
+"Log.Conv.Message"			= "Character encoding was changed.
+%@ file have to be converted.
+Are you sure you want to convert the log file?
 
-/** Provisional **/
-"IPMsg.provisional.lang"	= "e"; 
-
+If you choose \"No\", current log file will be back up.";
+"Log.Conv.OK"				= "Convert";
+"Log.Conv.Cancel"			= "No";
+"Log.ConvFail.Title"		= "Log conversion failed";
+"Log.ConvFail.Message"		= "A new empty log file will be created.
+Current log file will be back up.";
+"Log.ConvFail.OK"			= "OK";
+"Log.Backup.Title"			= "Original Log File Backup";
+"Log.Backup.OK"				= "Close";

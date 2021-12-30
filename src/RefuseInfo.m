@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: RefuseInfo.m
- *	Module		: 通知拒否条件情報クラス		
+ *	Module		: 通知拒否条件情報クラス
  *============================================================================*/
 
 #import "RefuseInfo.h"
@@ -16,149 +16,144 @@
 
 @implementation RefuseInfo
 
+@synthesize	target		= _target;
+@synthesize string		= _string;
+@synthesize condition	= _condition;
+
+/*----------------------------------------------------------------------------*
+ * ファクトリ
+ *----------------------------------------------------------------------------*/
++ (id)refuseInfoWithTarget:(IPRefuseTarget)aTarget
+					string:(NSString*)aString
+				 condition:(IPRefuseCondition)aCondition
+{
+	return [[[RefuseInfo alloc] initWithTarget:aTarget
+										string:aString
+									 condition:aCondition] autorelease];
+}
+
 /*----------------------------------------------------------------------------*
  * 初期化／解放
  *----------------------------------------------------------------------------*/
 
 // 初期化
-- (id)initWithTarget:(IPRefuseTarget)aTarget string:(NSString*)aString condition:(IPRefuseCondition)aCondition {
+- (id)initWithTarget:(IPRefuseTarget)aTarget
+			  string:(NSString*)aString
+		   condition:(IPRefuseCondition)aCondition
+{
 	self = [super init];
 	if (self) {
-		target		= aTarget;
-		string		= [aString copy];
-		condition	= aCondition;
+		self.target		= aTarget;
+		self.string		= aString;
+		self.condition	= aCondition;
 	}
 	return self;
 }
 
 // 解放
-- (void)dealloc {
-	[string release];
+- (void)dealloc
+{
+	[_string release];
 	[super dealloc];
 }
 
 /*----------------------------------------------------------------------------*
- * getter
+ * 判定
  *----------------------------------------------------------------------------*/
 
-- (IPRefuseTarget)target {
-	return target;
-}
-
-- (NSString*)string {
-	return string;
-}
-
-- (IPRefuseCondition)condition {
-	return condition;
-}
-
-/*----------------------------------------------------------------------------*
- * setter
- *----------------------------------------------------------------------------*/
-
-- (void)setTarget:(IPRefuseTarget)aTarget {
-	target = aTarget;
-}
-
-- (void)setString:(NSString*)aString {
-	[string release];
-	string = [aString copy];
-}
-
-- (void)setCondition:(IPRefuseCondition)aCondition {
-	condition = aCondition;
-}
-
-/*----------------------------------------------------------------------------*
- * その他
- *----------------------------------------------------------------------------*/
-
-- (BOOL)match:(UserInfo*)user {
-	NSString* targetStr		= nil;	
-	switch (target) {
-	case IP_REFUSE_USER:	targetStr = [user user];		break;
-	case IP_REFUSE_GROUP:	targetStr = [user group];		break;
-	case IP_REFUSE_MACHINE:	targetStr = [user host];		break;
-	case IP_REFUSE_LOGON:	targetStr = [user logOnUser];	break;
-	case IP_REFUSE_ADDRESS:	targetStr = [user address];		break;
+- (BOOL)match:(UserInfo*)user
+{
+	NSString* targetStr	= nil;
+	switch (self.target) {
+	case IP_REFUSE_USER:	targetStr = user.userName;		break;
+	case IP_REFUSE_GROUP:	targetStr = user.groupName;		break;
+	case IP_REFUSE_MACHINE:	targetStr = user.hostName;		break;
+	case IP_REFUSE_LOGON:	targetStr = user.logOnName;		break;
+	case IP_REFUSE_ADDRESS:	targetStr = user.ipAddress;		break;
 	default:
-		WRN(@"invalid refuse target(%d)", target);
+		WRN(@"invalid refuse target(%d)", self.target);
 		return NO;
 	}
-	switch (condition) {
+	switch (self.condition) {
 	case IP_REFUSE_MATCH:
-		return [targetStr isEqualToString:string];
+		return [targetStr isEqualToString:self.string];
 	case IP_REFUSE_CONTAIN:
-		return ([targetStr rangeOfString:string].location != NSNotFound);
+		return ([targetStr rangeOfString:self.string].location != NSNotFound);
 	case IP_REFUSE_START:
 	{
 		int len1 = [targetStr length];
-		int len2 = [string length];
+		int len2 = [self.string length];
 		if (len1 > len2) {
-			return [[targetStr substringToIndex:(len2)] isEqualToString:string];
+			return [[targetStr substringToIndex:(len2)] isEqualToString:self.string];
 		} else if (len1 == len2) {
-			return [targetStr isEqualToString:string];
+			return [targetStr isEqualToString:self.string];
 		}
 	}
 		break;
 	case IP_REFUSE_END:
 	{
 		int len1 = [targetStr length];
-		int len2 = [string length];
+		int len2 = [self.string length];
 		if (len1 > len2) {
-			return [[targetStr substringFromIndex:(len1 - len2)] isEqualToString:string];
+			return [[targetStr substringFromIndex:(len1 - len2)] isEqualToString:self.string];
 		} else if (len1 == len2) {
-			return [targetStr isEqualToString:string];
+			return [targetStr isEqualToString:self.string];
 		}
 	}
-		break; 
+		break;
 	default:
-		WRN(@"invalid refuse condition(%d)", condition);
+		WRN(@"invalid refuse condition(%d)", self.condition);
 		break;
 	}
 	return NO;
 }
 
+/*----------------------------------------------------------------------------*
+ * その他
+ *----------------------------------------------------------------------------*/
+
 /* コピー処理 （NSCopyingプロトコル） */
-- (id)copyWithZone:(NSZone*)zone {
-	return [[RefuseInfo allocWithZone:zone]
-				initWithTarget:target
-						string:string
-					 condition:condition];
+- (id)copyWithZone:(NSZone*)zone
+{
+	RefuseInfo* newObj = [[RefuseInfo allocWithZone:zone] init];
+	if (newObj) {
+		newObj->_target		= self->_target;
+		newObj->_string		= [self->_string copyWithZone:zone];
+		newObj->_condition	= self->_condition;
+	}
+	return newObj;
 }
 
-- (NSString*)description {
-	NSString* targetStr		= nil;
-	NSString* conditionStr	= nil;
-	
-	switch (target) {
-	case IP_REFUSE_USER:	targetStr = NSLocalizedString(@"Refuse.Desc.Name", nil);		break;
-	case IP_REFUSE_GROUP:	targetStr = NSLocalizedString(@"Refuse.Desc.Group", nil);		break;
-	case IP_REFUSE_MACHINE:	targetStr = NSLocalizedString(@"Refuse.Desc.Machine", nil);		break;
-	case IP_REFUSE_LOGON:	targetStr = NSLocalizedString(@"Refuse.Desc.LogOn", nil);		break;
-	case IP_REFUSE_ADDRESS:	targetStr = NSLocalizedString(@"Refuse.Desc.IPAddress", nil);	break;
+- (NSString*)description
+{
+	NSString* fmt = NSLocalizedString(@"Refuse.Description.Format", nil);
+
+	NSString* s = @"";
+	switch (self.target) {
+	case IP_REFUSE_USER:	s = @"Refuse.Desc.Name";		break;
+	case IP_REFUSE_GROUP:	s = @"Refuse.Desc.Group";		break;
+	case IP_REFUSE_MACHINE:	s = @"Refuse.Desc.Machine";		break;
+	case IP_REFUSE_LOGON:	s = @"Refuse.Desc.LogOn";		break;
+	case IP_REFUSE_ADDRESS:	s = @"Refuse.Desc.IPAddress";	break;
 	default:
-		WRN(@"invalid refuse target(%d)", target);
+		WRN(@"invalid refuse target(%d)", self.target);
 		break;
 	}
-	switch (condition) {
-	case IP_REFUSE_MATCH:	conditionStr = NSLocalizedString(@"Refuse.Desc.Match", nil);	break;
-	case IP_REFUSE_CONTAIN:	conditionStr = NSLocalizedString(@"Refuse.Desc.Contain", nil);	break;
-	case IP_REFUSE_START:	conditionStr = NSLocalizedString(@"Refuse.Desc.Start", nil);	break;
-	case IP_REFUSE_END:		conditionStr = NSLocalizedString(@"Refuse.Desc.End", nil);		break;
+	NSString* tgt = NSLocalizedString(s, nil);
+
+	s = @"";
+	switch (self.condition) {
+	case IP_REFUSE_MATCH:	s = @"Refuse.Desc.Match";		break;
+	case IP_REFUSE_CONTAIN:	s = @"Refuse.Desc.Contain";		break;
+	case IP_REFUSE_START:	s = @"Refuse.Desc.Start";		break;
+	case IP_REFUSE_END:		s = @"Refuse.Desc.End";			break;
 	default:
-		WRN(@"invalid refuse condition(%d)", condition);
+		WRN(@"invalid refuse condition(%d)", self.condition);
 		break;
 	}
-	
-	// 英語環境では順番が変わるので注意（かなり暫定処理）
-	if ([NSLocalizedString(@"IPMsg.provisional.lang", nil) isEqualToString:@"e"]) {
-		return [NSString stringWithFormat:NSLocalizedString(@"Refuse.Description.Format", nil),
-																targetStr, conditionStr, string];
-	}
-	return [NSString stringWithFormat:NSLocalizedString(@"Refuse.Description.Format", nil),
-																targetStr, string, conditionStr];
+	NSString* cnd = NSLocalizedString(s, nil);
+
+	return [NSString stringWithFormat:fmt, tgt, self.string, cnd];
 }
 
 @end

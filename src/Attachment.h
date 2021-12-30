@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: Attachment.h
- *	Module		: 添付ファイル情報クラス		
+ *	Module		: 添付ファイル情報クラス
  *============================================================================*/
 
 #include <Cocoa/Cocoa.h>
@@ -17,35 +17,31 @@
 
 @interface Attachment : NSObject <NSCopying>
 {
-	NSNumber*		fileID;				// ファイルID
-	AttachmentFile*	file;				// ファイルオブジェクト
-	NSImage*		iconImage;			// ファイルアイコン
-	NSMutableArray*	sentUsers;			// 送信ユーザ（送信ファイル用）
-	BOOL			downloadComplete;	// ダウンロード完了フラグ（受信ファイル用）
+	NSNumber*		_fileID;
+	AttachmentFile*	_file;
+	NSImage*		_icon;
+	BOOL			_download;
+	NSMutableArray*	_sentUsers;		// 送信ユーザ（送信ファイル用）
 }
+
+@property(retain,readwrite)	NSNumber*		fileID;			// ファイルID
+@property(retain,readonly)	AttachmentFile*	file;			// ファイルオブジェクト
+@property(retain,readonly)	NSImage*		icon;			// ファイルアイコン
+@property(assign,readwrite)	BOOL			isDownloaded;	// DL済みフラグ（受信用）
 
 // ファクトリ
 + (id)attachmentWithFile:(AttachmentFile*)attach;
-+ (id)attachmentWithMessageAttachment:(char*)buf;
++ (id)attachmentWithMessage:(NSString*)str;
 
-// 初期化／解放
+// 初期化
 - (id)initWithFile:(AttachmentFile*)attach;
-- (id)initWithMessageAttachment:(char*)buf;
-- (void)dealloc;
-
-// getter/setter
-- (NSNumber*)fileID;
-- (void)setFileID:(int)fid;
-- (AttachmentFile*)file;
-- (NSImage*)iconImage;
-- (BOOL)downloadComplete;
-- (void)setDownloadComplete:(BOOL)flag;
+- (id)initWithMessage:(NSString*)str;
 
 // 送信ユーザ管理
-- (void)appendUser:(UserInfo*)user;
+- (void)addUser:(UserInfo*)user;
 - (void)removeUser:(UserInfo*)user;
-- (unsigned)numberOfUsers;
-- (UserInfo*)userAtIndex:(unsigned)index;
+- (NSUInteger)numberOfUsers;
+- (UserInfo*)userAtIndex:(NSUInteger)index;
 - (BOOL)containsUser:(UserInfo*)user;
 
 @end

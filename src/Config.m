@@ -1,12 +1,14 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: Config.m
- *	Module		: 初期設定情報管理クラス		
+ *	Module		: 初期設定情報管理クラス
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
+#import <Sparkle/Sparkle.h>
+#import <objc/runtime.h>
 #import "Config.h"
 #import "RefuseInfo.h"
 #import "DebugLog.h"
@@ -15,14 +17,12 @@
  * 定数定義
  *============================================================================*/
 
-
 // 基本
 static NSString* GEN_VERSION			= @"Version";
+static NSString* GEN_VERSION_STR		= @"VersionString";
 static NSString* GEN_USER_NAME			= @"UserName";
 static NSString* GEN_GROUP_NAME			= @"GroupName";
 static NSString* GEN_PASSWORD			= @"UserPassword";
-static NSString* GEN_MACHINENAME_TYPE	= @"MachineNameType";
-static NSString* GEN_HOSTDOMAIN_DEL		= @"RemoveDomainFromHostName";
 static NSString* GEN_USE_STATUS_BAR		= @"UseStatusBarMenu";
 
 // ネットワーク
@@ -36,7 +36,6 @@ static NSString* SEND_DOCK_SEND			= @"OpenSendWindowWhenDockClick";
 static NSString* SEND_SEAL_CHECK		= @"SealCheckDefaultOn";
 static NSString* SEND_HIDE_REPLY		= @"HideRecieveWindowWhenSendReply";
 static NSString* SEND_OPENSEAL_CHECK	= @"CheckSealOpened";
-static NSString* SEND_ALL_USER_CHECK	= @"ToAllUsersCheckEnabled";
 static NSString* SEND_MULTI_USER_CHECK	= @"AllowSendingToMutipleUser";
 static NSString* SEND_MSG_FONT_NAME		= @"SendMessageFontName";
 static NSString* SEND_MSG_FONT_SIZE		= @"SendMessageFontSize";
@@ -57,13 +56,6 @@ static NSString* ABSENCE				= @"Absence";
 // 通知拒否
 static NSString* REFUSE					= @"RefuseCondition";
 
-// ユーザリスト
-static NSString* ULIST_DISP_LOGON		= @"DisplayLogOnName";
-static NSString* ULIST_DISP_IP			= @"DisplayIPAddress";
-static NSString* ULIST_SORT_RULE		= @"UserListSortRules";
-static NSString* ULIST_IGNORE_CASE		= @"SortUserListWithIgnoreCase";
-static NSString* ULIST_KANJI_PRIORITY	= @"GivePriorityToMultiByteCharacters";
-
 // ログ
 static NSString* LOG_STD_ON				= @"StandardLogEnabled";
 static NSString* LOG_STD_CHAIN			= @"StandardLogWhenLockedMessageOpened";
@@ -71,18 +63,25 @@ static NSString* LOG_STD_FILE			= @"StandardLogFile";
 static NSString* LOG_ALT_ON				= @"AlternateLogEnabled";
 static NSString* LOG_ALT_SELECTION		= @"AlternateLogWithSelectedRange";
 static NSString* LOG_ALT_FILE			= @"AlternateLogFile";
-static NSString* LOG_LINE_ENDING		= @"LogLineEnding";
 
-// ウィンドウ位置／サイズ
+// ウィンドウ位置／サイズ／設定
 static NSString* RCVWIN_SIZE_W			= @"ReceiveWindowWidth";
 static NSString* RCVWIN_SIZE_H			= @"ReceiveWindowHeight";
-static NSString* RCVWIN_POS_X			= @"ReceiveWindowOriginX";
-static NSString* RCVWIN_POS_Y			= @"ReceiveWindowOriginY";
 static NSString* SNDWIN_SIZE_W			= @"SendWindowWidth";
 static NSString* SNDWIN_SIZE_H			= @"SendWindowHeight";
 static NSString* SNDWIN_SIZE_SPLIT		= @"SendWindowSplitPoint";
-static NSString* SNDWIN_POS_X			= @"SendWindowOriginX";
-static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
+static NSString* SNDWIN_USERLIST_COL	= @"SendWindowUserListColumnDisplay";
+static NSString* SNDSEARCH_USER			= @"SendWindowSearchByUserName";
+static NSString* SNDSEARCH_GROUP		= @"SendWindowSearchByGroupName";
+static NSString* SNDSEARCH_HOST			= @"SendWindowSearchByHostName";
+static NSString* SNDSEARCH_LOGON		= @"SendWindowSearchByLogOnName";
+
+@interface Config()
+- (void)updateBroadcastAddresses;
+- (NSMutableArray*)convertRefuseDefaultsToInfo:(NSArray*)array;
+- (NSMutableArray*)convertRefuseInfoToDefaults:(NSArray*)array;
+@property(retain,readwrite)	NSArray*	broadcastAddresses;
+@end
 
 /*============================================================================*
  * クラス実装
@@ -90,12 +89,47 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 
 @implementation Config
 
+@synthesize	userName					= _userName;
+@synthesize groupName					= _groupName;
+@synthesize password					= _password;
+@synthesize useStatusBar				= _useStatusBar;
+@synthesize portNo						= _portNo;
+@synthesize dialup						= _dialup;
+@synthesize broadcastAddresses			= _broadcastAddresses;
+@synthesize quoteString					= _quoteString;
+@synthesize openNewOnDockClick			= _openNewOnDockClick;
+@synthesize sealCheckDefault			= _sealCheckDefault;
+@synthesize hideReceiveWindowOnReply	= _hideRcvWinOnReply;
+@synthesize noticeSealOpened			= _noticeSealOpened;
+@synthesize allowSendingToMultiUser		= _allowSendingMultiUser;
+@synthesize	receiveSound				= _receiveSound;
+@synthesize quoteCheckDefault			= _quoteCheckDefault;
+@synthesize nonPopup					= _nonPopup;
+@synthesize nonPopupWhenAbsence			= _nonPopupWhenAbsence;
+@synthesize iconBoundModeInNonPopup		= _nonPopupIconBound;
+@synthesize useClickableURL				= _useClickableURL;
+@synthesize standardLogEnabled			= _standardLogEnabled;
+@synthesize logChainedWhenOpen			= _logChainedWhenOpen;
+@synthesize standardLogFile				= _standardLogFile;
+@synthesize alternateLogEnabled			= _alternateLogEnabled;
+@synthesize logWithSelectedRange		= _logWithSelectedRange;
+@synthesize alternateLogFile			= _alternateLogFile;
+@synthesize sendWindowSize				= _sndWinSize;
+@synthesize sendWindowSplit				= _sndWinSplit;
+@synthesize sendSearchByUserName		= _sndSearchUser;
+@synthesize sendSearchByGroupName		= _sndSearchGroup;
+@synthesize sendSearchByHostName		= _sndSearchHost;
+@synthesize sendSearchByLogOnName		= _sndSearchLogon;
+@synthesize receiveWindowSize			= _rcvWinSize;
+
 /*----------------------------------------------------------------------------*
  * ファクトリ
  *----------------------------------------------------------------------------*/
- 
+#pragma mark -
+
 // 共有インスタンスを返す
-+ (Config*)sharedConfig {
++ (Config*)sharedConfig
+{
 	static Config* sharedConfig = nil;
 	if (!sharedConfig) {
 		sharedConfig = [[Config alloc] init];
@@ -104,781 +138,780 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 }
 
 /*----------------------------------------------------------------------------*
- * 内部利用
- *----------------------------------------------------------------------------*/
-
-// ブロードキャスト対象アドレスリスト更新
-- (void)updateBroadcastAddresses {
-	int	i;
-	if (broadcastAddresses) {
-		[broadcastAddresses removeAllObjects];
-	} else {
-		broadcastAddresses = [[NSMutableArray alloc] init];
-	}
-	for (i = 0; i < [broadcastHostList count]; i++) {
-		NSString* addr = [[NSHost hostWithName:[broadcastHostList objectAtIndex:i]] address];
-		if (addr) {
-			if (![broadcastAddresses containsObject:addr]) {
-				[broadcastAddresses addObject:addr];
-			}
-		}
-	}
-	for (i = 0; i < [broadcastIPList count]; i++) {
-		NSString* addr = [broadcastIPList objectAtIndex:i];
-		if (![broadcastAddresses containsObject:addr]) {
-			[broadcastAddresses addObject:addr];
-		}
-	}
-}
-
-// 通知拒否リスト変換
-- (NSMutableArray*)convertRefuseDefaultsToInfo:(NSArray*)array {
-	NSMutableArray* newArray = [[[NSMutableArray alloc] init] autorelease];
-	if (array) {
-		int	i;
-		for (i = 0; i < [array count]; i++) {
-			NSDictionary*		dic 			= (NSDictionary*)[array objectAtIndex:i];
-			IPRefuseTarget		target			= 0;
-			NSString*			targetStr		= [dic objectForKey:@"Target"];
-			NSString*			string			= [dic objectForKey:@"String"];
-			IPRefuseCondition	condition		= 0;
-			NSString*			conditionStr	= [dic objectForKey:@"Condition"];
-			if (!targetStr || !string || !conditionStr) {
-				continue;
-			}
-			if ([targetStr isEqualToString:@"UserName"]) {			target = IP_REFUSE_USER;	}
-			else if ([targetStr isEqualToString:@"GroupName"]) {	target = IP_REFUSE_GROUP;	}
-			else if ([targetStr isEqualToString:@"MachineName"]) {	target = IP_REFUSE_MACHINE;	}
-			else if ([targetStr isEqualToString:@"LogOnName"]) {	target = IP_REFUSE_LOGON;	}
-			else if ([targetStr isEqualToString:@"IPAddress"]) {	target = IP_REFUSE_ADDRESS;	}
-			else {
-				WRN(@"invalid refuse target(%@)", targetStr);
-				continue;
-			}
-			if ([string length] <= 0) {
-				continue;
-			}
-			if ([conditionStr isEqualToString:@"Match"]) {			condition = IP_REFUSE_MATCH;	}
-			else if ([conditionStr isEqualToString:@"Contain"]) {	condition = IP_REFUSE_CONTAIN;	}
-			else if ([conditionStr isEqualToString:@"Start"]) {		condition = IP_REFUSE_START;	}
-			else if ([conditionStr isEqualToString:@"End"]) {		condition = IP_REFUSE_END;		}
-			else {
-				WRN(@"invalid refuse condition(%@)", conditionStr);
-				continue;
-			}
-
-			[newArray addObject:[[[RefuseInfo alloc] initWithTarget:target string:string condition:condition] autorelease]];
-		}
-	}
-	return newArray;
-}
-
-- (NSMutableArray*)convertRefuseInfoToDefaults:(NSArray*)array {
-	int				i;
-	NSMutableArray* newArray = [[[NSMutableArray alloc] init] autorelease];
-	for (i = 0; i < [array count]; i++) {
-		RefuseInfo*				info		= (RefuseInfo*)[array objectAtIndex:i];
-		NSMutableDictionary*	dict		= [[[NSMutableDictionary alloc] init] autorelease];
-		NSString*				target		= nil;
-		NSString*				condition	= nil;
-		switch ([info target]) {
-		case IP_REFUSE_USER:	target = @"UserName";		break;
-		case IP_REFUSE_GROUP:	target = @"GroupName";		break;
-		case IP_REFUSE_MACHINE:	target = @"MachineName";	break;
-		case IP_REFUSE_LOGON:	target = @"LogOnName";		break;
-		case IP_REFUSE_ADDRESS:	target = @"IPAddress";		break;
-		default:
-			WRN(@"invalid refuse target(%d)", [info target]);
-			continue;
-		}
-		switch ([info condition]) {
-		case IP_REFUSE_MATCH:	condition = @"Match";		break;
-		case IP_REFUSE_CONTAIN:	condition = @"Contain";		break;
-		case IP_REFUSE_START:	condition = @"Start";		break;
-		case IP_REFUSE_END:		condition = @"End";			break;
-		default:
-			WRN(@"invalid refuse condition(%d)", [info condition]);
-			continue;
-		}
-		[dict setObject:target			forKey:@"Target"];
-		[dict setObject:[info string]	forKey:@"String"];
-		[dict setObject:condition		forKey:@"Condition"];
-		[newArray addObject:dict];
-	}
-	return newArray;
-}
-
-/*----------------------------------------------------------------------------*
  * 初期化／解放
  *----------------------------------------------------------------------------*/
+#pragma mark -
 
 // 初期化
-- (id)init {
-	NSUserDefaults*			defaults = [NSUserDefaults standardUserDefaults];
-	NSMutableDictionary*	dic;
-	NSArray*				array;
-	NSDictionary*			broadDic;
-	int						i;
-	NSString*				fontName;
-	float					fontSize;
-
+- (id)init
+{
 	self = [super init];
-	
-	// 過去バージョンのキーの削除
-	[defaults removeObjectForKey:GEN_MACHINENAME_TYPE];
-	[defaults removeObjectForKey:GEN_HOSTDOMAIN_DEL];
-	
-	// デフォルト値の設定
-	dic = [[NSMutableDictionary alloc] init];
-	// 全般
-	[dic setObject:NSFullUserName()						forKey:GEN_USER_NAME];
-	[dic setObject:@""									forKey:GEN_GROUP_NAME];
-	[dic setObject:@""									forKey:GEN_PASSWORD];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:GEN_USE_STATUS_BAR];
-	// ネットワーク
-	[dic setObject:[NSNumber numberWithInt:2425]		forKey:NET_PORT_NO];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:NET_DIALUP];
-	// 送信
-	[dic setObject:@">"									forKey:SEND_QUOT_STR];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:SEND_DOCK_SEND];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:SEND_SEAL_CHECK];
-	[dic setObject:[NSNumber numberWithBool:YES]		forKey:SEND_HIDE_REPLY];
-	[dic setObject:[NSNumber numberWithBool:YES]		forKey:SEND_OPENSEAL_CHECK];
-	[dic setObject:[NSNumber numberWithBool:YES]		forKey:SEND_ALL_USER_CHECK];
-	[dic setObject:[NSNumber numberWithBool:YES]		forKey:SEND_MULTI_USER_CHECK];
-	// 受信
-	[dic setObject:@""									forKey:RECV_SOUND];
-	[dic setObject:[NSNumber numberWithBool:YES]		forKey:RECV_QUOT_CHECK];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:RECV_NON_POPUP];
-	[dic setObject:[NSNumber numberWithInt:IPMSG_BOUND_ONECE]	forKey:RECV_BOUND_IN_NONPOPUP];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:RECV_ABSENCE_NONPOPUP];
-	[dic setObject:[NSNumber numberWithBool:YES]		forKey:RECV_CLICKABLE_URL];
-	// ユーザリスト
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:ULIST_DISP_LOGON];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:ULIST_DISP_IP];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:ULIST_IGNORE_CASE];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:ULIST_KANJI_PRIORITY];
-	{
-		NSMutableArray* sortArray = [[[NSMutableArray alloc] init] autorelease];
-		[sortArray addObject:[NSNumber numberWithInt:IPMSG_SORT_OFF|IPMSG_SORT_ASC|IPMSG_SORT_NAME]];
-		[sortArray addObject:[NSNumber numberWithInt:IPMSG_SORT_OFF|IPMSG_SORT_ASC|IPMSG_SORT_GROUP]];
-		[sortArray addObject:[NSNumber numberWithInt:IPMSG_SORT_OFF|IPMSG_SORT_ASC|IPMSG_SORT_IP]];
-		[sortArray addObject:[NSNumber numberWithInt:IPMSG_SORT_OFF|IPMSG_SORT_ASC|IPMSG_SORT_MACHINE]];
-		[sortArray addObject:[NSNumber numberWithInt:IPMSG_SORT_OFF|IPMSG_SORT_ASC|IPMSG_SORT_DESCRIPTION]];
-		[dic setObject:sortArray forKey:ULIST_SORT_RULE];
+	if (!self) {
+		return nil;
 	}
+
+	NSUserDefaults*			defaults = [NSUserDefaults standardUserDefaults];
+	NSArray*				array;
+	NSMutableArray*			mutableArray;
+	NSDictionary*			dic;
+	NSMutableDictionary*	mutableDic;
+	NSString*				str;
+	float					fVal;
+	NSUInteger				i;
+	NSSize					size;
+
+	DBG(@"======== Init Config start ========");
+
+	// デフォルト値の設定
+	mutableDic = [NSMutableDictionary dictionary];
+	// 全般
+	[mutableDic setObject:NSFullUserName() forKey:GEN_USER_NAME];
+	[mutableDic setObject:@"" forKey:GEN_GROUP_NAME];
+	[mutableDic setObject:@"" forKey:GEN_PASSWORD];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:GEN_USE_STATUS_BAR];
+	// ネットワーク
+	[mutableDic setObject:[NSNumber numberWithInt:2425] forKey:NET_PORT_NO];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:NET_DIALUP];
+	// 送信
+	[mutableDic setObject:@">" forKey:SEND_QUOT_STR];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:SEND_DOCK_SEND];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:SEND_SEAL_CHECK];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:SEND_HIDE_REPLY];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:SEND_OPENSEAL_CHECK];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:SEND_MULTI_USER_CHECK];
+	// 受信
+	[mutableDic setObject:@"" forKey:RECV_SOUND];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:RECV_QUOT_CHECK];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:RECV_NON_POPUP];
+	[mutableDic setObject:[NSNumber numberWithInt:IPMSG_BOUND_ONECE] forKey:RECV_BOUND_IN_NONPOPUP];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:RECV_ABSENCE_NONPOPUP];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:RECV_CLICKABLE_URL];
 	// ログ
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:LOG_STD_ON];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:LOG_STD_CHAIN];
-	[dic setObject:@"~/Library/Logs/ipmsg.log"			forKey:LOG_STD_FILE];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:LOG_ALT_ON];
-	[dic setObject:[NSNumber numberWithBool:NO]			forKey:LOG_ALT_SELECTION];
-	[dic setObject:@"~/Library/Logs/ipmsg_alt.log"		forKey:LOG_ALT_FILE];
-	[dic setObject:[NSNumber numberWithInt:IPMSG_LF]	forKey:LOG_LINE_ENDING];
-	
-	[defaults registerDefaults:dic];
-	[dic release];
-	
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:LOG_STD_ON];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:LOG_STD_CHAIN];
+	[mutableDic setObject:@"~/Documents/ipmsg_log.txt" forKey:LOG_STD_FILE];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:LOG_ALT_ON];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:LOG_ALT_SELECTION];
+	[mutableDic setObject:@"~/Documents/ipmsg_alt_log.txt" forKey:LOG_ALT_FILE];
+	// 送信ウィンドウ
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:SNDSEARCH_USER];
+	[mutableDic setObject:[NSNumber numberWithBool:YES] forKey:SNDSEARCH_GROUP];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:SNDSEARCH_HOST];
+	[mutableDic setObject:[NSNumber numberWithBool:NO] forKey:SNDSEARCH_LOGON];
+	[defaults registerDefaults:mutableDic];
+	#if IPMSG_LOG_TRC
+		// デバッグ用ログ出力
+		TRC(@"defaultValues[%u]=(", [mutableDic count]);
+		for (id key in [mutableDic allKeys]) {
+			id val = [mutableDic objectForKey:key];
+			array = [[val description] componentsSeparatedByString:@"\n"];
+			if ([array count] > 1) {
+				NSUInteger num = 0;
+				for (NSString* s in array) {
+					num++;
+					if (num == 1) {
+						TRC(@"\t%@=%@", key, s);
+					} else {
+						TRC(@"\t\t%@", s);
+					}
+				}
+			} else if ([val isKindOfClass:[NSString class]]) {
+				TRC(@"\t%@=\"%@\"", key, val);
+			} else {
+				TRC(@"\t%@=%@", key, val);
+			}
+		}
+		TRC(@")");
+	#endif
+
 	// 不在文のデフォルト値
-	defaultAbsences = [[NSMutableArray alloc] init];
+	mutableArray = [NSMutableArray array];
 	for (i = 0; i < 8; i++) {
 		NSString* key1	= [NSString stringWithFormat:@"Pref.Absence.Def%d.Title", i];
 		NSString* key2	= [NSString stringWithFormat:@"Pref.Absence.Def%d.Message", i];
-		dic		= [[[NSMutableDictionary alloc] init] autorelease];
-		[dic setObject:NSLocalizedString(key1, nil) forKey:@"Title"];
-		[dic setObject:NSLocalizedString(key2, nil) forKey:@"Message"];
-		[defaultAbsences addObject:dic];
+		mutableDic = [NSMutableDictionary dictionary];
+		[mutableDic setObject:NSLocalizedString(key1, nil) forKey:@"Title"];
+		[mutableDic setObject:NSLocalizedString(key2, nil) forKey:@"Message"];
+		[mutableArray addObject:mutableDic];
 	}
-	
+	_defaultAbsences = [[NSArray alloc] initWithArray:mutableArray];
+	#if IPMSG_LOG_TRC
+		// デバッグ用ログ出力
+		TRC(@"defaultAbsences[%u]=(", [_defaultAbsences count]);
+		for (dic in _defaultAbsences) {
+			NSString* t = [dic objectForKey:@"Title"];
+			NSString* m = [dic objectForKey:@"Message"];
+			str = [m stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+			TRC(@"\t\"%@\"（\"%@\"）", t, str);
+		}
+		TRC(@")");
+	#endif
+
 	// フォントのデフォルト値
-	fontName			= NSLocalizedString(@"Message.DefaultFontName", nil);
-	fontSize			= 12;
-	defaultMessageFont	= [[NSFont fontWithName:fontName size:fontSize] retain];
-	if (!defaultMessageFont) {
-		defaultMessageFont = [[NSFont systemFontOfSize:[NSFont systemFontSize]] retain];
+	str		= NSLocalizedString(@"Message.DefaultFontName", nil);
+	fVal	= 12;
+	_defaultMessageFont	= [[NSFont fontWithName:str size:fVal] retain];
+	if (!_defaultMessageFont) {
+		_defaultMessageFont = [[NSFont systemFontOfSize:[NSFont systemFontSize]] retain];
 	}
+	TRC(@"defaultMessageFont=%@", _defaultMessageFont);
 
 	// 全般
-	userName				= [[defaults stringForKey:	GEN_USER_NAME] copy];
-	groupName				= [[defaults stringForKey:	GEN_GROUP_NAME] copy];
-	password				= [[defaults stringForKey:	GEN_PASSWORD] copy];
-	useStatusBar			= [defaults boolForKey:		GEN_USE_STATUS_BAR];
+	self.userName					= [defaults stringForKey:GEN_USER_NAME];
+	self.groupName					= [defaults stringForKey:GEN_GROUP_NAME];
+	self.password					= [defaults stringForKey:GEN_PASSWORD];
+	self.useStatusBar				= [defaults boolForKey:GEN_USE_STATUS_BAR];
 	// ネットワーク
-	portNo					= [defaults integerForKey:	NET_PORT_NO];
-	dialup					= [defaults boolForKey:		NET_DIALUP];
-	broadDic				= [defaults dictionaryForKey:NET_BROADCAST];
-	broadcastHostList		= [[NSMutableArray alloc] initWithArray:[broadDic objectForKey:@"Host"]];
-	broadcastIPList			= [[NSMutableArray alloc] initWithArray:[broadDic objectForKey:@"IPAddress"]];
-	broadcastAddresses		= nil;
-	[self updateBroadcastAddresses]; 
+	self.portNo						= [defaults integerForKey:NET_PORT_NO];
+	self.dialup						= [defaults boolForKey:NET_DIALUP];
+	dic								= [defaults dictionaryForKey:NET_BROADCAST];
+	_broadcastHostList				= [[NSMutableArray alloc] initWithArray:[dic objectForKey:@"Host"]];
+	_broadcastIPList				= [[NSMutableArray alloc] initWithArray:[dic objectForKey:@"IPAddress"]];
+	_broadcastAddresses				= nil;
+	[self updateBroadcastAddresses];
 	// 送信
-	quoteString				= [[defaults stringForKey:	SEND_QUOT_STR] copy];
-	openNewOnDockClick		= [defaults boolForKey:		SEND_DOCK_SEND];
-	sealCheckDefault		= [defaults boolForKey:		SEND_SEAL_CHECK];
-	hideRcvWinOnReply		= [defaults boolForKey:		SEND_HIDE_REPLY];
-	noticeSealOpened		= [defaults boolForKey:		SEND_OPENSEAL_CHECK];
-	sendAllUsersEnabled		= [defaults boolForKey:		SEND_ALL_USER_CHECK];
-	allowSendingMultiUser	= [defaults boolForKey:		SEND_MULTI_USER_CHECK];
-	fontName				= [defaults stringForKey:	SEND_MSG_FONT_NAME];
-	fontSize				= [defaults floatForKey:	SEND_MSG_FONT_SIZE];
-	sendMessageFont			= (fontName && (fontSize > 0)) ? [[NSFont fontWithName:fontName size:fontSize] retain] : nil;
+	self.quoteString				= [defaults stringForKey:SEND_QUOT_STR];
+	self.openNewOnDockClick			= [defaults boolForKey:SEND_DOCK_SEND];
+	self.sealCheckDefault			= [defaults boolForKey:SEND_SEAL_CHECK];
+	self.hideReceiveWindowOnReply	= [defaults boolForKey:SEND_HIDE_REPLY];
+	self.noticeSealOpened			= [defaults boolForKey:SEND_OPENSEAL_CHECK];
+	self.allowSendingToMultiUser	= [defaults boolForKey:SEND_MULTI_USER_CHECK];
+	str								= [defaults stringForKey:SEND_MSG_FONT_NAME];
+	fVal							= [defaults floatForKey:SEND_MSG_FONT_SIZE];
+	if (str && (fVal > 0)) {
+		self.sendMessageFont		= [NSFont fontWithName:str size:fVal];
+	}
 	// 受信
-	[self setReceiveSoundWithName:[defaults stringForKey:	RECV_SOUND]];
-	quoteCheckDefault		= [defaults boolForKey:		RECV_QUOT_CHECK];
-	nonPopup				= [defaults boolForKey:		RECV_NON_POPUP];
-	nonPopupWhenAbsence		= [defaults boolForKey:		RECV_ABSENCE_NONPOPUP];
-	nonPopupIconBound		= [defaults integerForKey:	RECV_BOUND_IN_NONPOPUP];
-	useClickableURL			= [defaults boolForKey:		RECV_CLICKABLE_URL];
-	fontName				= [defaults stringForKey:	RECV_MSG_FONT_NAME];
-	fontSize				= [defaults floatForKey:	RECV_MSG_FONT_SIZE];
-	receiveMessageFont		= (fontName && (fontSize > 0)) ? [[NSFont fontWithName:fontName size:fontSize] retain] : nil;
+	self.receiveSoundName			= [defaults stringForKey:RECV_SOUND];
+	self.quoteCheckDefault			= [defaults boolForKey:RECV_QUOT_CHECK];
+	self.nonPopup					= [defaults boolForKey:RECV_NON_POPUP];
+	self.nonPopupWhenAbsence		= [defaults boolForKey:RECV_ABSENCE_NONPOPUP];
+	self.iconBoundModeInNonPopup	= [defaults integerForKey:RECV_BOUND_IN_NONPOPUP];
+	self.useClickableURL			= [defaults boolForKey:RECV_CLICKABLE_URL];
+	str								= [defaults stringForKey:RECV_MSG_FONT_NAME];
+	fVal							= [defaults floatForKey:RECV_MSG_FONT_SIZE];
+	if (str && (fVal > 0)) {
+		self.receiveMessageFont		= [NSFont fontWithName:str size:fVal];
+	}
 	// 不在
-	array					= [defaults arrayForKey:	ABSENCE];
-	absenceList				= [[NSMutableArray alloc] initWithArray:((array) ? array : defaultAbsences)];
-	absenceIndex			= -1;
+	array							= [defaults arrayForKey:ABSENCE];
+	if (!array) {
+		array						= _defaultAbsences;
+	}
+	_absenceList					= [[NSMutableArray alloc] initWithArray:array];
+	self.absenceIndex				= -1;
 	// 通知拒否
-	refuseList				= [[self convertRefuseDefaultsToInfo:[defaults arrayForKey:REFUSE]] retain];
-	// ユーザリスト
-	displayLogOnName		= [defaults boolForKey:		ULIST_DISP_LOGON];
-	displayIPAddress		= [defaults boolForKey:		ULIST_DISP_IP];
-	sortRuleList			= [[NSMutableArray alloc] initWithArray:[defaults arrayForKey:ULIST_SORT_RULE]];
-	sortByIgnoreCase		= [defaults boolForKey:		ULIST_IGNORE_CASE];
-	sortByKanjiPriority		= [defaults boolForKey:		ULIST_KANJI_PRIORITY];
+	array							= [defaults arrayForKey:REFUSE];
+	_refuseList						= [[self convertRefuseDefaultsToInfo:array] retain];
 	// ログ
-	standardLogEnabled		= [defaults boolForKey:		LOG_STD_ON];
-	logChainedWhenOpen		= [defaults boolForKey:		LOG_STD_CHAIN];
-	standardLogFile			= [[defaults stringForKey:	LOG_STD_FILE] copy];
-	alternateLogEnabled		= [defaults boolForKey:		LOG_ALT_ON];
-	logWithSelectedRange	= [defaults boolForKey:		LOG_ALT_SELECTION];
-	alternateLogFile		= [[defaults stringForKey:	LOG_ALT_FILE] copy];
-	logLineEnding			= [defaults integerForKey:	LOG_LINE_ENDING];
+	self.standardLogEnabled			= [defaults boolForKey:LOG_STD_ON];
+	self.logChainedWhenOpen			= [defaults boolForKey:LOG_STD_CHAIN];
+	self.standardLogFile			= [defaults stringForKey:LOG_STD_FILE];
+	self.alternateLogEnabled		= [defaults boolForKey:LOG_ALT_ON];
+	self.logWithSelectedRange		= [defaults boolForKey:LOG_ALT_SELECTION];
+	self.alternateLogFile			= [defaults stringForKey:LOG_ALT_FILE];
 
-	// 送受信ウィンドウ位置／サイズ
-	sndWinPos.x				= [defaults floatForKey:	SNDWIN_POS_X];
-	sndWinPos.y				= [defaults floatForKey:	SNDWIN_POS_Y];
-	sndWinSize.width		= [defaults floatForKey:	SNDWIN_SIZE_W];
-	sndWinSize.height		= [defaults floatForKey:	SNDWIN_SIZE_H];
-	sndWinSplit				= [defaults floatForKey:	SNDWIN_SIZE_SPLIT];
-	rcvWinPos.x				= [defaults floatForKey:	SNDWIN_POS_X];
-	rcvWinPos.y				= [defaults floatForKey:	SNDWIN_POS_Y];
-	rcvWinSize.width		= [defaults floatForKey:	SNDWIN_SIZE_W];
-	rcvWinSize.height		= [defaults floatForKey:	SNDWIN_SIZE_H];
+	// 送受信ウィンドウ
+	size.width						= [defaults floatForKey:SNDWIN_SIZE_W];
+	size.height						= [defaults floatForKey:SNDWIN_SIZE_H];
+	self.sendWindowSize				= size;
+	self.sendWindowSplit			= [defaults floatForKey:SNDWIN_SIZE_SPLIT];
+	self.sendSearchByUserName		= [defaults boolForKey:SNDSEARCH_USER];
+	self.sendSearchByGroupName		= [defaults boolForKey:SNDSEARCH_GROUP];
+	self.sendSearchByHostName		= [defaults boolForKey:SNDSEARCH_HOST];
+	self.sendSearchByLogOnName		= [defaults boolForKey:SNDSEARCH_LOGON];
+	_sendUserListColDisp			= [[NSMutableDictionary alloc] init];
+	dic								= [defaults dictionaryForKey:SNDWIN_USERLIST_COL];
+	if (dic) {
+		[_sendUserListColDisp setDictionary:dic];
+	}
+	size.width						= [defaults floatForKey:RCVWIN_SIZE_W];
+	size.height						= [defaults floatForKey:RCVWIN_SIZE_H];
+	self.receiveWindowSize			= size;
+	#if IPMSG_LOG_DBG
+		// デバッグ用ログ出力
+		NSUInteger	count;
+
+		objc_property_t* props = class_copyPropertyList([self class], &count);
+		DBG(@"properties[%u]=(", count);
+		for (i = 0; i < count; i++) {
+			const char*	name;
+			id			val;
+			name	= property_getName(props[i]);
+			val		= [self valueForKey:[NSString stringWithUTF8String:name]];
+			array	= [[val description] componentsSeparatedByString:@"\n"];
+			if ([array count] > 1) {
+				NSUInteger num = 0;
+				for (NSString* s in array) {
+					num++;
+					if (num == 1) {
+						DBG(@"\t%s=%@", name, s);
+					} else if (num == [array count]) {
+						DBG(@"\t\t%@;", s);
+					} else {
+						DBG(@"\t\t%@", s);
+					}
+				}
+			} else if ([val isKindOfClass:[NSString class]]) {
+				DBG(@"\t%s=\"%@\";", name, val);
+			} else {
+				DBG(@"\t%s=%@;", name, val);
+			}
+		}
+		free(props);
+		DBG(@")");
+
+		Ivar* ivars = class_copyIvarList([self class], &count);
+		TRC(@"ivars[%u]=(", count);
+		for (i = 0; i < count; i++) {
+			const char*	name;
+			id			val;
+			name	= ivar_getName(ivars[i]);
+			val		= [self valueForKey:[NSString stringWithUTF8String:name]];
+			if ((strcmp(name, "_absenceList") == 0) ||
+				(strcmp(name, "_defaultAbsences") == 0)) {
+				TRC(@"\t%s=(", name);
+				for (dic in val) {
+					NSString* t = [dic objectForKey:@"Title"];
+					NSString* m = [dic objectForKey:@"Message"];
+					str = [m stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+					TRC(@"\t\t\"%@\"（\"%@\"）", t, str);
+				}
+				TRC(@"\t);");
+			} else {
+				array	= [[val description] componentsSeparatedByString:@"\n"];
+				if ([array count] > 1) {
+					NSUInteger num = 0;
+					for (NSString* s in array) {
+						num++;
+						if (num == 1) {
+							TRC(@"\t%s=%@", name, s);
+						} else if (num == [array count]) {
+							TRC(@"\t%@;", s);
+						} else {
+							TRC(@"\t%@", s);
+						}
+					}
+				} else if ([val isKindOfClass:[NSString class]]) {
+					TRC(@"\t%s=\"%@\";", name, val);
+				} else {
+					TRC(@"\t%s=%@;", name, val);
+				}
+			}
+		}
+		free(ivars);
+		TRC(@")");
+	#endif
+
+	DBG(@"======== Init Config complated ========");
 
 	return self;
 }
 
 // 解放
-- (void)dealloc {
-	[userName			release];
-	[groupName			release];
-	[password			release];
-	[broadcastHostList	release];
-	[broadcastIPList	release];
-	[broadcastAddresses	release];
-	[receiveSound		release];
-	[receiveMessageFont	release];
-	[quoteString		release];
-	[sendMessageFont	release];
-	[absenceList		release];
-	[refuseList			release];
-	[defaultAbsences	release];
-	[sortRuleList		release];
-	[standardLogFile	release];
-	[alternateLogFile	release];
-	[defaultMessageFont	release];
+- (void)dealloc
+{
+	[_userName release];
+	[_groupName release];
+	[_password release];
+	[_quoteString release];
+	[_absenceList release];
+	[_refuseList release];
+	[_sendMessageFont release];
+	[_sendUserListColDisp release];
+	[_receiveSound release];
+	[_receiveMessageFont release];
+	[_standardLogFile release];
+	[_alternateLogFile release];
+	[_defaultMessageFont release];
+	[_defaultAbsences release];
+
+	[_broadcastHostList release];
+	[_broadcastIPList release];
+	[_broadcastAddresses release];
 	[super dealloc];
 }
 
 /*----------------------------------------------------------------------------*
  * 永続化
  *----------------------------------------------------------------------------*/
-- (void)save {
-	NSUserDefaults*			def = [NSUserDefaults standardUserDefaults];
-	NSMutableDictionary*	dic = [[[NSMutableDictionary alloc] init] autorelease];
-	NSString*				ver = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-	
+- (void)save
+{
+	NSUserDefaults*	def		= [NSUserDefaults standardUserDefaults];
+	NSBundle*		mb		= [NSBundle mainBundle];
+	NSString*		ver		= [mb objectForInfoDictionaryKey:@"CFBundleVersion"];
+	NSString*		verstr	= [mb objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+	NSDictionary*	dic		= [NSDictionary dictionaryWithObjectsAndKeys:
+													_broadcastHostList, @"Host",
+													_broadcastIPList, @"IPAddress",
+													nil];
+
 	// 全般
-	[def setObject: ver						forKey:GEN_VERSION];
-	[def setObject:	userName				forKey:GEN_USER_NAME];
-	[def setObject:	groupName				forKey:GEN_GROUP_NAME];
-	[def setObject:	password				forKey:GEN_PASSWORD];
-	[def setBool:	useStatusBar			forKey:GEN_USE_STATUS_BAR];
-	
+	[def setObject:ver forKey:GEN_VERSION];
+	[def setObject:verstr forKey:GEN_VERSION_STR];
+	[def setObject:self.userName forKey:GEN_USER_NAME];
+	[def setObject:self.groupName forKey:GEN_GROUP_NAME];
+	[def setObject:self.password forKey:GEN_PASSWORD];
+	[def setBool:self.useStatusBar forKey:GEN_USE_STATUS_BAR];
+
 	// ネットワーク
-	[def setInteger:portNo					forKey:NET_PORT_NO];
-	[def setBool:	dialup					forKey:NET_DIALUP];
-	[dic setObject:	broadcastHostList		forKey:@"Host"];
-	[dic setObject:	broadcastIPList			forKey:@"IPAddress"];
-	[def setObject:	dic						forKey:NET_BROADCAST];
+	[def setInteger:self.portNo forKey:NET_PORT_NO];
+	[def setBool:self.dialup forKey:NET_DIALUP];
+	[def setObject:dic forKey:NET_BROADCAST];
+
 	// 送信
-	[def setObject:	quoteString				forKey:SEND_QUOT_STR];
-	[def setBool:	openNewOnDockClick		forKey:SEND_DOCK_SEND];
-	[def setBool:	sealCheckDefault		forKey:SEND_SEAL_CHECK];
-	[def setBool:	hideRcvWinOnReply		forKey:SEND_HIDE_REPLY];
-	[def setBool:	noticeSealOpened		forKey:SEND_OPENSEAL_CHECK];
-	[def setBool:	sendAllUsersEnabled		forKey:SEND_ALL_USER_CHECK];
-	[def setBool:	allowSendingMultiUser	forKey:SEND_MULTI_USER_CHECK];
-	if (sendMessageFont) {
-		[def setObject:	[sendMessageFont fontName]	forKey:SEND_MSG_FONT_NAME];
-		[def setFloat:	[sendMessageFont pointSize]	forKey:SEND_MSG_FONT_SIZE];
+	[def setObject:self.quoteString forKey:SEND_QUOT_STR];
+	[def setBool:self.openNewOnDockClick forKey:SEND_DOCK_SEND];
+	[def setBool:self.sealCheckDefault forKey:SEND_SEAL_CHECK];
+	[def setBool:self.hideReceiveWindowOnReply forKey:SEND_HIDE_REPLY];
+	[def setBool:self.noticeSealOpened forKey:SEND_OPENSEAL_CHECK];
+	[def setBool:self.allowSendingToMultiUser forKey:SEND_MULTI_USER_CHECK];
+	if (self.sendMessageFont) {
+		[def setObject:[self.sendMessageFont fontName] forKey:SEND_MSG_FONT_NAME];
+		[def setFloat:[self.sendMessageFont pointSize] forKey:SEND_MSG_FONT_SIZE];
 	}
 	// 受信
-	[def setObject:	[receiveSound name]		forKey:RECV_SOUND];
-	[def setBool:	quoteCheckDefault		forKey:RECV_QUOT_CHECK];
-	[def setBool:	nonPopup				forKey:RECV_NON_POPUP];
-	[def setBool:	nonPopupWhenAbsence		forKey:RECV_ABSENCE_NONPOPUP];
-	[def setInteger:nonPopupIconBound		forKey:RECV_BOUND_IN_NONPOPUP];
-	[def setBool:	useClickableURL			forKey:RECV_CLICKABLE_URL];
-	if (receiveMessageFont) {
-		[def setObject:	[receiveMessageFont fontName]	forKey:RECV_MSG_FONT_NAME];
-		[def setFloat:	[receiveMessageFont pointSize]	forKey:RECV_MSG_FONT_SIZE];
+	[def setObject:[self.receiveSound name] forKey:RECV_SOUND];
+	[def setBool:self.quoteCheckDefault forKey:RECV_QUOT_CHECK];
+	[def setBool:self.nonPopup forKey:RECV_NON_POPUP];
+	[def setBool:self.nonPopupWhenAbsence forKey:RECV_ABSENCE_NONPOPUP];
+	[def setInteger:self.iconBoundModeInNonPopup forKey:RECV_BOUND_IN_NONPOPUP];
+	[def setBool:self.useClickableURL forKey:RECV_CLICKABLE_URL];
+	if (self.receiveMessageFont) {
+		[def setObject:[self.receiveMessageFont fontName] forKey:RECV_MSG_FONT_NAME];
+		[def setFloat:[self.receiveMessageFont pointSize] forKey:RECV_MSG_FONT_SIZE];
 	}
-	
+
 	// 不在
-	[def setObject:	absenceList				forKey:ABSENCE];
+	[def setObject:_absenceList forKey:ABSENCE];
 	// 通知拒否
-	[def setObject:	[self convertRefuseInfoToDefaults:refuseList]
-											forKey:REFUSE];
-	// ユーザリスト
-	[def setBool:	displayLogOnName		forKey:ULIST_DISP_LOGON];
-	[def setBool:	displayIPAddress		forKey:ULIST_DISP_IP];
-	[def setObject:	sortRuleList			forKey:ULIST_SORT_RULE];
-	[def setBool:	sortByIgnoreCase		forKey:ULIST_IGNORE_CASE];
-	[def setBool:	sortByKanjiPriority		forKey:ULIST_KANJI_PRIORITY];
+	[def setObject:[self convertRefuseInfoToDefaults:_refuseList] forKey:REFUSE];
 	// ログ
-	[def setBool:	standardLogEnabled		forKey:LOG_STD_ON];
-	[def setBool:	logChainedWhenOpen		forKey:LOG_STD_CHAIN];
-	[def setObject:	standardLogFile			forKey:LOG_STD_FILE];
-	[def setBool:	alternateLogEnabled		forKey:LOG_ALT_ON];
-	[def setBool:	logWithSelectedRange	forKey:LOG_ALT_SELECTION];
-	[def setObject:	alternateLogFile		forKey:LOG_ALT_FILE];
-	[def setInteger:logLineEnding			forKey:LOG_LINE_ENDING];
-	
+	[def setBool:self.standardLogEnabled forKey:LOG_STD_ON];
+	[def setBool:self.logChainedWhenOpen forKey:LOG_STD_CHAIN];
+	[def setObject:self.standardLogFile forKey:LOG_STD_FILE];
+	[def setBool:self.alternateLogEnabled forKey:LOG_ALT_ON];
+	[def setBool:self.logWithSelectedRange forKey:LOG_ALT_SELECTION];
+	[def setObject:self.alternateLogFile forKey:LOG_ALT_FILE];
+
 	// 送受信ウィンドウ位置／サイズ
-	[def setFloat:	sndWinPos.x				forKey:SNDWIN_POS_X];
-	[def setFloat:	sndWinPos.y				forKey:SNDWIN_POS_Y];
-	[def setFloat:	sndWinSize.width		forKey:SNDWIN_SIZE_W];
-	[def setFloat:	sndWinSize.height		forKey:SNDWIN_SIZE_H];
-	[def setFloat:	sndWinSplit				forKey:SNDWIN_SIZE_SPLIT];
-	[def setFloat:	rcvWinPos.x				forKey:RCVWIN_POS_X];
-	[def setFloat:	rcvWinPos.y				forKey:RCVWIN_POS_Y];
-	[def setFloat:	rcvWinSize.width		forKey:RCVWIN_SIZE_W];
-	[def setFloat:	rcvWinSize.height		forKey:RCVWIN_SIZE_H];
-	
+	[def setFloat:self.sendWindowSize.width forKey:SNDWIN_SIZE_W];
+	[def setFloat:self.sendWindowSize.height forKey:SNDWIN_SIZE_H];
+	[def setFloat:self.sendWindowSplit forKey:SNDWIN_SIZE_SPLIT];
+	[def setBool:self.sendSearchByUserName forKey:SNDSEARCH_USER];
+	[def setBool:self.sendSearchByGroupName forKey:SNDSEARCH_GROUP];
+	[def setBool:self.sendSearchByHostName forKey:SNDSEARCH_HOST];
+	[def setBool:self.sendSearchByLogOnName forKey:SNDSEARCH_LOGON];
+	[def setObject:_sendUserListColDisp forKey:SNDWIN_USERLIST_COL];
+	[def setFloat:self.receiveWindowSize.width forKey:RCVWIN_SIZE_W];
+	[def setFloat:self.receiveWindowSize.height forKey:RCVWIN_SIZE_H];
+
 	// 保存
 	[def synchronize];
 }
 
 /*----------------------------------------------------------------------------*
- * 「全般」関連
+ * 「ネットワーク」関連
  *----------------------------------------------------------------------------*/
+#pragma mark -
+#pragma mark ネットワーク関連
 
-// ユーザ名
-- (NSString*)userName {
-	return userName;
+// ブロードキャスト
+- (NSUInteger)numberOfBroadcasts
+{
+	return [_broadcastHostList count] + [_broadcastIPList count];
 }
 
-- (void)setUserName:(NSString*)name {
-	[userName autorelease];
-	userName = [name copy];
+- (NSString*)broadcastAtIndex:(NSUInteger)index
+{
+	@try {
+		NSUInteger hostnum = [_broadcastHostList count];
+		if (index < hostnum) {
+			return [_broadcastHostList objectAtIndex:index];
+		}
+		return [_broadcastIPList objectAtIndex:index - hostnum];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
+	return nil;
 }
 
-// グループ名
-- (NSString*)groupName {
-	return groupName;
+- (BOOL)containsBroadcastWithAddress:(NSString*)address
+{
+	return [_broadcastIPList containsObject:address];
 }
 
-- (void)setGroupName:(NSString*)name {
-	[groupName autorelease];
-	groupName = [name copy];
+- (BOOL)containsBroadcastWithHost:(NSString*)host
+{
+	return [_broadcastHostList containsObject:host];
 }
 
-// パスワード
-- (NSString*)password {
-	return password;
+- (void)addBroadcastWithAddress:(NSString*)address
+{
+	@try {
+		[_broadcastIPList addObject:address];
+		[_broadcastIPList sortUsingSelector:@selector(compare:)];
+		[self updateBroadcastAddresses];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
-- (void)setPassword:(NSString*)pass {
-	[password autorelease];
-	password = [pass copy];
+- (void)addBroadcastWithHost:(NSString*)host
+{
+	@try {
+		[_broadcastHostList addObject:host];
+		[_broadcastHostList sortUsingSelector:@selector(compare:)];
+		[self updateBroadcastAddresses];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
-// ステータスバー
-- (BOOL)useStatusBar {
-	return useStatusBar;
-}
-
-- (void)setUseStatusBar:(BOOL)use {
-	useStatusBar = use;
+- (void)removeBroadcastAtIndex:(NSUInteger)index
+{
+	@try {
+		int hostnum = [_broadcastHostList count];
+		if (index < hostnum) {
+			[_broadcastHostList removeObjectAtIndex:index];
+		} else {
+			[_broadcastIPList removeObjectAtIndex:index - hostnum];
+		}
+		[self updateBroadcastAddresses];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
 /*----------------------------------------------------------------------------*
- * 「ネットワーク」関連
+ * 「アップデート」関連
  *----------------------------------------------------------------------------*/
- 
-// ポート番号
-- (int)portNo {
-	return portNo;
+#pragma mark -
+#pragma mark アップデート関連
+
+- (BOOL)updateAutomaticCheck
+{
+	return [[SUUpdater sharedUpdater] automaticallyChecksForUpdates];
 }
 
-- (void)setPortNo:(int)port {
-	portNo = port;
+- (void)setUpdateAutomaticCheck:(BOOL)b
+{
+	[[SUUpdater sharedUpdater] setAutomaticallyChecksForUpdates:b];
 }
 
-// ダイアルアップ接続
-- (BOOL)dialup {
-	return dialup;
+- (NSTimeInterval)updateCheckInterval
+{
+	return [[SUUpdater sharedUpdater] updateCheckInterval];
 }
 
-- (void)setDialup:(BOOL)flag {
-	dialup = flag;
+- (void)setUpdateCheckInterval:(NSTimeInterval)interval
+{
+	[[SUUpdater sharedUpdater] setUpdateCheckInterval:interval];
 }
 
-// ブロードキャスト
-- (NSArray*)broadcastAddresses {
-	return broadcastAddresses;
-}
-
-- (int)numberOfBroadcasts {
-	return [broadcastHostList count] + [broadcastIPList count];
-}
-
-- (NSString*)broadcastAtIndex:(int)index {
-	int hostnum = [broadcastHostList count];
-	if (index < hostnum) {
-		return [broadcastHostList objectAtIndex:index];
-	}
-	return [broadcastIPList objectAtIndex:index - hostnum];
-}
-
-- (BOOL)containsBroadcastWithAddress:(NSString*)address {
-	return [broadcastIPList containsObject:address];
-}
-
-- (BOOL)containsBroadcastWithHost:(NSString*)host {
-	return [broadcastHostList containsObject:host];
-}
-
-- (void)addBroadcastWithAddress:(NSString*)address {
-	[broadcastIPList addObject:address];
-	[broadcastIPList sortUsingSelector:@selector(compare:)];
-	[self updateBroadcastAddresses];
-}
-
-- (void)addBroadcastWithHost:(NSString*)host {
-	[broadcastHostList addObject:host];
-	[broadcastHostList sortUsingSelector:@selector(compare:)];
-	[self updateBroadcastAddresses];
-}
-
-- (void)removeBroadcastAtIndex:(int)index {
-	int hostnum = [broadcastHostList count];
-	if (index < hostnum) {
-		[broadcastHostList removeObjectAtIndex:index];
-	} else {
-		[broadcastIPList removeObjectAtIndex:index - hostnum];
-	}
-	[self updateBroadcastAddresses];
-}
-	
 /*----------------------------------------------------------------------------*
  * 「送信」関連
  *----------------------------------------------------------------------------*/
-
-// 引用文字列
-- (NSString*)quoteString {
-	return quoteString;
-}
-
-- (void)setQuoteString:(NSString*)string {
-	[quoteString autorelease];
-	quoteString = [string copy];
-}
-
-// Dockをクリックでウィンドウオープン
-- (BOOL)openNewOnDockClick {
-	return openNewOnDockClick;
-}
-
-- (void)setOpenNewOnDockClick:(BOOL)open {
-	openNewOnDockClick = open;
-}
-
-// 引用チェックをデフォルト
-- (BOOL)sealCheckDefault {
-	return sealCheckDefault;
-}
-
-- (void)setSealCheckDefault:(BOOL)seal {
-	sealCheckDefault = seal;
-}
-
-// 返信時に受信ウィンドウをクローズ
-- (BOOL)hideReceiveWindowOnReply {
-	return hideRcvWinOnReply;
-}
-
-- (void)setHideReceiveWindowOnReply:(BOOL)hide {
-	hideRcvWinOnReply = hide;
-}
-
-// 開封チェックを行う
-- (BOOL)noticeSealOpened {
-	return noticeSealOpened;
-}
-
-- (void)setNoticeSealOpened:(BOOL)check {
-	noticeSealOpened = check;
-}
-
-// 全員に送信チェックボックス有効
-- (BOOL)sendAllUsersCheckEnabled {
-	return sendAllUsersEnabled;
-}
-
-- (void)setSendAllUsersCheckEnabled:(BOOL)check {
-	sendAllUsersEnabled = check;
-}
-
-// 複数ユーザへの送信を許可
-- (BOOL)allowSendingToMultiUser {
-	return allowSendingMultiUser;
-}
-
-- (void)setAllowSendingToMultiUser:(BOOL)allow {
-	allowSendingMultiUser = allow;
-}
+#pragma mark -
+#pragma mark 送信関連
 
 // メッセージ部フォント
-- (NSFont*)defaultSendMessageFont {
-	return defaultMessageFont;
+- (NSFont*)defaultSendMessageFont
+{
+	return _defaultMessageFont;
 }
 
-- (NSFont*)sendMessageFont {
-	return (sendMessageFont) ? sendMessageFont : defaultMessageFont;
+- (NSFont*)sendMessageFont
+{
+	return (_sendMessageFont) ? _sendMessageFont : _defaultMessageFont;
 }
 
-- (void)setSendMessageFont:(NSFont*)font {
+- (void)setSendMessageFont:(NSFont*)font
+{
 	[font retain];
-	[sendMessageFont release];
-	sendMessageFont = font;
+	[_sendMessageFont release];
+	_sendMessageFont = font;
+}
+
+// ユーザリスト表示項目
+- (BOOL)sendWindowUserListColumnHidden:(id)identifier
+{
+	NSNumber* val = [_sendUserListColDisp objectForKey:identifier];
+	if (val) {
+		return ![val boolValue];
+	}
+	return NO;
+}
+
+- (void)setSendWindowUserListColumn:(id)identifier hidden:(BOOL)hidden
+{
+	[_sendUserListColDisp setObject:[NSNumber numberWithBool:!hidden] forKey:identifier];
 }
 
 /*----------------------------------------------------------------------------*
  * 「受信」関連
  *----------------------------------------------------------------------------*/
- 
+#pragma mark -
+#pragma mark 受信関連
+
 // 受信音
-- (NSSound*)receiveSound {
-	return receiveSound;
+- (NSString*)receiveSoundName
+{
+	return [_receiveSound name];
 }
 
-- (NSString*)receiveSoundName {
-	return [receiveSound name];
-}
-
-- (void)setReceiveSoundWithName:(NSString*)soundName {
-	[receiveSound autorelease];
-	receiveSound = nil;
+- (void)setReceiveSoundName:(NSString*)soundName
+{
+	[_receiveSound autorelease];
+	_receiveSound = nil;
 	if (soundName) {
 		if ([soundName length] > 0) {
-			receiveSound = [[NSSound soundNamed:soundName] retain];
+			_receiveSound = [[NSSound soundNamed:soundName] retain];
 		}
 	}
 }
 
-// 引用チェックをデフォルト
-- (BOOL)quoteCheckDefault {
-	return quoteCheckDefault;
-}
-
-- (void)setQuoteCheckDefault:(BOOL)quote {
-	quoteCheckDefault = quote;
-}
-
-// ノンポップアップ受信
-- (BOOL)nonPopup {
-	return nonPopup;
-}
-
-- (void)setNonPopup:(BOOL)nonPop {
-	nonPopup = nonPop;
-}
-
-// 不在時ノンポップアップ受信
-- (BOOL)nonPopupWhenAbsence {
-	return nonPopupWhenAbsence;
-}
-
-- (void)setNonPopupWhenAbsence:(BOOL)nonPop {
-	nonPopupWhenAbsence = nonPop;
-}
-
-// ノンポップアップ受信時アイコンバウンド種別
-- (IPMsgIconBoundType)iconBoundModeInNonPopup {
-	return nonPopupIconBound;
-}
-
-- (void)setIconBoundModeInNonPopup:(IPMsgIconBoundType)type {
-	nonPopupIconBound = type;
-}
-
-// クリッカブルURL
-- (BOOL)useClickableURL {
-	return useClickableURL;
-}
-
-- (void)setUseClickableURL:(BOOL)clickable {
-	useClickableURL = clickable;
-}
-
 // メッセージ部フォント
-- (NSFont*)defaultReceiveMessageFont {
-	return defaultMessageFont;
+- (NSFont*)defaultReceiveMessageFont
+{
+	return _defaultMessageFont;
 }
 
-- (NSFont*)receiveMessageFont {
-	return (receiveMessageFont) ? receiveMessageFont : defaultMessageFont;
+- (NSFont*)receiveMessageFont
+{
+	return (_receiveMessageFont) ? _receiveMessageFont : _defaultMessageFont;
 }
 
-- (void)setReceiveMessageFont:(NSFont*)font {
+- (void)setReceiveMessageFont:(NSFont*)font
+{
 	[font retain];
-	[receiveMessageFont release];
-	receiveMessageFont = font;
+	[_receiveMessageFont release];
+	_receiveMessageFont = font;
 }
 
 /*----------------------------------------------------------------------------*
  * 「不在」関連
  *----------------------------------------------------------------------------*/
+#pragma mark -
+#pragma mark 不在関連
 
-- (int)numberOfAbsences {
-	return [absenceList count];
+- (NSUInteger)numberOfAbsences
+{
+	return [_absenceList count];
 }
 
-- (NSString*)absenceTitleAtIndex:(int)index {
-	return [[absenceList objectAtIndex:index] objectForKey:@"Title"];
+- (NSString*)absenceTitleAtIndex:(NSUInteger)index
+{
+	@try {
+		return [[_absenceList objectAtIndex:index] objectForKey:@"Title"];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
+	return nil;
 }
 
-- (NSString*)absenceMessageAtIndex:(int)index {
-	return [[absenceList objectAtIndex:index] objectForKey:@"Message"];
+- (NSString*)absenceMessageAtIndex:(NSUInteger)index
+{
+	@try {
+		return [[_absenceList objectAtIndex:index] objectForKey:@"Message"];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
+	return nil;
 }
 
-- (BOOL)containsAbsenceTitle:(NSString*)title {
-	int i;
-	for (i = 0; i < [absenceList count]; i++) {
-		NSDictionary* dic = [absenceList objectAtIndex:i];
-		if ([title isEqualToString:[dic objectForKey:@"Title"]]) {
-			return YES;
+- (BOOL)containsAbsenceTitle:(NSString*)title
+{
+	@try {
+		for (NSDictionary* dic in _absenceList) {
+			if ([title isEqualToString:[dic objectForKey:@"Title"]]) {
+				return YES;
+			}
 		}
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
 	}
 	return NO;
 }
 
-- (void)addAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(int)index {
-	id obj = [[[NSMutableDictionary alloc] init] autorelease];
-	[obj setObject:title	forKey:@"Title"];
-	[obj setObject:msg		forKey:@"Message"];
-	if ((index < 0) || (index >= [absenceList count])) {
-		[absenceList addObject:obj];
-	} else {
-		[absenceList insertObject:obj atIndex:index];
+- (void)addAbsenceTitle:(NSString*)title message:(NSString*)msg
+{
+	@try {
+		NSMutableDictionary* dic = [NSMutableDictionary dictionary];
+		[dic setObject:title forKey:@"Title"];
+		[dic setObject:msg forKey:@"Message"];
+		[_absenceList addObject:dic];
+	} @catch (NSException* exception) {
+		ERR(@"%@(title=%@,msg=%@)", exception, title, msg);
 	}
 }
 
-- (void)setAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(int)index {
-	if ((index >= 0) && (index < [absenceList count])) {
-		id obj = [[[NSMutableDictionary alloc] init] autorelease];
-		[obj setObject:title	forKey:@"Title"];
-		[obj setObject:msg		forKey:@"Message"];
-		[absenceList replaceObjectAtIndex:index withObject:obj];
+- (void)insertAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(NSUInteger)index
+{
+	@try {
+		NSMutableDictionary* dic = [NSMutableDictionary dictionary];
+		[dic setObject:title forKey:@"Title"];
+		[dic setObject:msg forKey:@"Message"];
+		[_absenceList insertObject:dic atIndex:index];
+	} @catch (NSException* exception) {
+		ERR(@"%@(title=%@,msg=%@,index=%u)", exception, title, msg, index);
 	}
 }
 
-- (void)upAbsenceAtIndex:(int)index {
-	id obj = [[absenceList objectAtIndex:index] retain];
-	[absenceList removeObjectAtIndex:index];
-	[absenceList insertObject:obj atIndex:index - 1];
-	[obj release];
+- (void)setAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(NSInteger)index
+{
+	@try {
+		NSMutableDictionary* dic = [NSMutableDictionary dictionary];
+		[dic setObject:title forKey:@"Title"];
+		[dic setObject:msg forKey:@"Message"];
+		[_absenceList replaceObjectAtIndex:index withObject:dic];
+	} @catch (NSException* exception) {
+		ERR(@"%@(title=%@,msg=%@,index=%u)", exception, title, msg, index);
+	}
 }
 
-- (void)downAbsenceAtIndex:(int)index {
-	id obj = [[absenceList objectAtIndex:index] retain];
-	[absenceList removeObjectAtIndex:index];
-	[absenceList insertObject:obj atIndex:index + 1];
-	[obj release];
+- (void)upAbsenceAtIndex:(NSUInteger)index
+{
+	@try {
+		id obj = [[_absenceList objectAtIndex:index] retain];
+		[_absenceList removeObjectAtIndex:index];
+		[_absenceList insertObject:obj atIndex:index - 1];
+		[obj release];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
-- (void)removeAbsenceAtIndex:(int)index {
-	[absenceList removeObjectAtIndex:index];
+- (void)downAbsenceAtIndex:(NSUInteger)index
+{
+	@try {
+		id obj = [[_absenceList objectAtIndex:index] retain];
+		[_absenceList removeObjectAtIndex:index];
+		[_absenceList insertObject:obj atIndex:index + 1];
+		[obj release];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
-- (void)resetAllAbsences {
-	[absenceList removeAllObjects];
-	[absenceList addObjectsFromArray:defaultAbsences];
+- (void)removeAbsenceAtIndex:(NSUInteger)index
+{
+	@try {
+		[_absenceList removeObjectAtIndex:index];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
-- (BOOL)isAbsence {
-	return (absenceIndex != -1);
+- (void)resetAllAbsences
+{
+	[_absenceList removeAllObjects];
+	[_absenceList addObjectsFromArray:_defaultAbsences];
 }
 
-- (int)absenceIndex {
-	return absenceIndex;
+- (BOOL)inAbsence
+{
+	return (_absenceIndex >= 0);
 }
 
-- (void)setAbsenceIndex:(int)index {
-	if ((index >= 0) && (index < [absenceList count])) {
-		absenceIndex = index;
+- (NSInteger)absenceIndex
+{
+	return _absenceIndex;
+}
+
+- (void)setAbsenceIndex:(NSInteger)index
+{
+	if ((index >= 0) && (index < [_absenceList count])) {
+		_absenceIndex = index;
 	} else {
-		absenceIndex = -1;
+		_absenceIndex = -1;
 	}
 }
 
 /*----------------------------------------------------------------------------*
  * 「通知拒否」関連
  *----------------------------------------------------------------------------*/
+#pragma mark -
+#pragma mark 通知拒否関連
 
-- (int)numberOfRefuseInfo {
-	return [refuseList count];
+- (NSUInteger)numberOfRefuseInfo
+{
+	return [_refuseList count];
 }
 
-- (RefuseInfo*)refuseInfoAtIndex:(int)index {
-	return [refuseList objectAtIndex:index];
+- (RefuseInfo*)refuseInfoAtIndex:(NSUInteger)index
+{
+	@try {
+		return [_refuseList objectAtIndex:index];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
+	return nil;
 }
 
-- (void)addRefuseInfo:(RefuseInfo*)info atIndex:(int)index {
-	if ((index < 0) || (index >= [refuseList count])) {
-		[refuseList addObject:info];
-	} else {
-		[refuseList insertObject:info atIndex:index];
+- (void)addRefuseInfo:(RefuseInfo*)info
+{
+	@try {
+		[_refuseList addObject:info];
+	} @catch (NSException* exception) {
+		ERR(@"%@(info=%@)", exception, info);
 	}
 }
 
-- (void)setRefuseInfo:(RefuseInfo*)info atIndex:(int)index {
-	[refuseList replaceObjectAtIndex:index withObject:info];
+- (void)insertRefuseInfo:(RefuseInfo*)info atIndex:(NSUInteger)index
+{
+	@try {
+		[_refuseList insertObject:info atIndex:index];
+	} @catch (NSException* exception) {
+		ERR(@"%@(info=%@,index=%u)", exception, info, index);
+	}
 }
 
-- (void)upRefuseInfoAtIndex:(int)index {
-	id obj = [[refuseList objectAtIndex:index] retain];
-	[refuseList removeObjectAtIndex:index];
-	[refuseList insertObject:obj atIndex:index - 1];
-	[obj release];
+- (void)setRefuseInfo:(RefuseInfo*)info atIndex:(NSUInteger)index
+{
+	@try {
+		[_refuseList replaceObjectAtIndex:index withObject:info];
+	} @catch (NSException* exception) {
+		ERR(@"%@(info=%@,index=%u)", exception, info, index);
+	}
 }
 
-- (void)downRefuseInfoAtIndex:(int)index {
-	id obj = [[refuseList objectAtIndex:index] retain];
-	[refuseList removeObjectAtIndex:index];
-	[refuseList insertObject:obj atIndex:index + 1];
-	[obj release];
-}
- 
-- (void)removeRefuseInfoAtIndex:(int)index {
-	[refuseList removeObjectAtIndex:index];
+- (void)upRefuseInfoAtIndex:(NSUInteger)index
+{
+	@try {
+		id obj = [[_refuseList objectAtIndex:index] retain];
+		[_refuseList removeObjectAtIndex:index];
+		[_refuseList insertObject:obj atIndex:index - 1];
+		[obj release];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
 }
 
-- (BOOL)refuseUser:(UserInfo*)user {
-	int i;
-	for (i = 0; i < [refuseList count]; i++) {
-		RefuseInfo* info = (RefuseInfo*)[refuseList objectAtIndex:i];
+- (void)downRefuseInfoAtIndex:(NSUInteger)index
+{
+	@try {
+		id obj = [[_refuseList objectAtIndex:index] retain];
+		[_refuseList removeObjectAtIndex:index];
+		[_refuseList insertObject:obj atIndex:index + 1];
+		[obj release];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
+}
+
+- (void)removeRefuseInfoAtIndex:(NSUInteger)index
+{
+	@try {
+		[_refuseList removeObjectAtIndex:index];
+	} @catch (NSException* exception) {
+		ERR(@"%@(index=%u)", exception, index);
+	}
+}
+
+- (BOOL)matchRefuseCondition:(UserInfo*)user
+{
+	for (RefuseInfo* info in _refuseList) {
 		if ([info match:user]) {
 			return YES;
 		}
@@ -887,223 +920,104 @@ static NSString* SNDWIN_POS_Y			= @"SendWindowOriginY";
 }
 
 /*----------------------------------------------------------------------------*
- * 「ユーザリスト」関連
+ * 内部利用
  *----------------------------------------------------------------------------*/
+#pragma mark -
+#pragma mark 内部利用
 
-// ログオン名を表示する
-- (BOOL)displayLogOnName {
-	return displayLogOnName;
-}
-
-- (void)setDisplayLogOnName:(BOOL)disp {
-	displayLogOnName = disp;
-}
-
-// IPアドレスを表示する
-- (BOOL)displayIPAddress {
-	return displayIPAddress;
-}
-
-- (void)setDisplayIPAddress:(BOOL)disp {
-	displayIPAddress = disp;
-}
-
-// ソートルール
-- (int)numberOfSortRules {
-	return [sortRuleList count];
-}
-
-- (void)moveSortRuleFromIndex:(int)from toIndex:(int)to {
-	NSNumber* number = [[sortRuleList objectAtIndex:from] retain];
-	if (number) {
-		[sortRuleList removeObjectAtIndex:from];
-		[sortRuleList insertObject:number atIndex:to];
-		[number release];
+// ブロードキャスト対象アドレスリスト更新
+- (void)updateBroadcastAddresses
+{
+	NSMutableArray* newList = [NSMutableArray array];
+	for (NSString* host in _broadcastHostList) {
+		NSString* addr = [[NSHost hostWithName:host] address];
+		if (addr) {
+			if (![newList containsObject:addr]) {
+				[newList addObject:addr];
+			}
+		}
 	}
-}
-
-- (IPMsgUserSortRuleType)sortRuleTypeAtIndex:(int)index {
-	return [[sortRuleList objectAtIndex:index] intValue] & IPMSG_SORT_TYPE_MASK;
-}
-
-- (BOOL)sortRuleEnabledAtIndex:(int)index {
-	return (([[sortRuleList objectAtIndex:index] intValue] & IPMSG_SORT_ONOFF_MASK) == IPMSG_SORT_ON);
-}
-
-- (void)setSortRuleEnabled:(BOOL)flag atIndex:(int)index {
-	NSNumber* number = [sortRuleList objectAtIndex:index];
-	if (number) {
-		int value = [number intValue];
-		value &= ~IPMSG_SORT_ONOFF_MASK;
-		value |= ((flag) ? IPMSG_SORT_ON : IPMSG_SORT_OFF);
-		[sortRuleList replaceObjectAtIndex:index withObject:[NSNumber numberWithInt:value]];
+	for (NSString* addr in _broadcastIPList) {
+		if (![newList containsObject:addr]) {
+			[newList addObject:addr];
+		}
 	}
+	self.broadcastAddresses = newList;
 }
 
-- (IPMsgUserSortRuleType)sortRuleOrderAtIndex:(int)index {
-	return [[sortRuleList objectAtIndex:index] intValue] & IPMSG_SORT_ORDER_MASK;
-}
-	
-- (void)setSortRuleOrder:(IPMsgUserSortRuleType)order atIndex:(int)index {
-	NSNumber* number = [sortRuleList objectAtIndex:index];
-	if (number) {
-		int value = [number intValue];
-		value &= ~IPMSG_SORT_ORDER_MASK;
-		value |= order;
-		[sortRuleList replaceObjectAtIndex:index withObject:[NSNumber numberWithInt:value]];
+// 通知拒否リスト変換
+- (NSMutableArray*)convertRefuseDefaultsToInfo:(NSArray*)array
+{
+	NSMutableArray* newArray = [NSMutableArray array];
+	for (NSDictionary* dic in array) {
+		IPRefuseTarget		target			= 0;
+		NSString*			targetStr		= [dic objectForKey:@"Target"];
+		NSString*			string			= [dic objectForKey:@"String"];
+		IPRefuseCondition	condition		= 0;
+		NSString*			conditionStr	= [dic objectForKey:@"Condition"];
+		if (!targetStr || !string || !conditionStr) {
+			continue;
+		}
+		if ([targetStr isEqualToString:@"UserName"]) {			target = IP_REFUSE_USER;	}
+		else if ([targetStr isEqualToString:@"GroupName"]) {	target = IP_REFUSE_GROUP;	}
+		else if ([targetStr isEqualToString:@"MachineName"]) {	target = IP_REFUSE_MACHINE;	}
+		else if ([targetStr isEqualToString:@"LogOnName"]) {	target = IP_REFUSE_LOGON;	}
+		else if ([targetStr isEqualToString:@"IPAddress"]) {	target = IP_REFUSE_ADDRESS;	}
+		else {
+			WRN(@"invalid refuse target(%@)", targetStr);
+			continue;
+		}
+		if ([string length] <= 0) {
+			continue;
+		}
+		if ([conditionStr isEqualToString:@"Match"]) {			condition = IP_REFUSE_MATCH;	}
+		else if ([conditionStr isEqualToString:@"Contain"]) {	condition = IP_REFUSE_CONTAIN;	}
+		else if ([conditionStr isEqualToString:@"Start"]) {		condition = IP_REFUSE_START;	}
+		else if ([conditionStr isEqualToString:@"End"]) {		condition = IP_REFUSE_END;		}
+		else {
+			WRN(@"invalid refuse condition(%@)", conditionStr);
+			continue;
+		}
+
+		[newArray addObject:[RefuseInfo refuseInfoWithTarget:target
+													  string:string
+												   condition:condition]];
 	}
+	return newArray;
 }
 
-// 大文字小文字を無視する
-- (BOOL)sortByIgnoreCase {
-	return sortByIgnoreCase;
-}
-
-- (void)setSortByIgnoreCase:(BOOL)flag {
-	sortByIgnoreCase = flag;
-}
-
-// 漢字を優先する
-- (BOOL)sortByKanjiPriority {
-	return sortByKanjiPriority;
-}
-
-- (void)setSortByKanjiPriority:(BOOL)flag {
-	sortByKanjiPriority = flag;
-}
-
-/*----------------------------------------------------------------------------*
- * 「ログ」関連
- *----------------------------------------------------------------------------*/
-
-// 標準ログを使用する
-- (BOOL)standardLogEnabled {
-	return standardLogEnabled;
-}
-
-- (void)setStandardLogEnabled:(BOOL)b {
-	standardLogEnabled = b;
-}
-
-// 錠前付きは開封時にログ
-- (BOOL)logChainedWhenOpen {
-	return logChainedWhenOpen;
-}
-
-- (void)setLogChainedWhenOpen:(BOOL)b {
-	logChainedWhenOpen = b;
-}
-
-// 標準ログファイル
-- (NSString*)standardLogFile {
-	return standardLogFile;
-}
-
-- (void)setStandardLogFile:(NSString*)path {
-	[standardLogFile autorelease];
-	standardLogFile = [path copy];
-}
-
-// 重要ログを使用する
-- (BOOL)alternateLogEnabled {
-	return alternateLogEnabled;
-}
-
-- (void)setAlternateLogEnabled:(BOOL)b {
-	alternateLogEnabled = b;
-}
-
-// 選択範囲を記録する
-- (BOOL)logWithSelectedRange {
-	return logWithSelectedRange;
-}
-
-- (void)setLogWithSelectedRange:(BOOL)b {
-	logWithSelectedRange = b;
-}
-
-// 重要ログファイル
-- (NSString*)alternateLogFile {
-	return alternateLogFile;
-}
-- (void)setAlternateLogFile:(NSString*)path {
-	[alternateLogFile autorelease];
-	alternateLogFile = [path copy];
-}
-
-// 改行コード
-- (IPMsgLogLineEnding)logLineEnding {
-	return logLineEnding;
-}
-
-- (void)setLogLineEnding:(IPMsgLogLineEnding)lineEnding {
-	logLineEnding = lineEnding;
-}
-
-/*----------------------------------------------------------------------------*
- * 送受信ウィンドウ位置／サイズ関連
- *----------------------------------------------------------------------------*/
-
-// 受信ウィンドウ位置
-- (NSPoint)sendWindowPosition {
-	return sndWinPos;
-}
-
-- (void)setSendWindowPosition:(NSPoint)point {
-	sndWinPos = point;
-}
-
-- (void)resetSendWindowPosition {
-	sndWinPos.x	= 0;
-	sndWinPos.y = 0;
-}
-
-// 受信ウィンドウサイズ
-- (NSSize)sendWindowSize {
-	return sndWinSize;
-}
-
-- (float)sendWindowSplit {
-	return sndWinSplit;
-}
-
-- (void)setSendWindowSize:(NSSize)size split:(int)split {
-	sndWinSize	= size;
-	sndWinSplit	= split;
-}
-
-- (void)resetSendWindowSize {
-	sndWinSize.width	= 0;
-	sndWinSize.height	= 0;
-	sndWinSplit			= 0;
-}
-
-// 受信ウィンドウ位置
-- (NSPoint)receiveWindowPosition {
-	return rcvWinPos;
-}
-
-- (void)setReceiveWindowPosition:(NSPoint)position {
-	rcvWinPos = position;
-}
-
-- (void)resetReceiveWindowPosition {
-	rcvWinPos.x	= 0;
-	rcvWinPos.y	= 0;
-}
-
-// 受信ウィンドウサイズ
-- (NSSize)receiveWindowSize {
-	return rcvWinSize;
-}
-
-- (void)setReceiveWindowSize:(NSSize)size {
-	rcvWinSize = size;
-}
-
-- (void)resetReceiveWindowSize {
-	rcvWinSize.width	= 0;
-	rcvWinSize.height	= 0;
+- (NSMutableArray*)convertRefuseInfoToDefaults:(NSArray*)array
+{
+	NSMutableArray* newArray = [NSMutableArray array];
+	for (RefuseInfo* info in array) {
+		NSMutableDictionary*	dict		= [NSMutableDictionary dictionary];
+		NSString*				target		= nil;
+		NSString*				condition	= nil;
+		switch ([info target]) {
+			case IP_REFUSE_USER:	target = @"UserName";		break;
+			case IP_REFUSE_GROUP:	target = @"GroupName";		break;
+			case IP_REFUSE_MACHINE:	target = @"MachineName";	break;
+			case IP_REFUSE_LOGON:	target = @"LogOnName";		break;
+			case IP_REFUSE_ADDRESS:	target = @"IPAddress";		break;
+			default:
+				WRN(@"invalid refuse target(%d)", [info target]);
+				continue;
+		}
+		switch ([info condition]) {
+			case IP_REFUSE_MATCH:	condition = @"Match";		break;
+			case IP_REFUSE_CONTAIN:	condition = @"Contain";		break;
+			case IP_REFUSE_START:	condition = @"Start";		break;
+			case IP_REFUSE_END:		condition = @"End";			break;
+			default:
+				WRN(@"invalid refuse condition(%d)", [info condition]);
+				continue;
+		}
+		[dict setObject:target forKey:@"Target"];
+		[dict setObject:[info string] forKey:@"String"];
+		[dict setObject:condition forKey:@"Condition"];
+		[newArray addObject:dict];
+	}
+	return newArray;
 }
 
 @end

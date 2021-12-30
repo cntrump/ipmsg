@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentClient.m
- *	Module		: 添付ファイルダウンローダクラス		
+ *	Module		: 添付ファイルダウンローダクラス
  *============================================================================*/
 
 #import "AttachmentClient.h"
@@ -27,11 +27,11 @@
 /*============================================================================*
  * プライベートメソッド定義
  *============================================================================*/
- 
+
 @interface AttachmentClient(Private)
 - (void)downloadThread:(id)param;
 - (DownloadResult)downloadFile:(AttachmentFile*)file from:(int)sock;
-- (DownloadResult)downloadDir:(AttachmentFile*)file from:(int)sock;
+- (DownloadResult)downloadDir:(AttachmentFile*)file from:(int)sock useUTF8:(BOOL)utf8;
 - (DownloadResult)receiveFrom:(int)sock to:(void*)ptr maxLength:(unsigned)len;
 - (void)incrementNumberOfFile;
 - (void)incrementNumberOfDirectory;
@@ -42,7 +42,7 @@
 /*============================================================================*
  * クラス実装
  *============================================================================*/
- 
+
 @implementation AttachmentClient
 
 /*----------------------------------------------------------------------------*
@@ -66,7 +66,7 @@
 	totalSize		= 0;
 	downloadSize	= 0;
 	percentage		= 0;
-	
+
 	return self;
 }
 
@@ -94,10 +94,10 @@
 - (void)addTarget:(Attachment*)attachment {
 	if ([lock tryLock]) {
 		[targets addObject:attachment];
-		totalSize += [[attachment file] size];
+		totalSize += [attachment file].size;
 		[lock unlock];
 	} else {
-		WRN0(@"try lock err.");
+		WRN(@"try lock err.");
 	}
 }
 
@@ -116,7 +116,7 @@
 		[connection setRootObject:obj];
 		[NSThread detachNewThreadSelector:@selector(downloadThread:) toTarget:self withObject:array];
 	} else {
-		WRN0(@"try lock err.");
+		WRN(@"try lock err.");
 	}
 }
 
@@ -128,7 +128,7 @@
 /*----------------------------------------------------------------------------*
  * getter
  *----------------------------------------------------------------------------*/
- 
+
 - (unsigned)indexOfTarget {
 	return indexOfTarget;
 }
@@ -185,9 +185,9 @@
 																   sendPort:[portArray objectAtIndex:1]];
 	listener = [conn rootProxy];
 	[listener setProtocolForProxy:@protocol(AttachmentClientListener)];
-	
-	DBG0(@"start download thread.");
-	
+
+	DBG(@"start download thread.");
+
 	// ステータス管理開始
 	[startDate release];
 	startDate		= [[NSDate alloc] init];
@@ -203,50 +203,56 @@
 		struct sockaddr_in	addr;
 		Attachment* 		attach = [targets objectAtIndex:indexOfTarget];
 		char				buf[256];
-		
+
 		if (!attach) {
-			ERR(@"download:internal error(attach is nil,index=%d)", indexOfTarget);
+			ERR(@"internal error(attach is nil,index=%d)", indexOfTarget);
 			result = DL_INTERNAL_ERROR;
 			break;
 		}
-		
+
 		[listener downloadIndexOfTargetChanged];
 
 		// ソケット準備
 		sock = socket(AF_INET, SOCK_STREAM, 0);
 		if (sock == -1) {
-			ERR0(@"download:socket open error");
+			ERR(@"socket open error");
 			result = DL_SOCKET_ERROR;
 			break;
 		}
-	
+
 		// 接続
 		memset(&addr, 0, sizeof(addr));
 		addr.sin_family			= AF_INET;
 		addr.sin_port			= htons([[MessageCenter sharedCenter] myPortNo]);
-		addr.sin_addr.s_addr	= htonl([[message fromUser] addressNumber]);	
+		addr.sin_addr.s_addr	= htonl([message fromUser].ipAddressNumber);
 		if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-			ERR0(@"download:connect error");
+			ERR(@"connect error");
 			close(sock);
 			result = DL_CONNECT_ERROR;
 			break;
 		}
 		/*
 		if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
-			ERR(@"download:socket option set error(errorno=%d)", errno);
+			ERR(@"socket option set error(errorno=%d)", errno);
 			result = DL_SOCKET_ERROR;
 			break;
 		}
 		*/
-		
+
 		// リクエスト送信
+		UInt32	command = [attach.file isRegularFile] ? IPMSG_GETFILEDATA : IPMSG_GETDIRFILES;
+		BOOL	utf8	= (BOOL)(([message command] & IPMSG_UTF8OPT) != 0);
+
+		if (utf8) {
+			command |= IPMSG_UTF8OPT;
+		}
 		sprintf(buf, "%d:%ld:%s:%s:%ld:%x:%x:%x:",
 						IPMSG_VERSION,
 						[MessageCenter nextMessageID],
-						[NSUserName() ipmsgCString],
-						[[[MessageCenter sharedCenter] myHostName] ipmsgCString],
-						([[attach file] isRegularFile]) ? IPMSG_GETFILEDATA : IPMSG_GETDIRFILES,
-						[message packetNo],
+						[NSUserName() SJISString],
+						[[[MessageCenter sharedCenter] myHostName] SJISString],
+						command,
+						message.packetNo,
 						[[attach fileID] intValue],
 						0U);
 		// リクエスト送信
@@ -260,11 +266,11 @@
 
 		// ファイルダウンロード
 		if ([[attach file] isRegularFile]) {
-			result = [self downloadFile:[attach file] from:sock];
+			result = [self downloadFile:attach.file from:sock];
 			if (result == DL_SUCCESS) {
-				[attach setDownloadComplete:YES];
+				attach.isDownloaded = YES;
 			} else {
-				ERR(@"download file error.(%@)", [[attach file] name]);
+				ERR(@"download file error.(%@)", attach.file.name);
 				close(sock);
 				break;
 			}
@@ -272,11 +278,11 @@
 		}
 		// ディレクトリダウンロード
 		else if ([[attach file] isDirectory]) {
-			result = [self downloadDir:[attach file] from:sock];
+			result = [self downloadDir:attach.file from:sock useUTF8:utf8];
 			if (result == DL_SUCCESS) {
-				[attach setDownloadComplete:YES];
+				attach.isDownloaded = YES;
 			} else {
-				ERR(@"download dir error.(%@)", [[attach file] name]);
+				ERR(@"download dir error.(%@)", attach.file.name);
 				close(sock);
 				break;
 			}
@@ -285,9 +291,9 @@
 		// リソースフォーク（未実装）
 		// その他（未サポート）
 		else {
-			ERR(@"unsupported file type(%@)", [[attach file] path]);
+			ERR(@"unsupported file type(%@)", attach.file.path);
 		}
-		
+
 		// ソケットクローズ
 		close(sock);
 	}
@@ -296,7 +302,7 @@
 	}
 	[listener downloadDidFinished:result];
 	[lock unlock];
-	DBG0(@"stop download thread.");
+	DBG(@"stop download thread.");
 	[pool release];
 }
 
@@ -315,18 +321,18 @@
 	// 保存先ディレクトリ指定
 	[file setDirectory:savePath];
 	DBG(@"file:start download file(%@)", [file name]);
-	
+
 	/*------------------------------------------------------------------------*
 	 * データ受信
 	 *------------------------------------------------------------------------*/
-	
+
 	// ファイルオープン／作成
 	if (![file openFileForWrite]) {
-		ERR(@"file:open/create file error(%@)", [file path]);
+		ERR(@"file:open/create file error(%@)", file.path);
 		return DL_FILE_OPEN_ERROR;
 	}
 	// ファイル受信
-	remain = [file size];
+	remain = file.size;
 	while (remain > 0) {
 		size = MIN(sizeof(buf), remain);
 		ret = [self receiveFrom:sock to:buf maxLength:size];
@@ -335,11 +341,7 @@
 			// ファイルクローズ
 			[file closeFile];
 			// 書きかけのファイルを削除
-		#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-			[[NSFileManager defaultManager] removeItemAtPath:[file path] error:NULL];
-		#else
-			[[NSFileManager defaultManager] removeFileAtPath:[file path] handler:nil];
-		#endif
+			[[NSFileManager defaultManager] removeItemAtPath:file.path error:NULL];
 			return ret;
 		}
 		[self newDataDownload:size];
@@ -356,8 +358,8 @@
 /*----------------------------------------------------------------------------*
  * ディレクトリダウンロード処理
  *----------------------------------------------------------------------------*/
-- (DownloadResult)downloadDir:(AttachmentFile*)dir from:(int)sock {
-	
+- (DownloadResult)downloadDir:(AttachmentFile*)dir from:(int)sock useUTF8:(BOOL)utf8
+{
 	char				buf[8192];		// バッファサイズを変更可能に？
 	long				headerSize;
 	NSString*			currentDir	= savePath;
@@ -365,7 +367,7 @@
 	AttachmentFile*		file;
 	unsigned long long	remain;
 	DBG(@"dir:start download directory(%@)", [dir name]);
-	
+
 	/*------------------------------------------------------------------------*
 	 * 各ファイル受信ループ
 	 *------------------------------------------------------------------------*/
@@ -392,7 +394,7 @@
 		}
 		headerSize -= 5;	// 先頭のヘッダ長サイズ（"0000:"）分減らす
 		if (headerSize == 0) {
-			WRN0(@"dir:headerSize is 0. why?");
+			WRN(@"dir:headerSize is 0. why?");
 			continue;
 		}
 
@@ -403,17 +405,23 @@
 			break;
 		}
 		buf[headerSize] = '\0';
+		NSString* header;
+		if (utf8) {
+			header = [NSString stringWithUTF8String:buf];
+		} else {
+			header = [NSString stringWithSJISString:buf];
+		}
 //		DBG(@"dir:recv Header=%s", buf);
-		file = [AttachmentFile fileWithDirectory:currentDir header:buf];
+		file = [AttachmentFile fileWithDirectory:currentDir header:header];
 		if (!file) {
 			ERR(@"dir:parse dir header error(%s)", buf);
 			result = DL_INVALID_DATA;
 			break;
 		}
-		
+
 		// ファイルオープン／作成
 		if (![file openFileForWrite]) {
-			ERR(@"dir:open/create file error(%@)", [file path]);
+			ERR(@"dir:open/create file error(%@)", file.path);
 			result = DL_FILE_OPEN_ERROR;
 			break;
 		}
@@ -422,15 +430,15 @@
 			[self newFileDownloadStart:[file name]];
 		} else if ([file isDirectory]) {
 			[self newFileDownloadStart:[file name]];
-			currentDir = [file path];
+			currentDir = file.path;
 			DBG(@"dir:chdir to child (-> \"%@\")", [currentDir substringFromIndex:[savePath length] + 1]);
 		} else if ([file isParentDirectory]) {
-			currentDir = [file path];
+			currentDir = file.path;
 			DBG(@"dir:chdir to parent(<- \"%@\")",
 					([currentDir length] > [savePath length]) ? [currentDir substringFromIndex:[savePath length] + 1] : @"");
 		}
 		// ファイル受信
-		remain = [file size];
+		remain = file.size;
 		if (remain > 0) {
 			totalSize += remain;
 			[listener downloadTotalSizeChanged];
@@ -448,7 +456,7 @@
 		}
 		// ファイルクローズ
 		[file closeFile];
-		
+
 		if (result != DL_SUCCESS) {
 			// エラー発生
 			break;
@@ -459,20 +467,20 @@
 			result = DL_SIZE_NOT_ENOUGH;
 			break;
 		}
-		
+
 		if ([file isRegularFile]) {
 			[self incrementNumberOfFile];
 		} else if ([file isParentDirectory]) {
 			[self incrementNumberOfDirectory];
 		}
-		
+
 		// 終了判定
 		if ([currentDir isEqualToString:savePath]) {
 			DBG(@"dir:download complete2(%@)", savePath);
 			break;
 		}
 	}
-	
+
 	// エラー判定
 	if (stop) {
 		// 停止された場合
@@ -486,7 +494,7 @@
 		[[NSFileManager defaultManager] removeFileAtPath:dir handler:nil];
 	}
 */
-	
+
 	return result;
 }
 
@@ -501,7 +509,7 @@
 	int				size;
 	for (timeout = 0; (timeout < 40) && !stop; timeout++) {
 		if (stop) {
-			WRN0(@"user cancel(stop)");
+			WRN(@"user cancel(stop)");
 			return DL_STOP;
 		}
 		FD_ZERO(&fdSet);
@@ -517,7 +525,7 @@
 		}
 		if (ret < 0) {
 			// 受信エラー
-			ERR0(@"socket error(select).");
+			ERR(@"socket error(select).");
 			return DL_SOCKET_ERROR;
 		}
 		// 正常受信
@@ -531,12 +539,12 @@
 		if (recvSize < len) {
 			continue;
 		}
-		
+
 		return DL_SUCCESS;
 	}
-	
+
 	WRN(@"receive timeout(%dsec,sock=%d)", timeout/2, sock);
-	
+
 	return DL_TIMEOUT;
 }
 

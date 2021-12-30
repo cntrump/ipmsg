@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AppControl.h
- *	Module		: アプリケーションコントローラ		
+ *	Module		: アプリケーションコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -30,22 +30,27 @@
 	IBOutlet NSMenuItem*	absenceOffMenuItemForDock;		// Dock用不在解除メニュー項目
 	IBOutlet NSMenu*		absenceMenuForStatusBar;		// ステータスバー用不在メニュー
 	IBOutlet NSMenuItem*	absenceOffMenuItemForStatusBar;	// ステータスバー用不在解除メニュー項目
-	
-	IBOutlet NSMenuItem*	receiveWindowPosFixMenuItem;	// 受信ウィンドウ固定位置メニュー項目
-	IBOutlet NSMenuItem*	sendWindowPosFixMenuItem;		// 送信ウィンドウ固定位置メニュー項目
+
 	IBOutlet NSMenuItem*	showNonPopupMenuItem;			// ノンポップアップ表示メニュー項目
-	
+
+	IBOutlet NSMenuItem*	sendWindowListUserMenuItem;		// 送信ウィンドウユーザ一覧ユーザメニュー項目
+	IBOutlet NSMenuItem*	sendWindowListGroupMenuItem;	// 送信ウィンドウユーザ一覧グループメニュー項目
+	IBOutlet NSMenuItem*	sendWindowListHostMenuItem;		// 送信ウィンドウユーザ一覧ホストメニュー項目
+	IBOutlet NSMenuItem*	sendWindowListIPAddressMenuItem;// 送信ウィンドウユーザ一覧IPアドレスメニュー項目
+	IBOutlet NSMenuItem*	sendWindowListLogonMenuItem;	// 送信ウィンドウユーザ一覧ログオンメニュー項目
+	IBOutlet NSMenuItem*	sendWindowListVersionMenuItem;	// 送信ウィンドウユーザ一覧バージョンメニュー項目
+
 	IBOutlet NSMenu*		statusBarMenu;					// ステータスバー用のメニュー
 	NSStatusItem*			statusBarItem;					// ステータスアイテムのインスタンス
-	
+
 	BOOL					activatedFlag;					// アプリケーションアクティベートフラグ
-	
+
 	NSMutableArray*			receiveQueue;					// 受信メッセージキュー
 	NSLock*					receiveQueueLock;				// 受信メッセージキュー排他ロック
-	
+
 	NSTimer*				iconToggleTimer;				// アイコントグル用タイマー
-	BOOL					iconToggleState;				// アイコントグル状態（YES:通常/NO:リバース)	
-	
+	BOOL					iconToggleState;				// アイコントグル状態（YES:通常/NO:リバース)
+
 	NSImage*				iconNormal;						// 通常時アプリアイコン
 	NSImage*				iconNormalReverse;				// 通常時アプリアイコン（反転）
 	NSImage*				iconAbsence;					// 不在時アプリアイコン
@@ -54,7 +59,8 @@
 	NSImage* 				iconSmallNormalReverse;			// 通常時アプリスモールアイコン（反転）
 	NSImage*				iconSmallAbsence;				// 不在時アプリスモールアイコン
 	NSImage*				iconSmallAbsenceReverse;		// 不在時アプリスモールアイコン（反転）
-	
+	NSImage*				iconSmallAlaternate;			// 選択時アプリスモールアイコン
+
 	NSDate*					lastDockDraggedDate;			// 前回Dockドラッグ受付時刻
 	SendControl*			lastDockDraggedWindow;			// 前回Dockドラッグ時生成ウィンドウ
 }
@@ -78,6 +84,9 @@
 
 // その他
 - (IBAction)gotoHomePage:(id)sender;
+- (IBAction)showAcknowledgement:(id)sender;
 - (IBAction)openLog:(id)sender;
+
+- (void)checkLogConversion:(BOOL)aStdLog path:(NSString*)aPath;
 
 @end

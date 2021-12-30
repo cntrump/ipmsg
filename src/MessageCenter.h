@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: MessageCenter.h
- *	Module		: メッセージ送受信管理クラス		
+ *	Module		: メッセージ送受信管理クラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
@@ -55,7 +55,7 @@ typedef struct
 	// 現在値
 	NSString*				primaryNIC;			// 有線ネットワークインタフェース
 	unsigned long			myIPAddress;		// ローカルホストアドレス
-	int						myPortNo;			// ソケットポート番号
+	NSInteger				myPortNo;			// ソケットポート番号
 	NSString*				myHostName;			// コンピュータ名
 	// DynamicStore関連
 	CFRunLoopSourceRef		runLoopSource;		// Run Loop Source Obj for SC Notification
@@ -63,7 +63,7 @@ typedef struct
 	SCDynamicStoreContext	scDSContext;		// DynamicStoreContext
 	NSString*				scKeyHostName;		// DynamicStore Key [for LocalHostName]
 	NSString*				scKeyNetIPv4;		// DynamicStore Key [for Global IPv4]
-	NSString*				scKeyIFIPv4;		// DynamicStore Key [for IF IPv4 Address]	
+	NSString*				scKeyIFIPv4;		// DynamicStore Key [for IF IPv4 Address]
 }
 
 // ファクトリ

@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentServer.h
- *	Module		: 送信添付ファイル管理クラス		
+ *	Module		: 送信添付ファイル管理クラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>

@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: RetryInfo.h
- *	Module		: メッセージ再送情報クラス		
+ *	Module		: メッセージ再送情報クラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
@@ -14,27 +14,25 @@
  * クラス定義
  *============================================================================*/
 
-@interface RetryInfo : NSObject {
-	int			command;		// 送信コマンド
-	UserInfo*	toUser;			// 送信相手
-	NSData*		msgBody;		// メッセージ文字列
-	NSData*		attachMsg;		// 添付文字列
-	int			retryCount;		// リトライ回数
+@interface RetryInfo : NSObject
+{
+	UInt32		_command;
+	UserInfo*	_toUser;
+	NSString*	_message;
+	NSString*	_option;
+	NSInteger	_retry;
 }
 
-// 初期化／解放
-- (id)initWithCommand:(int)cmd to:(UserInfo*)to message:(NSData*)msg attach:(NSData*)attach;
-- (void)dealloc;
+@property(readonly)		UInt32		command;		// 送信コマンド
+@property(readonly)		UserInfo*	toUser;			// 送信相手
+@property(readonly)		NSString*	message;		// メッセージ文字列
+@property(readonly)		NSString*	option;			// 拡張メッセージ文字列
+@property(readwrite)	NSInteger	retryCount;		// リトライ階数
 
-// getter
-- (int)command;
-- (UserInfo*)toUser;
-- (NSData*)messageBody;
-- (NSData*)attachMessage;
-- (int)retryCount;
+// ファクトリ
++ (RetryInfo*)infoWithCommand:(UInt32)cmd to:(UserInfo*)to message:(NSString*)msg option:(NSString*)opt;
 
-// リトライ回数操作
-- (void)upRetryCount;
-- (void)resetRetryCount;
+// 初期化
+- (id)initWithCommand:(UInt32)cmd to:(UserInfo*)to message:(NSString*)msg option:(NSString*)opt;
 
 @end

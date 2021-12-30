@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2003 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentClient.h
- *	Module		: 添付ファイルダウンローダクラス		
+ *	Module		: 添付ファイルダウンローダクラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
@@ -55,7 +55,7 @@ typedef enum
 /*============================================================================*
  * クラス定義
  *============================================================================*/
- 
+
 @interface AttachmentClient : NSObject {
 	// ダウンロード管理変数
 	RecvMessage*		message;		// 受信メッセージ

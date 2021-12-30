@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: DebugLog.h
- *	Module		: デバッグログ機能		
+ *	Module		: デバッグログ機能
  *	Description	: デバッグログマクロ定義
  *============================================================================*/
 
@@ -12,29 +12,50 @@
 /*============================================================================*
  * 出力フラグ
  *		IPMSG_DEBUGがメインスイッチ（定義がない場合全レベル強制OFF）
- *		※ XCodeのビルドスタイルにて定義されている
+ *		※ Xcodeのビルドスタイルにて定義されている
  *			・Release ビルドスタイル：出力しない（定義なし）
  *			・Debug   ビルドスタイル：出力する（定義あり）
  *============================================================================*/
- 
+
 // レベル別出力フラグ
 //		0:出力しない
 //		1:出力する
+#ifndef IPMSG_LOG_TRC
+#define IPMSG_LOG_TRC	0
+#endif
+
+#ifndef IPMSG_LOG_DBG
 #define IPMSG_LOG_DBG	1
+#endif
+
+#ifndef IPMSG_LOG_WRN
 #define IPMSG_LOG_WRN	1
+#endif
+
+#ifndef IPMSG_LOG_ERR
 #define IPMSG_LOG_ERR	1
+#endif
+
+/*============================================================================*
+ * トレースレベルログ
+ *============================================================================*/
+
+#if defined(IPMSG_DEBUG) && (IPMSG_LOG_TRC == 1)
+#define _LOG_TRC	@"T ",__FILE__,__LINE__,__FUNCTION__
+#define TRC(...)	IPMsgLog(_LOG_TRC,[NSString stringWithFormat:__VA_ARGS__])
+#else
+#define TRC(...)
+#endif
 
 /*============================================================================*
  * デバッグレベルログ
  *============================================================================*/
- 
+
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_DBG == 1)
-	#define _LOG_DBG		@"D ",__FILE__,__LINE__
-	#define DBG0(fmt)		IPMsgLog(_LOG_DBG,fmt)
-	#define DBG(fmt, ...)	IPMsgLog(_LOG_DBG,[NSString stringWithFormat:fmt,__VA_ARGS__])
+	#define _LOG_DBG	@"D ",__FILE__,__LINE__,__FUNCTION__
+	#define DBG(...)	IPMsgLog(_LOG_DBG,[NSString stringWithFormat:__VA_ARGS__])
 #else
-	#define DBG(fmt, ...)
-	#define DBG0(fmt)
+	#define DBG(...)
 #endif
 
 /*============================================================================*
@@ -42,25 +63,21 @@
  *============================================================================*/
 
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_WRN == 1)
-	#define _LOG_WRN		@"W-",__FILE__,__LINE__
-	#define WRN0(fmt)		IPMsgLog(_LOG_WRN,fmt)
-	#define WRN(fmt, ...)	IPMsgLog(_LOG_WRN,[NSString stringWithFormat:fmt,__VA_ARGS__])
+	#define _LOG_WRN	@"W-",__FILE__,__LINE__,__FUNCTION__
+	#define WRN(...)	IPMsgLog(_LOG_WRN,[NSString stringWithFormat:__VA_ARGS__])
 #else
-	#define WRN0(fmt)
-	#define WRN(fmt, ...)
+	#define WRN(...)
 #endif
 
 /*============================================================================*
  * エラーレベルログ
  *============================================================================*/
- 
+
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_ERR == 1)
-	#define _LOG_ERR		@"E*",__FILE__,__LINE__
-	#define ERR0(fmt)		IPMsgLog(_LOG_ERR,fmt)
-	#define ERR(fmt, ...)	IPMsgLog(_LOG_ERR,[NSString stringWithFormat:fmt,__VA_ARGS__])
+	#define _LOG_ERR	@"E*",__FILE__,__LINE__,__FUNCTION__
+	#define ERR(...)	IPMsgLog(_LOG_ERR,[NSString stringWithFormat:__VA_ARGS__])
 #else
-	#define ERR0(fmt)
-	#define ERR(fmt, ...)
+	#define ERR(...)
 #endif
 
 /*============================================================================*
@@ -73,7 +90,7 @@ extern "C" {
 
 #if defined(IPMSG_DEBUG)
 // ログ出力関数
-void IPMsgLog(NSString* level, char* file, int line, NSString* msg);
+void IPMsgLog(NSString* level, const char* file, int line, const char* func, NSString* msg);
 #endif
 
 #ifdef __cplusplus

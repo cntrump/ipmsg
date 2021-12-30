@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: PrefControl.h
- *	Module		: 環境設定パネルコントローラ		
+ *	Module		: 環境設定パネルコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -18,8 +18,6 @@
 	// 全般
 	IBOutlet NSTextField*		baseUserNameField;
 	IBOutlet NSTextField*		baseGroupNameField;
-	IBOutlet NSTextField*		baseLogOnNameField;
-	IBOutlet NSTextField*		baseMachineNameField;
 	IBOutlet NSButton*			basePasswordButton;
 	IBOutlet NSPanel*			pwdSheet;
 	IBOutlet NSSecureTextField*	pwdSheetOldPwdField;
@@ -35,7 +33,6 @@
 	IBOutlet NSButton*			sendDefaultSealCheck;
 	IBOutlet NSButton*			sendHideWhenReplyCheck;
 	IBOutlet NSButton*			sendOpenNotifyCheck;
-	IBOutlet NSButton*			sendAllUsersCheck;
 	IBOutlet NSButton*			sendMultipleUserCheck;
 	// 受信
 	IBOutlet NSPopUpButton*		receiveSoundPopup;
@@ -87,14 +84,6 @@
 	IBOutlet NSButton*			refuseSheetOKButton;
 	IBOutlet NSButton*			refuseSheetCancelButton;
 	int							refuseEditIndex;
-	// ユーザリスト
-	IBOutlet NSButton*			userlistLogonDispCheck;
-	IBOutlet NSButton*			userlistAddressDispCheck;
-	IBOutlet NSButton*			userlistIgnoreCaseCheck;
-	IBOutlet NSButton*			userlistKanjiPriorityCheck;
-	IBOutlet NSTableView*		userlistSortTable;
-	IBOutlet NSButton*			userlistSortUpButton;
-	IBOutlet NSButton*			userlistSortDownButton;
 	// ログ
 	IBOutlet NSButton*			logStdEnableCheck;
 	IBOutlet NSButton*			logStdWhenOpenChainCheck;
@@ -104,7 +93,10 @@
 	IBOutlet NSButton*			logAltSelectionCheck;
 	IBOutlet NSTextField*		logAltPathField;
 	IBOutlet NSButton*			logAltPathRefButton;
-	IBOutlet NSPopUpButton*		logLineEndingsPopup;
+	// アップデート
+	IBOutlet NSButton*			updateCheckAutoCheck;
+	IBOutlet NSMatrix*			updateTypeMatrix;
+	IBOutlet NSTextField*		updateBetaTestLabel;
 }
 
 // 最新状態に更新

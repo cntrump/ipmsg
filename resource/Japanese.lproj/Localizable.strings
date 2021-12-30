@@ -1,7 +1,7 @@
 /* Localized versions of Localizable.strings keys */
 
 /* VersionMessage */
-"Version.Msg.string"		= "MacOS X版 Ver%@";
+"Version.Msg.string"		= "Mac OS X版 Ver%@";
 
 /* General */
 "Message.DefaultFontName"	= "Osaka-Mono";
@@ -71,13 +71,20 @@
 "RecvDlg.DownloadError.OtherError"		= "内部エラーが発生しました。（%d）";
 
 /* SendDialog */
-"SendDlg.UserNumStr"		= "ユーザ数：%d";
-"SendDlg.AbsenceOff.Title"	= "不在モード中";
-"SendDlg.AbsenceOff.OK"		= "解除して送信";
-"SendDlg.AbsenceOff.Cancel"	= "キャンセル";
-"SendDlg.AbsenceOff.Msg"	= "不在通知モード（%@）になっています。
+"SendDlg.UserNumStr"					= "%d / %d";
+"SendDlg.Search.Target.User"			= "ユーザ";
+"SendDlg.Search.Target.Group"			= "グループ";
+"SendDlg.Search.Target.Host"			= "ホスト";
+"SendDlg.Search.Target.LogOn"			= "ログオン";
+"SendDlg.Search.Placeholder.Separator"	= "、";
+"SendDlg.Search.Placeholder.Normal"		= "%@を検索";
+"SendDlg.Search.Placeholder.Invalid"	= "検索対象がありません";
+"SendDlg.AbsenceOff.Title"				= "不在モード中";
+"SendDlg.AbsenceOff.OK"					= "解除して送信";
+"SendDlg.AbsenceOff.Cancel"				= "キャンセル";
+"SendDlg.AbsenceOff.Msg"				= "不在通知モード（%@）になっています。
 解除して送信しますか？";
-"SendDlg.Attach.Header"		= "添付ファイル（%d）";
+"SendDlg.Attach.Header"					= "添付ファイル（%d）";
 /* Send Retry out Confirm */
 "Send.Retry.Title"			= "メッセージを再送しますか？";
 "Send.Retry.Msg"			= "%@へのメッセージ送信に失敗しました。";
@@ -165,15 +172,6 @@
 探さないでください...";
 	/* Refuse List */
 "Pref.Refuse.Error.NoInput"	= "文字列が入力されていません。";
-	/* Sort Rule */
-"Sort.RuleName.Name"		= "名前順";
-"Sort.RuleName.Group"		= "グループ名順";
-"Sort.RuleName.Address"		= "IPアドレス順";
-"Sort.RuleName.Machine"		= "マシン名順";
-"Sort.RuleName.Description"	= "画面表示文字列順";
-"Sort.RuleName.Unknown"		= "不明";
-"Sort.RuleOrder.Ascending"	= "↑昇順";
-"Sort.RuleOrder.Descending"	= "↓降順";
 	/* Log */
 "Log.File.SaveSheet.OK"		= "決定";
 "Log.Type.Broadcast"		= "(同報)";
@@ -182,6 +180,19 @@
 "Log.Type.Locked"			= "(鍵)";
 "Log.Type.Sealed"			= "(封)";
 "Log.Type.Attachment"		= "(添)";
+	/* Log Convertion */
+"Log.Conv.StdLog"			= "標準ログ";
+"Log.Conv.AltLog"			= "重要ログ";
+"Log.Conv.Title"			= "%@の変換";
+"Log.Conv.Message"			= "ログファイルの文字コードが変更になりました。
+現在の%@ファイルは変換する必要があります。
+変換してよろしいですか。
 
-/** Provisional **/
-"IPMsg.provisional.lang"	= "j"; 
+\"いいえ\"を選ぶと、現在のログファイルはバックアップされてログファイルが新しくなります。";
+"Log.Conv.OK"				= "変換する";
+"Log.Conv.Cancel"			= "いいえ";
+"Log.ConvFail.Title"		= "ログファイルの変換に失敗しました。";
+"Log.ConvFail.Message"		= "ログファイルは新しくなります。オリジナルのログファイルはそのままバックアップされます。";
+"Log.ConvFail.OK"			= "OK";
+"Log.Backup.Title"			= "オリジナルのログファイルは待避されました";
+"Log.Backup.OK"				= "閉じる";

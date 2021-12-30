@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: Config.h
- *	Module		: 初期設定情報管理クラス		
+ *	Module		: 初期設定情報管理クラス
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -15,38 +15,13 @@
  * 定数定義
  *============================================================================*/
 
-// ユーザリストソートルール種別
-typedef enum {
-	IPMSG_SORT_ASC			= 0x0001,
-	IPMSG_SORT_DESC			= 0x0002,
-	IPMSG_SORT_NAME			= 0x0010,
-	IPMSG_SORT_GROUP		= 0x0020,
-	IPMSG_SORT_IP			= 0x0030,
-	IPMSG_SORT_MACHINE		= 0x0040,
-	IPMSG_SORT_DESCRIPTION	= 0x0050,
-	IPMSG_SORT_ON			= 0x1000,
-	IPMSG_SORT_OFF			= 0x2000,
-
-} IPMsgUserSortRuleType;
-
-#define IPMSG_SORT_ORDER_MASK	0x000F
-#define IPMSG_SORT_TYPE_MASK	0x00F0
-#define IPMSG_SORT_ONOFF_MASK	0xF000
-
-// ログ改行コード 
-typedef enum {
-	IPMSG_LF,
-	IPMSG_CR,
-	IPMSG_CRLF
-	
-} IPMsgLogLineEnding;
-
 // ノンポップアップ受信アイコンバウンド種別
-typedef enum {
-	IPMSG_BOUND_ONECE	= 0,	
+typedef enum
+{
+	IPMSG_BOUND_ONECE	= 0,
 	IPMSG_BOUND_REPEAT	= 1,
 	IPMSG_BOUND_NONE	= 2
-	
+
 } IPMsgIconBoundType;
 
 /*============================================================================*
@@ -56,65 +31,100 @@ typedef enum {
 @interface Config : NSObject
 {
 	//-------- 不揮発の設定値（永続化必要）　----------------------------
-	// 全般
-	NSString*			userName;				// ユーザ名
-	NSString*			groupName;				// グループ名
-	NSString*			password;				// パスワード
-	BOOL				useStatusBar;			// メニューバーの右端にアイコンを追加するか
-	// ネットワーク
-	int					portNo;					// ポート番号
-	NSMutableArray*		broadcastHostList;		// ブロードキャスト一覧（ホスト名）
-	NSMutableArray*		broadcastIPList;		// ブロードキャスト一覧（IPアドレス）
-	NSMutableArray*		broadcastAddresses;		// ブロードキャストアドレス一覧
-	BOOL				dialup;					// ダイアルアップ接続
-	// 送信
-	NSString*			quoteString;			// 引用文字列
-	BOOL				openNewOnDockClick;		// Dockクリック時送信ウィンドウオープン
-	BOOL				sealCheckDefault;		// 封書チェックをデフォルト
-	BOOL				hideRcvWinOnReply;		// 送信時受信ウィンドウをクローズ
-	BOOL				noticeSealOpened;		// 開封確認を行う
-	BOOL				sendAllUsersEnabled;	// 全員へ送信チェックボックス有効
-	BOOL				allowSendingMultiUser;	// 複数ユーザ宛送信を許可
-	NSFont*				sendMessageFont;		// 送信ウィンドウメッセージ部フォント
-	// 受信
-	NSSound*			receiveSound;			// 受信音
-	BOOL				quoteCheckDefault;		// 引用チェックをデフォルト
-	BOOL				nonPopup;				// ノンポップアップ受信
-	BOOL				nonPopupWhenAbsence;	// 不在時ノンポップアップ受信
-	IPMsgIconBoundType	nonPopupIconBound;		// ノンポップアップ受信時アイコンバウンド種別
-	BOOL				useClickableURL;		// クリッカブルURLを使用する
-	NSFont*				receiveMessageFont;		// 受信ウィンドウメッセージ部フォント
-	// 不在
-	NSMutableArray*		absenceList;			// 不在定義
-	// 通知拒否
-	NSMutableArray*		refuseList;				// 拒否条件リスト
-	// ユーザリスト
-	BOOL				displayLogOnName;		// ログオン名を表示する
-	BOOL				displayIPAddress;		// IPアドレスを表示する
-	BOOL				sortByIgnoreCase;		// 大文字小文字を無視する
-	BOOL				sortByKanjiPriority;	// 漢字を優先する
-	NSMutableArray*		sortRuleList;			// ソートルール
-	// ログ
-	BOOL				standardLogEnabled;		// 標準ログを使用する
-	BOOL				logChainedWhenOpen;		// 錠前付きは開封時にログ
-	NSString*			standardLogFile;		// 標準ログファイルパス
-	BOOL				alternateLogEnabled;	// 重要ログを使用する
-	BOOL				logWithSelectedRange;	// 選択範囲を記録する
-	NSString*			alternateLogFile;		// 重要ログファイルパス
-	IPMsgLogLineEnding	logLineEnding;			// ログ改行コード
-	
-	// 送受信ウィンドウ位置／サイズ
-	NSPoint				sndWinPos;				// 送信ウィンドウ位置
-	NSSize				sndWinSize;				// 送信ウィンドウサイズ
-	float				sndWinSplit;			// 送信ウィンドウ分割位置
-	NSPoint				rcvWinPos;				// 受信ウィンドウ位置
-	NSSize				rcvWinSize;				// 受信ウィンドウサイズ
-
+	NSString*				_userName;
+	NSString*				_groupName;
+	NSString*				_password;
+	BOOL					_useStatusBar;
+	NSInteger				_portNo;
+	BOOL					_dialup;
+	NSMutableArray*			_broadcastHostList;
+	NSMutableArray*			_broadcastIPList;
+	NSArray*				_broadcastAddresses;
+	NSString*				_quoteString;
+	NSMutableArray*			_absenceList;
+	NSMutableArray*			_refuseList;
+	BOOL					_openNewOnDockClick;
+	BOOL					_sealCheckDefault;
+	BOOL					_hideRcvWinOnReply;
+	BOOL					_noticeSealOpened;
+	BOOL					_allowSendingMultiUser;
+	NSFont*					_sendMessageFont;
+	NSMutableDictionary*	_sendUserListColDisp;
+	NSSound*				_receiveSound;
+	BOOL					_quoteCheckDefault;
+	BOOL					_nonPopup;
+	BOOL					_nonPopupWhenAbsence;
+	IPMsgIconBoundType		_nonPopupIconBound;
+	BOOL					_useClickableURL;
+	NSFont*					_receiveMessageFont;
+	BOOL					_standardLogEnabled;
+	BOOL					_logChainedWhenOpen;
+	NSString*				_standardLogFile;
+	BOOL					_alternateLogEnabled;
+	BOOL					_logWithSelectedRange;
+	NSString*				_alternateLogFile;
+	BOOL					_sndSearchUser;
+	BOOL					_sndSearchGroup;
+	BOOL					_sndSearchHost;
+	BOOL					_sndSearchLogon;
+	NSSize					_sndWinSize;
+	float					_sndWinSplit;
+	NSSize					_rcvWinSize;
 	//-------- 揮発の設定値（永続化不要）　------------------------------
-	NSMutableArray*		defaultAbsences;		// 不在定義の初期値
-	int					absenceIndex;			// 不在モード
-	NSFont*				defaultMessageFont;		// 送受信ウィンドウメッセージ標準フォント
+	NSInteger				_absenceIndex;
+	NSFont*					_defaultMessageFont;
+	NSArray*				_defaultAbsences;
 }
+
+// 全般
+@property(copy,readwrite)	NSString*			userName;					// ユーザ名
+@property(copy,readwrite)	NSString*			groupName;					// グループ名
+@property(copy,readwrite)	NSString*			password;					// パスワード
+@property(assign,readwrite)	BOOL				useStatusBar;				// メニューバーの右端にアイコンを追加するか
+// ネットワーク
+@property(assign,readwrite)	NSInteger			portNo;						// ポート番号
+@property(assign,readwrite)	BOOL				dialup;						// ダイアルアップ接続
+@property(retain,readonly)	NSArray*			broadcastAddresses;			// ブロードキャストアドレス一覧
+// アップデート
+@property(assign,readwrite)	BOOL				updateAutomaticCheck;		// 更新自動チェック
+@property(assign,readwrite)	NSTimeInterval		updateCheckInterval;		// 更新チェック間隔
+// 不在モード
+@property(readonly)			BOOL				inAbsence;					// 不在モード中か
+@property(assign,readwrite)	NSInteger			absenceIndex;				// 不在モード
+// 送信
+@property(copy,readwrite)	NSString*			quoteString;				// 引用文字列
+@property(assign,readwrite)	BOOL				openNewOnDockClick;			// Dockクリック時送信ウィンドウオープン
+@property(assign,readwrite)	BOOL				sealCheckDefault;			// 封書チェックをデフォルト
+@property(assign,readwrite)	BOOL				hideReceiveWindowOnReply;	// 送信時受信ウィンドウをクローズ
+@property(assign,readwrite)	BOOL				noticeSealOpened;			// 開封確認を行う
+@property(assign,readwrite)	BOOL				allowSendingToMultiUser;	// 複数ユーザ宛送信を許可
+@property(retain,readwrite)	NSFont*				sendMessageFont;			// 送信ウィンドウメッセージ部フォント
+@property(readonly)			NSFont*				defaultSendMessageFont;		// 送信ウィンドウメッセージ標準フォント
+// 受信
+@property(retain,readonly)	NSSound*			receiveSound;				// 受信音
+@property(copy,readwrite)	NSString*			receiveSoundName;			// 受信音名
+@property(assign,readwrite)	BOOL				quoteCheckDefault;			// 引用チェックをデフォルト
+@property(assign,readwrite)	BOOL				nonPopup;					// ノンポップアップ受信
+@property(assign,readwrite)	BOOL				nonPopupWhenAbsence;		// 不在時ノンポップアップ受信
+@property(assign,readwrite)	IPMsgIconBoundType	iconBoundModeInNonPopup;	// ノンポップアップ受信時アイコンバウンド種別
+@property(assign,readwrite)	BOOL				useClickableURL;			// クリッカブルURLを使用する
+@property(retain,readwrite)	NSFont*				receiveMessageFont;			// 受信ウィンドウメッセージ部フォント
+@property(readonly)			NSFont*				defaultReceiveMessageFont;	// 受信ウィンドウメッセージ標準フォント
+// ログ
+@property(assign,readwrite)	BOOL				standardLogEnabled;			// 標準ログを使用する
+@property(assign,readwrite)	BOOL				logChainedWhenOpen;			// 錠前付きは開封時にログ
+@property(copy,readwrite)	NSString*			standardLogFile;			// 標準ログファイルパス
+@property(assign,readwrite)	BOOL				alternateLogEnabled;		// 重要ログを使用する
+@property(assign,readwrite)	BOOL				logWithSelectedRange;		// 選択範囲を記録する
+@property(copy,readwrite)	NSString*			alternateLogFile;			// 重要ログファイルパス
+// 送受信ウィンドウ
+@property(assign,readwrite)	NSSize				sendWindowSize;				// 送信ウィンドウサイズ
+@property(assign,readwrite)	float				sendWindowSplit;			// 送信ウィンドウ分割位置
+@property(assign,readwrite)	BOOL				sendSearchByUserName;		// 送信ユーザ検索（ユーザ名）
+@property(assign,readwrite)	BOOL				sendSearchByGroupName;		// 送信ユーザ検索（グループ名）
+@property(assign,readwrite)	BOOL				sendSearchByHostName;		// 送信ユーザ検索（ホスト名）
+@property(assign,readwrite)	BOOL				sendSearchByLogOnName;		// 送信ユーザ検索（ログオン名）
+@property(assign,readwrite)	NSSize				receiveWindowSize;			// 受信ウィンドウサイズ
 
 // ファクトリ
 + (Config*)sharedConfig;
@@ -123,171 +133,41 @@ typedef enum {
 - (void)save;
 
 // ----- getter / setter ------
-// 全般
-- (NSString*)userName;
-- (void)setUserName:(NSString*)name;
-
-- (NSString*)groupName;
-- (void)setGroupName:(NSString*)name;
-
-- (NSString*)password;
-- (void)setPassword:(NSString*)pass;
-
-- (BOOL)useStatusBar;
-- (void)setUseStatusBar:(BOOL)use;
-
 // ネットワーク
-- (int)portNo;
-- (void)setPortNo:(int)port;
-
-- (BOOL)dialup;
-- (void)setDialup:(BOOL)flag;
-
-- (NSArray*)broadcastAddresses;
-- (int)numberOfBroadcasts;
-- (NSString*)broadcastAtIndex:(int)index;
+- (NSUInteger)numberOfBroadcasts;
+- (NSString*)broadcastAtIndex:(NSUInteger)index;
 - (BOOL)containsBroadcastWithAddress:(NSString*)address;
 - (BOOL)containsBroadcastWithHost:(NSString*)host;
 - (void)addBroadcastWithAddress:(NSString*)address;
 - (void)addBroadcastWithHost:(NSString*)host;
-- (void)removeBroadcastAtIndex:(int)index;
-
-// 送信
-- (NSString*)quoteString;
-- (void)setQuoteString:(NSString*)string;
-
-- (BOOL)openNewOnDockClick;
-- (void)setOpenNewOnDockClick:(BOOL)open;
-
-- (BOOL)sealCheckDefault;
-- (void)setSealCheckDefault:(BOOL)seal;
-
-- (BOOL)hideReceiveWindowOnReply;
-- (void)setHideReceiveWindowOnReply:(BOOL)hide;
-
-- (BOOL)noticeSealOpened;
-- (void)setNoticeSealOpened:(BOOL)check;
-
-- (BOOL)sendAllUsersCheckEnabled;
-- (void)setSendAllUsersCheckEnabled:(BOOL)check;
-
-- (BOOL)allowSendingToMultiUser;
-- (void)setAllowSendingToMultiUser:(BOOL)allow;
-
-- (NSFont*)defaultSendMessageFont;
-- (NSFont*)sendMessageFont;
-- (void)setSendMessageFont:(NSFont*)font;
-
-// 受信
-- (NSSound*)receiveSound;
-- (NSString*)receiveSoundName;
-- (void)setReceiveSoundWithName:(NSString*)soundName;
-
-- (BOOL)quoteCheckDefault;
-- (void)setQuoteCheckDefault:(BOOL)quote;
-
-- (BOOL)nonPopup;
-- (void)setNonPopup:(BOOL)nonPop;
-
-- (BOOL)nonPopupWhenAbsence;
-- (void)setNonPopupWhenAbsence:(BOOL)nonPop;
-
-- (IPMsgIconBoundType)iconBoundModeInNonPopup;
-- (void)setIconBoundModeInNonPopup:(IPMsgIconBoundType)type;
-
-- (BOOL)useClickableURL;
-- (void)setUseClickableURL:(BOOL)clickable;
-
-- (NSFont*)defaultReceiveMessageFont;
-- (NSFont*)receiveMessageFont;
-- (void)setReceiveMessageFont:(NSFont*)font;
+- (void)removeBroadcastAtIndex:(NSUInteger)index;
 
 // 不在
-- (int)numberOfAbsences;
-- (NSString*)absenceTitleAtIndex:(int)index;
-- (NSString*)absenceMessageAtIndex:(int)index;
+- (NSUInteger)numberOfAbsences;
+- (NSString*)absenceTitleAtIndex:(NSUInteger)index;
+- (NSString*)absenceMessageAtIndex:(NSUInteger)index;
 - (BOOL)containsAbsenceTitle:(NSString*)title;
-- (void)addAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(int)index;
-- (void)setAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(int)index;
-- (void)upAbsenceAtIndex:(int)index;
-- (void)downAbsenceAtIndex:(int)index;
-- (void)removeAbsenceAtIndex:(int)index;
+- (void)addAbsenceTitle:(NSString*)title message:(NSString*)msg;
+- (void)insertAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(NSUInteger)index;
+- (void)setAbsenceTitle:(NSString*)title message:(NSString*)msg atIndex:(NSInteger)index;
+- (void)upAbsenceAtIndex:(NSUInteger)index;
+- (void)downAbsenceAtIndex:(NSUInteger)index;
+- (void)removeAbsenceAtIndex:(NSUInteger)index;
 - (void)resetAllAbsences;
 
-- (BOOL)isAbsence;
-- (int)absenceIndex;
-- (void)setAbsenceIndex:(int)index;
-
 // 通知拒否
-- (int)numberOfRefuseInfo;
-- (RefuseInfo*)refuseInfoAtIndex:(int)index;
-- (void)addRefuseInfo:(RefuseInfo*)info atIndex:(int)index;
-- (void)setRefuseInfo:(RefuseInfo*)info atIndex:(int)index;
-- (void)upRefuseInfoAtIndex:(int)index;
-- (void)downRefuseInfoAtIndex:(int)index;
-- (void)removeRefuseInfoAtIndex:(int)index;
+- (NSUInteger)numberOfRefuseInfo;
+- (RefuseInfo*)refuseInfoAtIndex:(NSUInteger)index;
+- (void)addRefuseInfo:(RefuseInfo*)info;
+- (void)insertRefuseInfo:(RefuseInfo*)info atIndex:(NSUInteger)index;
+- (void)setRefuseInfo:(RefuseInfo*)info atIndex:(NSUInteger)index;
+- (void)upRefuseInfoAtIndex:(NSUInteger)index;
+- (void)downRefuseInfoAtIndex:(NSUInteger)index;
+- (void)removeRefuseInfoAtIndex:(NSUInteger)index;
+- (BOOL)matchRefuseCondition:(UserInfo*)user;
 
-- (BOOL)refuseUser:(UserInfo*)user;
-
-// ユーザリスト
-- (BOOL)displayLogOnName;
-- (void)setDisplayLogOnName:(BOOL)disp;
-
-- (BOOL)displayIPAddress;
-- (void)setDisplayIPAddress:(BOOL)disp;
-
-- (BOOL)sortByIgnoreCase;
-- (void)setSortByIgnoreCase:(BOOL)flag;
-
-- (BOOL)sortByKanjiPriority;
-- (void)setSortByKanjiPriority:(BOOL)flag;
-
-- (int)numberOfSortRules;
-- (void)moveSortRuleFromIndex:(int)from toIndex:(int)to;
-- (IPMsgUserSortRuleType)sortRuleTypeAtIndex:(int)index;
-- (BOOL)sortRuleEnabledAtIndex:(int)index;
-- (void)setSortRuleEnabled:(BOOL)flag atIndex:(int)index;
-- (IPMsgUserSortRuleType)sortRuleOrderAtIndex:(int)index;
-- (void)setSortRuleOrder:(IPMsgUserSortRuleType)order atIndex:(int)index;
-
-// ログ
-- (BOOL)standardLogEnabled;
-- (void)setStandardLogEnabled:(BOOL)b;
-
-- (BOOL)logChainedWhenOpen;
-- (void)setLogChainedWhenOpen:(BOOL)b;
-
-- (NSString*)standardLogFile;
-- (void)setStandardLogFile:(NSString*)path;
-
-- (BOOL)alternateLogEnabled;
-- (void)setAlternateLogEnabled:(BOOL)b;
-
-- (BOOL)logWithSelectedRange;
-- (void)setLogWithSelectedRange:(BOOL)b;
-
-- (NSString*)alternateLogFile;
-- (void)setAlternateLogFile:(NSString*)path;
-
-- (IPMsgLogLineEnding)logLineEnding;
-- (void)setLogLineEnding:(IPMsgLogLineEnding)ending;
-
-// 送受信ウィンドウ位置／サイズ
-- (NSPoint)sendWindowPosition;
-- (void)setSendWindowPosition:(NSPoint)point;
-- (void)resetSendWindowPosition;
-
-- (NSSize)sendWindowSize;
-- (float)sendWindowSplit;
-- (void)setSendWindowSize:(NSSize)size split:(int)split;
-- (void)resetSendWindowSize;
-
-- (NSPoint)receiveWindowPosition;
-- (void)setReceiveWindowPosition:(NSPoint)position;
-- (void)resetReceiveWindowPosition;
-
-- (NSSize)receiveWindowSize;
-- (void)setReceiveWindowSize:(NSSize)size;
-- (void)resetReceiveWindowSize;
+// 送信ウィンドウ設定
+- (BOOL)sendWindowUserListColumnHidden:(id)identifier;
+- (void)setSendWindowUserListColumn:(id)identifier hidden:(BOOL)hidden;
 
 @end

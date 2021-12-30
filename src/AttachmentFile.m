@@ -1,10 +1,12 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentFile.m
- *	Module		: 添付ファイルオブジェクトクラス		
+ *	Module		: 添付ファイルオブジェクトクラス
  *============================================================================*/
+
+//	#define IPMSG_LOG_TRC	0
 
 #import "AttachmentFile.h"
 #import "IPMessenger.h"
@@ -14,27 +16,36 @@
 /*============================================================================*
  * プライベートメソッド定義
  *============================================================================*/
- 
-@interface AttachmentFile(Private)
-- (id)initWithBuffer:(char*)buf needReadModTime:(BOOL)flag;
-- (NSMutableDictionary*)fileAttributesDictionary;
-- (void)appendExtendAttributeTo:(NSMutableString*)header;
-- (void)readExtendAttribute:(char*)buf;
-- (BOOL)fileManager:(NSFileManager*)manager shouldProceedAfterError:(NSDictionary*)errorInfo;
-@end
 
-//static NSLock* resourceLock = nil;
+@interface AttachmentFile()
+- (id)initWithBuffer:(NSString*)buf needReadModTime:(BOOL)flag;
+- (void)readExtendAttribute:(NSString*)str;
+- (NSMutableDictionary*)fileAttributes;
+@property(assign,readwrite)	NSString*	name;
+@property(assign,readwrite)	NSString*	path;
+@property(assign,readwrite)	UInt64		size;
+@property(assign,readwrite)	UInt32		attribute;
+@property(retain,readwrite)	NSDate*		createTime;
+@property(retain,readwrite)	NSDate*		modifyTime;
+@end
 
 /*============================================================================*
  * クラス実装
  *============================================================================*/
- 
+
 @implementation AttachmentFile
+
+@synthesize name		= _name;
+@synthesize path		= _path;
+@synthesize size		= _size;
+@synthesize attribute	= _attribute;
+@synthesize createTime	= _createTime;
+@synthesize modifyTime	= _modifyTime;
 
 /*----------------------------------------------------------------------------*
  * ファクトリ
  *----------------------------------------------------------------------------*/
- 
+
 + (id)fileWithPath:(NSString*)path {
 	return [[[AttachmentFile alloc] initWithPath:path] autorelease];
 }
@@ -43,11 +54,11 @@
 	return [[[AttachmentFile alloc] initWithDirectory:dir file:file] autorelease];
 }
 
-+ (id)fileWithMessageAttachment:(char*)attach {
-	return [[[AttachmentFile alloc] initWithMessageAttachment:attach] autorelease];
++ (id)fileWithMessage:(NSString*)str {
+	return [[[AttachmentFile alloc] initWithMessage:str] autorelease];
 }
 
-+ (id)fileWithDirectory:(NSString*)dir header:(char*)header {
++ (id)fileWithDirectory:(NSString*)dir header:(NSString*)header {
 	return [[[AttachmentFile alloc] initWithDirectory:dir header:header] autorelease];
 }
 
@@ -61,21 +72,15 @@
 	NSDictionary*	attrs;
 	NSString*		work;
 	NSRange			range;
-			
+
 	self			= [super init];
-	fileName		= nil;
-	escapedFileName	= nil;
-	filePath		= nil;
-	fileSize		= 0LL;
-	createTime		= nil;
-	modTime			= nil;
+	_nameEscaped	= nil;
 	hfsFileType		= 0;
 	hfsCreator		= 0;
 	finderFlags		= 0;
 	permission		= 0;
-	fileAttribute	= 0;
 	handle			= nil;
-	
+
 	fileManager = [NSFileManager defaultManager];
 	// ファイル存在チェック
 	if (![fileManager fileExistsAtPath:path]) {
@@ -90,72 +95,72 @@
 		return nil;
 	}
 	// ファイル属性取得
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 	attrs = [fileManager attributesOfItemAtPath:path error:NULL];
-#else
-	attrs = [fileManager fileAttributesAtPath:path traverseLink:NO];
-#endif
 	// 初期化
-	fileName	= [[path lastPathComponent] copy];
-	filePath	= [path copy];
-	fileSize	= [[attrs objectForKey:NSFileSize] unsignedLongLongValue];
-	createTime	= [[attrs objectForKey:NSFileCreationDate] copy];
-	modTime		= [[attrs objectForKey:NSFileModificationDate] copy];
+	NSMutableString* uncomp = [NSMutableString stringWithString:[path lastPathComponent]];
+	CFStringNormalize((CFMutableStringRef)uncomp, kCFStringNormalizationFormC);
+//	CFStringFold((CFMutableStringRef)uncomp, kCFCompareCaseInsensitive | kCFCompareDiacriticInsensitive | kCFCompareWidthInsensitive, NULL);
+	self.name		= [[NSString alloc] initWithString:uncomp];
+	self.path		= [path copy];
+	self.size		= [[attrs objectForKey:NSFileSize] unsignedLongLongValue];
+	self.createTime	= [attrs objectForKey:NSFileCreationDate];
+	self.modifyTime	= [attrs objectForKey:NSFileModificationDate];
+
 	permission	= [[attrs objectForKey:NSFilePosixPermissions] unsignedIntValue];
 	hfsFileType	= [[attrs objectForKey:NSFileHFSTypeCode] unsignedLongValue];
 	hfsCreator	= [[attrs objectForKey:NSFileHFSCreatorCode] unsignedLongValue];
 	// 初期化（fileAttribute)
 	work = [attrs objectForKey:NSFileType];
 	if ([work isEqualToString:NSFileTypeRegular]) {
-		fileAttribute	= IPMSG_FILE_REGULAR;
+		self.attribute	= IPMSG_FILE_REGULAR;
 	} else if ([work isEqualToString:NSFileTypeDirectory]) {
-		fileAttribute	= IPMSG_FILE_DIR;
-		fileSize		= 0LL;	// 0じゃない場合があるみたいなので
+		self.attribute	= IPMSG_FILE_DIR;
+		self.size		= 0LL;	// 0じゃない場合があるみたいなので
 	} else {
-		WRN(@"filetype unsupported(%@ is %@)", filePath, work);
+		WRN(@"filetype unsupported(%@ is %@)", self.path, work);
 		[self release];
 		return nil;
 	}
 	if ([[attrs objectForKey:NSFileExtensionHidden] boolValue]) {
-		fileAttribute |= IPMSG_FILE_EXHIDDENOPT;
+		self.attribute |= IPMSG_FILE_EXHIDDENOPT;
 	}
 	if ([[attrs objectForKey:NSFileImmutable] boolValue]) {
-		fileAttribute |= IPMSG_FILE_RONLYOPT;
+		self.attribute |= IPMSG_FILE_RONLYOPT;
 	}
 	// ファイル属性取得（FinderInfo）
 	if (![self isDirectory]) {
 		FSRef		fsRef;
 		OSStatus	osStatus;
-		osStatus = FSPathMakeRef((const UInt8*)[filePath UTF8String], &fsRef, NULL);
+		osStatus = FSPathMakeRef((const UInt8*)[self.path UTF8String], &fsRef, NULL);
 		if (osStatus != noErr) {
-			ERR(@"FSRef make error(%@,status=%d)", filePath, osStatus);
+			ERR(@"FSRef make error(%@,status=%d)", self.path, osStatus);
 		} else {
 			FSCatalogInfo	catInfo;
 			OSErr			osError;
 			osError = FSGetCatalogInfo(&fsRef, kFSCatInfoFinderInfo, &catInfo, NULL, NULL, NULL);
 			if (osError != noErr) {
-				ERR(@"FSCatalogInfo get error(err=%d,%@)", osError, filePath);
+				ERR(@"FSCatalogInfo get error(err=%d,%@)", osError, self.path);
 			} else {
 				FInfo* info = (FInfo*)(&catInfo.finderInfo[0]);
 				finderFlags = info->fdFlags;
 				// エイリアスファイルは除く
 				if (finderFlags & kIsAlias) {
-					ERR(@"file is hfs Alias(%@)", filePath);
+					ERR(@"file is hfs Alias(%@)", self.path);
 					[self release];
 					return nil;
 				}
 				// 非表示ファイル
 				if (finderFlags & kIsInvisible) {
-					fileAttribute |= IPMSG_FILE_HIDDENOPT;
+					self.attribute |= IPMSG_FILE_HIDDENOPT;
 				}
 			}
-		}			
+		}
 	}
 	// ファイル名エスケープ（":"→"::"）
-	range = [fileName rangeOfString:@":"];
+	range = [self.name rangeOfString:@":"];
 	if (range.location != NSNotFound) {
-		NSMutableString*	escaped	= [NSMutableString stringWithCapacity:[fileName length] + 10];
-		NSArray*			array	= [fileName componentsSeparatedByString:@":"];
+		NSMutableString*	escaped	= [NSMutableString stringWithCapacity:[self.name length] + 10];
+		NSArray*			array	= [self.name componentsSeparatedByString:@":"];
 		unsigned			i;
 		for (i = 0; i < [array count]; i++) {
 			if (i != 0) {
@@ -163,9 +168,9 @@
 			}
 			[escaped appendString:[array objectAtIndex:i]];
 		}
-		escapedFileName = [[NSString alloc] initWithString:escaped];
+		_nameEscaped = [[NSString alloc] initWithString:escaped];
 	} else {
-		escapedFileName = [fileName retain];
+		_nameEscaped = [self.name retain];
 	}
 	// リソースフォーク確認
 	/*
@@ -215,7 +220,7 @@
 		}
 	}
 	*/
-	
+
 	return self;
 }
 
@@ -225,31 +230,33 @@
 }
 
 // 初期化（受信メッセージの添付ファイル）
-- (id)initWithMessageAttachment:(char*)attach {
-	return [self initWithBuffer:attach needReadModTime:YES];
+- (id)initWithMessage:(NSString*)str
+{
+	return [self initWithBuffer:str needReadModTime:YES];
 }
 
 // 初期化（ディレクトリ添付ファイル内の個別ファイル）
-- (id)initWithDirectory:(NSString*)dir header:(char*)header {
+- (id)initWithDirectory:(NSString*)dir header:(NSString*)header {
 	self = [self initWithBuffer:header needReadModTime:NO];
 	if (self) {
 		// ファイルパス
 		if ([self isParentDirectory]) {
-			filePath = [[dir stringByDeletingLastPathComponent] retain];
+			self.path = [[dir stringByDeletingLastPathComponent] retain];
 		} else {
-			filePath = [[dir stringByAppendingPathComponent:fileName] retain];
+			self.path = [[dir stringByAppendingPathComponent:self.name] retain];
 		}
-	}	
+	}
 	return self;
 }
 
 // 解放
 - (void)dealloc {
-	[fileName release];
-	[escapedFileName release];
-	[filePath release];
-	[createTime release];
-	[modTime release];
+	[_name release];
+	[_nameEscaped release];
+	[_path release];
+	[_createTime release];
+	[_modifyTime release];
+
 	[handle release];
 	[super dealloc];
 }
@@ -257,49 +264,34 @@
 /*----------------------------------------------------------------------------*
  * getter/setter
  *----------------------------------------------------------------------------*/
- 
-// ファイル名
-- (NSString*)name {
-	return fileName;
-}
-
-// ファイルパス
-- (NSString*)path {
-	return filePath;
-}
-
-// ファイルサイズ
-- (unsigned long long)size {
-	return fileSize;
-}
 
 // 通常ファイル判定
 - (BOOL)isRegularFile {
-	return (GET_MODE(fileAttribute) == IPMSG_FILE_REGULAR);
+	return (GET_MODE(self.attribute) == IPMSG_FILE_REGULAR);
 }
 
 // ディレクトリ判定
 - (BOOL)isDirectory {
-	return (GET_MODE(fileAttribute) == IPMSG_FILE_DIR);
+	return (GET_MODE(self.attribute) == IPMSG_FILE_DIR);
 }
 
 // 親ディレクトリ判定
 - (BOOL)isParentDirectory {
-	return (GET_MODE(fileAttribute) == IPMSG_FILE_RETPARENT);
+	return (GET_MODE(self.attribute) == IPMSG_FILE_RETPARENT);
 }
 
 // 拡張子非表示判定
 - (BOOL)isExtensionHidden {
-	return ((fileAttribute & IPMSG_FILE_EXHIDDENOPT) != 0);
+	return ((self.attribute & IPMSG_FILE_EXHIDDENOPT) != 0);
 }
 
 // ディレクトリ設定（ファイル保存時）
 - (void)setDirectory:(NSString*)dir {
-	if (filePath) {
-		ERR(@"filePath already exist(%@,dir=%@)", filePath, dir);
+	if (self.path) {
+		ERR(@"filePath already exist(%@,dir=%@)", self.path, dir);
 		return;
 	}
-	filePath = [[dir stringByAppendingPathComponent:fileName] retain];
+	self.path = [[dir stringByAppendingPathComponent:self.name] retain];
 }
 
 /*----------------------------------------------------------------------------*
@@ -309,14 +301,12 @@
 - (NSImage*)iconImage {
 	NSWorkspace* ws = [NSWorkspace sharedWorkspace];
 	// 絶対パス（ローカルファイル）
-	if (filePath) {
-		if ([filePath isAbsolutePath]) {
-			return [ws iconForFile:filePath];
-		}
+	if ([self.path isAbsolutePath]) {
+		return [ws iconForFile:self.path];
 	}
 	// ディレクトリ
 	if ([self isDirectory]) {
-		if ([[fileName pathExtension] isEqualToString:@"app"]) {
+		if ([[self.name pathExtension] isEqualToString:@"app"]) {
 			return [ws iconForFileType:@"app"];
 		}
 		return [ws iconForFileType:NSFileTypeForHFSTypeCode(kGenericFolderIcon)];
@@ -326,7 +316,7 @@
 		return [ws iconForFileType:NSFileTypeForHFSTypeCode(hfsFileType)];
 	}
 	// 最後のたのみ拡張子
-	return [ws iconForFileType:[fileName pathExtension]];
+	return [ws iconForFileType:[self.name pathExtension]];
 }
 
 /*----------------------------------------------------------------------------*
@@ -335,134 +325,119 @@
 
 // ファイル存在チェック
 - (BOOL)isFileExists {
-	return [[NSFileManager defaultManager] fileExistsAtPath:filePath];
+	return [[NSFileManager defaultManager] fileExistsAtPath:self.path];
 }
 
 // 書き込み用に開く
 - (BOOL)openFileForWrite {
 	NSFileManager* fileManager = [NSFileManager defaultManager];
-	
+
 	if (handle) {
 		// 既に開いていれば閉じる（バグ）
-		WRN(@"openToRead:Recalled(%@)", filePath);
+		WRN(@"openToRead:Recalled(%@)", self.path);
 		[handle closeFile];
 		[handle release];
 		handle = nil;
 	}
-	if (!filePath) {
+
+	if (!self.path) {
 		// ファイルパス未定義は受信添付ファイルの場合ありえる（バグ）
-		ERR(@"openToWrite:filePath not specified.(%@)", fileName);
+		ERR(@"filePath not specified.(%@)", self.name);
 		return NO;
 	}
-	
-	switch (GET_MODE(fileAttribute)) {
+
+	switch (GET_MODE(self.attribute)) {
 	case IPMSG_FILE_REGULAR:	// 通常ファイル
-//		DBG(@"openToWrite:type[file]=%@,size=%d", fileName, fileSize);
+//		DBG(@"type[file]=%@,size=%d", self.name, fileSize);
 		// 既存ファイルがあれば削除
-		if ([fileManager fileExistsAtPath:filePath]) {
-		#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-			if (![fileManager removeItemAtPath:filePath error:NULL]) {
-				ERR(@"opneToWrite:remove error exist file(%@)", filePath);
+		if ([fileManager fileExistsAtPath:self.path]) {
+			if (![fileManager removeItemAtPath:self.path error:NULL]) {
+				ERR(@"remove error exist file(%@)", self.path);
 				NSRunAlertPanel(NSLocalizedString(@"RecvDlg.Attach.NoPermission.Title", nil),
 								NSLocalizedString(@"RecvDlg.Attach.NoPermission.Msg", nill),
 								NSLocalizedString(@"RecvDlg.Attach.NoPermission.OK", nil),
-								nil, nil, filePath);
+								nil, nil, self.path);
 			}
-		#else
-			if (![fileManager removeFileAtPath:filePath handler:self]) {
-				ERR(@"opneToWrite:remove error exist file(%@)", filePath);
-				return NO;
-			}
-		#endif
 		}
 		// ファイル作成
-		if (![fileManager createFileAtPath:filePath contents:nil attributes:[self fileAttributesDictionary]]) {
-			ERR(@"openToWrite:file create error(%@)", filePath);
+		if (![fileManager createFileAtPath:self.path
+								  contents:nil
+								attributes:[self fileAttributes]]) {
+			ERR(@"file create error(%@)", self.path);
 			return NO;
 		}
 		// オープン（サイズ０は除く）
-		if (fileSize > 0) {
-			handle = [[NSFileHandle fileHandleForWritingAtPath:filePath] retain];
+		if (self.size > 0) {
+			handle = [[NSFileHandle fileHandleForWritingAtPath:self.path] retain];
 			if (!handle) {
-				ERR(@"openToWrite:file open error(%@)", filePath);
+				ERR(@"file open error(%@)", self.path);
 				return NO;
 			}
 		}
 		break;
 	case IPMSG_FILE_DIR:		// 子ディレクトリ
-//		DBG(@"openToWrite:type[subDir]=%@", fileName);
+//		DBG(@"type[subDir]=%@", self.name);
 		// 既存ファイルがあれば削除
-		if ([fileManager fileExistsAtPath:filePath]) {
-		#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-			if (![fileManager removeItemAtPath:filePath error:NULL]) {
-				ERR(@"opneToWrite:remove error exist dir(%@)", filePath);
+		if ([fileManager fileExistsAtPath:self.path]) {
+			if (![fileManager removeItemAtPath:self.path error:NULL]) {
+				ERR(@"remove error exist dir(%@)", self.path);
 				NSRunAlertPanel(NSLocalizedString(@"RecvDlg.Attach.NoPermission.Title", nil),
 								NSLocalizedString(@"RecvDlg.Attach.NoPermission.Msg", nill),
 								NSLocalizedString(@"RecvDlg.Attach.NoPermission.OK", nil),
-								nil, nil, filePath);
+								nil, nil, self.path);
 			}
-		#else
-			if (![fileManager removeFileAtPath:filePath handler:self]) {
-				ERR(@"opneToWrite:remove error exist dir(%@)", filePath);
-				return NO;
-			}
-		#endif
 		}
 		// ディレクトリ作成
-	#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-		if (![fileManager createDirectoryAtPath:filePath
+		if (![fileManager createDirectoryAtPath:self.path
 					withIntermediateDirectories:YES
-									 attributes:[self fileAttributesDictionary]
+									 attributes:[self fileAttributes]
 										  error:NULL]) {
-				  ERR(@"openToWrite:dir create error(%@)", filePath);
+				  ERR(@"dir create error(%@)", self.path);
 			return NO;
 		}
-	#else
-		if (![fileManager createDirectoryAtPath:filePath attributes:[self fileAttributesDictionary]]) {
-			ERR(@"openToWrite:dir create error(%@)", filePath);
-			return NO;
-		}
-	#endif
 		break;
 	case IPMSG_FILE_RETPARENT:	// 親ディレクトリ
-//		DBG(@"dir:type[parentDir]=%@", fileName);
+//		DBG(@"dir:type[parentDir]=%@", self.name);
 		break;
 	case IPMSG_FILE_SYMLINK:	// シンボリックリンク
-		WRN(@"dir:type[symlink] not support.(%@)", fileName);
+		WRN(@"dir:type[symlink] not support.(%@)", self.name);
 		break;
 	case IPMSG_FILE_CDEV:		// キャラクタ特殊ファイル
-		WRN(@"dir:type[cdev] not support.(%@)", fileName);
+		WRN(@"dir:type[cdev] not support.(%@)", self.name);
 		break;
 	case IPMSG_FILE_BDEV:		// ブロック特殊ファイル
-		WRN(@"dir:type[bdev] not support.(%@)", fileName);
+		WRN(@"dir:type[bdev] not support.(%@)", self.name);
 		break;
 	case IPMSG_FILE_FIFO:		// FIFOファイル
-		WRN(@"dir:type[fifo] not support.(%@)", fileName);
+		WRN(@"dir:type[fifo] not support.(%@)", self.name);
 		break;
 	case IPMSG_FILE_RESFORK:	// リソースフォーク
 // リソースフォーク対応時に修正が必要
-		WRN(@"dir:type[resfork] not support yet.(%@)", fileName);
+		WRN(@"dir:type[resfork] not support yet.(%@)", self.name);
 		break;
 	default:					// 未知
-		WRN(@"dir:unknown type(%@,attr=0x%08X)", fileName, fileAttribute);
+		WRN(@"dir:unknown type(%@,attr=0x%08X)", self.name, self.attribute);
 		break;
 	}
-	
+
 	return YES;
 }
 
 // ファイル書き込み
-- (BOOL)writeData:(void*)data length:(unsigned)len {
-	BOOL result = YES;
-	if (handle) {
-NS_DURING
-		[handle writeData:[NSData dataWithBytesNoCopy:data length:len freeWhenDone:NO]];
-NS_HANDLER
-		ERR(@"writeData:write error(size=%u)", len);
-		result = NO;
-NS_ENDHANDLER
+- (BOOL)writeData:(void*)data length:(unsigned)len
+{
+	if (!handle) {
+		ERR(@"handle not opend.");
+		return NO;
 	}
-	return result;
+	@try {
+		[handle writeData:[NSData dataWithBytesNoCopy:data length:len freeWhenDone:NO]];
+		return YES;
+	}
+	@catch (NSException* exception) {
+		ERR(@"write error([%@]size=%u)", [exception name], len);
+	}
+	return NO;
 }
 
 // ファイルクローズ
@@ -478,75 +453,42 @@ NS_ENDHANDLER
 		NSMutableDictionary*	newDic;
 		// FileManager属性の設定
 		fileManager = [NSFileManager defaultManager];
-	#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-		orgDic		= [fileManager attributesOfItemAtPath:filePath error:NULL];
-	#else
-		orgDic		= [fileManager fileAttributesAtPath:filePath traverseLink:NO];
-	#endif
+		orgDic		= [fileManager attributesOfItemAtPath:self.path error:NULL];
 		newDic		= [NSMutableDictionary dictionaryWithCapacity:[orgDic count]];
 		[newDic addEntriesFromDictionary:orgDic];
-		[newDic addEntriesFromDictionary:[self fileAttributesDictionary]];
-		[newDic setObject:[NSNumber numberWithBool:((fileAttribute&IPMSG_FILE_RONLYOPT) != 0)] forKey:NSFileImmutable];
-	#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-		[fileManager setAttributes:newDic ofItemAtPath:filePath error:NULL];
-	#else
-		[fileManager changeFileAttributes:newDic atPath:filePath];
-	#endif
+		[newDic addEntriesFromDictionary:[self fileAttributes]];
+		[newDic setObject:[NSNumber numberWithBool:((self.attribute&IPMSG_FILE_RONLYOPT) != 0)] forKey:NSFileImmutable];
+		[fileManager setAttributes:newDic ofItemAtPath:self.path error:NULL];
 		// FinderInfoの設定
 		if (finderFlags != 0) {
 			FSRef		fsRef;
 			OSStatus	osStatus;
-			osStatus = FSPathMakeRef((const UInt8*)[filePath UTF8String], &fsRef, NULL);
+			osStatus = FSPathMakeRef((const UInt8*)[self.path UTF8String], &fsRef, NULL);
 			if (osStatus != noErr) {
-				ERR(@"FSRef make error(%@,status=%d)", filePath, osStatus);
+				ERR(@"FSRef make error(%@,status=%d)", self.path, osStatus);
 			} else {
 				FSCatalogInfo	catInfo;
 				FSSpec			fsSpec;
 				OSErr			osError;
 				osError = FSGetCatalogInfo(&fsRef, kFSCatInfoFinderInfo, &catInfo, NULL, &fsSpec, NULL);
 				if (osError != noErr) {
-					ERR(@"FSCatalogInfo get error(err=%d,%@)", osError, filePath);
+					ERR(@"FSCatalogInfo get error(err=%d,%@)", osError, self.path);
 				} else {
 					FInfo* info = (FInfo*)(&catInfo.finderInfo[0]);
 					info->fdFlags =	finderFlags;
-					if (fileAttribute & IPMSG_FILE_HIDDENOPT) {
+					if (self.attribute & IPMSG_FILE_HIDDENOPT) {
 						info->fdFlags |= kIsInvisible;
 					}
 					osError = FSSetCatalogInfo(&fsRef, kFSCatInfoFinderInfo, &catInfo);
 					if (osError != noErr) {
-						ERR(@"FSCatalogInfo set error(0x%02X,err=%d,%@)", info->fdFlags, osError, filePath);
+						ERR(@"FSCatalogInfo set error(0x%02X,err=%d,%@)", info->fdFlags, osError, self.path);
 					} else {
-						#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-							FSFlushVolume(fsSpec.vRefNum);
-						#else
-							FlushVol(NULL, fsSpec.vRefNum);
-						#endif
+						FSFlushVolume(fsSpec.vRefNum);
 					}
 				}
-			}			
+			}
 		}
 	}
-}
-
-/*----------------------------------------------------------------------------*
- * 添付処理関連
- *----------------------------------------------------------------------------*/
-
-// ファイル添付（メッセージ付加用）文字列
-- (NSString*)stringForMessageAttachment:(unsigned)fileID {
-	unsigned mtimeVal = (unsigned)[modTime timeIntervalSince1970];
-	NSMutableString* work = [NSMutableString stringWithCapacity:64];
-	[work appendFormat:@"%d:%@:%llX:%X:%X:", fileID, escapedFileName, fileSize, mtimeVal, fileAttribute];
-	[self appendExtendAttributeTo:work];
-	return work;
-}
-
-// ディレクトリ添付（ディレクトリデータ送信時付加用）文字列
-- (NSString*)stringForDirectoryHeader {
-	NSMutableString* work = [NSMutableString stringWithCapacity:64];
-	[work appendFormat:@"%@:%llX:%X:", escapedFileName, fileSize, fileAttribute];
-	[self appendExtendAttributeTo:work];
-	return [NSString stringWithFormat:@"%04X:%@", strlen([work ipmsgCString]) + 5, work];
 }
 
 /*----------------------------------------------------------------------------*
@@ -555,7 +497,7 @@ NS_ENDHANDLER
 
 // オブジェクト概要
 - (NSString*)description {
-	return [NSString stringWithFormat:@"AttachmentFile[%@(size=%llX)]", fileName, fileSize];
+	return [NSString stringWithFormat:@"AttachmentFile[%@(size=%llX)]", self.name, self.size];
 }
 
 /*----------------------------------------------------------------------------*
@@ -563,291 +505,291 @@ NS_ENDHANDLER
  *----------------------------------------------------------------------------*/
 
 // 受信バッファ解析初期化共通処理
-- (id)initWithBuffer:(char*)buf needReadModTime:(BOOL)flag {
-	char*	ptr;
-	char*	work;
-	NSRange	range;
+- (id)initWithBuffer:(NSString*)buf needReadModTime:(BOOL)flag
+{
 	self			= [super init];
-	fileName		= nil;
-	escapedFileName	= nil;
-	filePath		= nil;
-	fileSize		= 0LL;
-	createTime		= nil;
-	modTime			= nil;
+	_nameEscaped	= nil;
 	hfsFileType		= 0;
 	hfsCreator		= 0;
 	finderFlags		= 0;
 	permission		= 0;
-	fileAttribute	= 0;
 	handle			= nil;
-	
-	if (!buf) {
-		ERR0(@"parameter buf is NULL");
-		[self release];
-		return nil;
-	}
-	ptr = buf;
-	
+
 	/*------------------------------------------------------------------------*
 	 * ファイル名
 	 *------------------------------------------------------------------------*/
-	// "::"エスケープ対応取り出し
-	work = strchr(ptr, ':');
-	if (!work) {
-		ERR(@"file name error(%s)", ptr);
-		[self release];
-		return nil;
-	}
-	while (work[1] == ':') {
-		work = strchr(work + 2, ':');
-		if (!work) {
-			ERR(@"file name error(%s)", ptr);
+
+	@try {
+		NSRange	range = [buf rangeOfString:@":"];
+		if (range.location == NSNotFound) {
+			ERR(@"file name error(%@)", buf);
 			[self release];
 			return nil;
 		}
-	}
-	*work = '\0';
-	escapedFileName = [NSString stringWithIPMsgCString:ptr];
-	// "/" → "_" 置換
-	range = [escapedFileName rangeOfString:@"/"];
-	if (range.location != NSNotFound) {
-		NSMutableString* esc = [[escapedFileName mutableCopy] autorelease];
-		range = [esc rangeOfString:@"/"];
-		while (range.location != NSNotFound) {
-			[esc replaceCharactersInRange:range withString:@"_"];
-			range = [esc rangeOfString:@"/"];
+		while ([buf characterAtIndex:range.location + 1] == ':') {
+			NSRange work = range;
+			work.location += 2;
+			work.length = [buf length] - work.location;
+			range = [buf rangeOfString:@":" options:0 range:work];
 		}
-		escapedFileName = [NSString stringWithString:esc];
+		NSString* name;
+		// ファイル名部分を切り出す
+		_nameEscaped	= [buf substringToIndex:range.location];
+		// 解析対象文字列をファイル名の後からにする
+		buf	= [buf substringFromIndex:range.location + 1];
+		// ファイル名の"::"エスケープを"_"にする（:はファイルパスに使えないので）
+		self.name = [_nameEscaped stringByReplacingOccurrencesOfString:@"::" withString:@"_"];
+		// ファイル名の"/"を"_"にする（HFS+ならば"/"は使えるが、HFS+以外の場合や混乱を回避するため）
+		self.name = [self.name stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
+
+		[_nameEscaped retain];
+		[self.name retain];
 	}
-	[escapedFileName retain];
-	// "::"エスケープ復元
-	range = [escapedFileName rangeOfString:@"::"];
-	if (range.location != NSNotFound) {
-		NSMutableString*	esc		= [[[NSMutableString alloc] initWithCapacity:[escapedFileName length]] autorelease];
-		NSArray*			array	= [escapedFileName componentsSeparatedByString:@"::"];
-		int					i;
-		for (i = 0; i < [array count]; i++) {
-			[esc appendString:[array objectAtIndex:i]];
-			if (i != [array count] - 1) {
-				[esc appendString:@":"];
-			}
-		}
-		fileName = [[NSString alloc] initWithString:esc];
-	} else {
-		fileName = [escapedFileName retain];
+	@catch (NSException* exception) {
+		ERR(@"file name error(%@,exp=%@)", buf, exception);
+		[self release];
+		return nil;
 	}
-	ptr = work + 1;
-	
+	TRC(@"fileName:%@(escaped:%@)", self.name, _nameEscaped);
+
+	NSArray*	strs	= [buf componentsSeparatedByString:@":"];
+	NSInteger	index	= 0;
+	NSString*	str;
+	NSScanner*	scanner;
+	UInt		uintVal;
+	UInt64		uint64Val;
+
 	/*------------------------------------------------------------------------*
 	 * ファイルサイズ
 	 *------------------------------------------------------------------------*/
-	work = strchr(ptr, ':');
-	if (!work) {
-		ERR(@"file size error(%s,file=@)", ptr, fileName);
+
+	str		= [strs objectAtIndex:index];
+	scanner	= [NSScanner scannerWithString:str];
+	if (![scanner scanHexLongLong:&uint64Val]) {
+		ERR(@"file size error(%@)", str);
 		[self release];
 		return nil;
 	}
-	*work = '\0';
-	fileSize = strtoull(ptr, NULL, 16);
-	ptr = work + 1;
-	
+	self.size = uint64Val;
+	index++;
+	TRC(@"fileSize:%lld", self.size);
+
 	/*------------------------------------------------------------------------*
 	 * 更新時刻（MessageAttachmentのみ）
 	 *------------------------------------------------------------------------*/
+
 	if (flag) {
-		work = strchr(ptr, ':');
-		if (!work) {
-			ERR(@"modDate attr error(%s,file=@)", ptr, fileName);
+		str		= [strs objectAtIndex:index];
+		scanner = [NSScanner scannerWithString:str];
+		if (![scanner scanHexInt:&uintVal]) {
+			ERR(@"modDate attr error(%@)", str);
 			[self release];
 			return nil;
 		}
-		*work = '\0';
-		modTime = [[NSDate dateWithTimeIntervalSince1970:strtol(ptr, NULL, 16)] retain];
-		ptr = work + 1;
+		self.modifyTime = [NSDate dateWithTimeIntervalSince1970:uintVal];
+		index++;
+		TRC(@"modTime:%@", self.modifyTime);
 	}
-	
+
 	/*------------------------------------------------------------------------*
 	 * ファイル属性
 	 *------------------------------------------------------------------------*/
-	work = strchr(ptr, ':');
-	if (!work) {
-		ERR(@"file attr error(%s,file=%@)", ptr, fileName);
+
+	str		= [strs objectAtIndex:index];
+	scanner = [NSScanner scannerWithString:str];
+	if (![scanner scanHexInt:&uintVal]) {
+		ERR(@"file attr error(%@)", str);
 		[self release];
 		return nil;
 	}
-	*work = '\0';
-	fileAttribute = strtoul(ptr, NULL, 16);
-	ptr = work + 1;
-	
+	self.attribute = uintVal;
+	index++;
+	TRC(@"attr:0x%08X", self.attribute);
+
 	/*------------------------------------------------------------------------*
 	 * 拡張ファイル属性
 	 *------------------------------------------------------------------------*/
-	while (*ptr) {
-		work = strchr(ptr, ':');
-		if (!work) {
-			ERR(@"extend attr error(%s,file=%@)", ptr, fileName);
-			[self release];
-			return nil;
-		}
-		*work = '\0';
-		[self readExtendAttribute:ptr];
-		ptr = work + 1;
+
+	while (index < [strs count]) {
+		str	= [strs objectAtIndex:index];
+		[self readExtendAttribute:str];
+		index++;
 	}
-	 
+
 	return self;
 }
 
-// ファイル属性（NSFileManager用）作成
-- (NSMutableDictionary*)fileAttributesDictionary {
-	NSMutableDictionary* attr = [NSMutableDictionary dictionaryWithCapacity:10];
-	// アクセス権（安全のため0600は必ず付与）
-	if (permission != 0) {
-		[attr setObject:[NSNumber numberWithUnsignedInt:(permission|0600)] forKey:NSFilePosixPermissions];
-	}
-	// 作成日時
-	if (createTime) {
-		[attr setObject:createTime forKey:NSFileCreationDate];
-	}
-	// 更新日時
-	if (modTime) {
-		[attr setObject:modTime forKey:NSFileModificationDate];
-	}
-	// 拡張子非表示
-	[attr setObject:[NSNumber numberWithBool:((fileAttribute|IPMSG_FILE_EXHIDDENOPT) != 0)] forKey:NSFileExtensionHidden];
-	// ファイルタイプ
-	if (hfsFileType != 0) {
-		[attr setObject:[NSNumber numberWithUnsignedLong:hfsFileType] forKey:NSFileHFSTypeCode];
-	}
-	// クリエータ
-	if (hfsCreator != 0) {
-		[attr setObject:[NSNumber numberWithUnsignedLong:hfsCreator] forKey:NSFileHFSCreatorCode];
-	}
-	return attr;
-}
-
 // 拡張ファイル属性編集
-- (void)appendExtendAttributeTo:(NSMutableString*)header {
-	if (createTime) {
-		[header appendFormat:@"%X=%X:", IPMSG_FILE_CREATETIME, (unsigned)[createTime timeIntervalSince1970]];
+- (NSString*)makeExtendAttribute
+{
+	NSMutableArray* array = [NSMutableArray arrayWithCapacity:10];
+	if (self.createTime) {
+		unsigned val = (unsigned)[self.createTime timeIntervalSince1970];
+		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_CREATETIME, val]];
 	}
-	if (modTime) {
-		[header appendFormat:@"%X=%X:", IPMSG_FILE_MTIME, (unsigned)[modTime timeIntervalSince1970]];
+	if (self.modifyTime) {
+		unsigned val = (unsigned)[self.modifyTime timeIntervalSince1970];
+		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_MTIME, val]];
 	}
 	if (permission != 0) {
-		[header appendFormat:@"%X=%X:", IPMSG_FILE_PERM, permission];
+		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_PERM, permission]];
 	}
 	if (hfsFileType != 0) {
-		[header appendFormat:@"%X=%X:", IPMSG_FILE_FILETYPE, hfsFileType];
+		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_FILETYPE, hfsFileType]];
 	}
 	if (hfsCreator != 0) {
-		[header appendFormat:@"%X=%X:", IPMSG_FILE_CREATOR, hfsCreator];
+		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_CREATOR, hfsCreator]];
 	}
 	if (finderFlags != 0) {
-		[header appendFormat:@"%X=%X:", IPMSG_FILE_FINDERINFO, finderFlags];
+		[array addObject:[NSString stringWithFormat:@"%X=%X", IPMSG_FILE_FINDERINFO, finderFlags]];
 	}
+	if ([array count] > 0) {
+		return [array componentsJoinedByString:@":"];
+	}
+	return @"";
 }
 
 // 拡張ファイル属性解析
-- (void)readExtendAttribute:(char*)buf {
-	char*			sKey;
-	char*			sVal;
-	char*			work = strchr(buf, '=');
-	unsigned long	key;
-	unsigned long	val;
-	if (!work) {
-		ERR(@"extend attribute invalid(%s)", buf);
+- (void)readExtendAttribute:(NSString*)str
+{
+	UInt		key;
+	UInt		val;
+	NSScanner*	scanner;
+	NSArray*	kv	= [str componentsSeparatedByString:@"="];
+
+	TRC(@"extAttr:string='%@'", str);
+	if ([str length] <= 0) {
+		TRC(@"extAttr:skip empty");
 		return;
 	}
-	*work = '\0';
-	sKey = buf;
-	sVal = &work[1];
-	if (strlen(sKey) == 0) {
-		ERR0(@"extend attribute key invalid");
+
+	if ([kv count] != 2) {
+		ERR(@"extend attribute invalid(%@)", str);
 		return;
 	}
-	if (strlen(sVal) == 0) {
-		ERR0(@"extend attribute val invalid");
+
+	scanner	= [NSScanner scannerWithString:[kv objectAtIndex:0]];
+	if (![scanner scanHexInt:&key]) {
+		ERR(@"extend attribute invalid(%@)", str);
 		return;
 	}
-	key = strtoul(sKey, NULL, 16);
-	val = strtoul(sVal, NULL, 16);
+	scanner	= [NSScanner scannerWithString:[kv objectAtIndex:1]];
+	if (![scanner scanHexInt:&val]) {
+		ERR(@"extend attribute invalid(%@)", str);
+		return;
+	}
+
 	switch (key) {
-	case IPMSG_FILE_UID:
-		WRN(@"extAttr:UID unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_USERNAME:
-		WRN(@"extAttr:USERNAME unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_GID:
-		WRN(@"extAttr:GID unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_GROUPNAME:
-		WRN(@"extAttr:GROUPNAME unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_PERM:
-		permission = val;
-//		DBG(@"extAttr:PERM=0%03o", permission);
-		break;
-	case IPMSG_FILE_MAJORNO:
-		WRN(@"extAttr:MAJORNO unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_MINORNO:
-		WRN(@"extAttr:MINORNO unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_CTIME:
-		WRN(@"extAttr:CTIME unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_MTIME:
-		[modTime release];
-		modTime = [[NSDate dateWithTimeIntervalSince1970:val] retain];
-//		DBG(@"extAttr:MTIME=%d(%@)", val, modTime);
-		break;
-	case IPMSG_FILE_ATIME:
-		WRN(@"extAttr:ATIME unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_CREATETIME:
-		createTime = [[NSDate dateWithTimeIntervalSince1970:val] retain];
-//		DBG(@"extAttr:CREATETIME=%d(%@)", val, createTime);
-		break;
-	case IPMSG_FILE_CREATOR:
-		hfsCreator = val;
-//		DBG5(@"extAttr:CREATOR=0x%08X('%c%c%c%c')", hfsCreator,
-//				((char*)&val)[0], ((char*)&val)[1], ((char*)&val)[2], ((char*)&val)[3]);
-		break;
-	case IPMSG_FILE_FILETYPE:
-		hfsFileType = val;
-//		DBG5(@"extAttr:FILETYPE=0x%08X('%c%c%c%c')", hfsFileType,
-//				((char*)&val)[0], ((char*)&val)[1], ((char*)&val)[2], ((char*)&val)[3]);
-		break;
-	case IPMSG_FILE_FINDERINFO:
-		finderFlags = val;
-//		DBG3(@"extAttr:FINDERINFO=0x%04X('%c%c')", finderFlags, ((char*)&val)[0], ((char*)&val)[1]);
-		break;
-	case IPMSG_FILE_ACL:
-		WRN(@"extAttr:ACL unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_ALIASFNAME:
-		WRN(@"extAttr:ALIASFNAME unsupported(%d[0x%X])", val, val);
-		break;
-	case IPMSG_FILE_UNICODEFNAME:
-		WRN(@"extAttr:UNICODEFNAME unsupported(%d[0x%X])", val, val);
-		break;
-	default:
-		WRN(@"extAttr:unknownType(0x%08X,val=%d[0x%X])", key, val, val);
-		break;
-	}	
+		case IPMSG_FILE_UID:
+			WRN(@"extAttr:UID          unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_USERNAME:
+			WRN(@"extAttr:USERNAME     unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_GID:
+			WRN(@"extAttr:GID          unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_GROUPNAME:
+			WRN(@"extAttr:GROUPNAME    unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_CLIPBOARDPOS:
+			WRN(@"extAttr:CLIPBOARDPOS unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_PERM:
+			permission = val;
+			TRC(@"extAttr:PERM       = 0%03o", permission);
+			break;
+		case IPMSG_FILE_MAJORNO:
+			WRN(@"extAttr:MAJORNO      unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_MINORNO:
+			WRN(@"extAttr:MINORNO      unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_CTIME:
+			WRN(@"extAttr:CTIME        unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_MTIME:
+			self.modifyTime = [NSDate dateWithTimeIntervalSince1970:val];
+			TRC(@"extAttr:MTIME      = %d(%@)", val, self.modifyTime);
+			break;
+		case IPMSG_FILE_ATIME:
+			WRN(@"extAttr:ATIME        unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_CREATETIME:
+			self.createTime = [NSDate dateWithTimeIntervalSince1970:val];
+			TRC(@"extAttr:CREATETIME = %d(%@)", val, self.createTime);
+			break;
+		case IPMSG_FILE_CREATOR:
+			hfsCreator = val;
+			TRC(@"extAttr:CREATOR    = 0x%08X('%c%c%c%c')", hfsCreator,
+										((char*)&val)[0], ((char*)&val)[1],
+										((char*)&val)[2], ((char*)&val)[3]);
+			break;
+		case IPMSG_FILE_FILETYPE:
+			hfsFileType = val;
+			TRC(@"extAttr:FILETYPE   = 0x%08X('%c%c%c%c')", hfsFileType,
+										((char*)&val)[0], ((char*)&val)[1],
+										((char*)&val)[2], ((char*)&val)[3]);
+			break;
+		case IPMSG_FILE_FINDERINFO:
+			finderFlags = val;
+			TRC(@"extAttr:FINDERINFO = 0x%04X('%c%c')", finderFlags,
+										((char*)&val)[0], ((char*)&val)[1]);
+			break;
+		case IPMSG_FILE_ACL:
+			WRN(@"extAttr:ACL          unsupported(%d[0x%X])", val, val);
+			break;
+		case IPMSG_FILE_ALIASFNAME:
+			WRN(@"extAttr:ALIASFNAME   unsupported(%d[0x%X])", val, val);
+			break;
+		default:
+			WRN(@"extAttr:unknownType(key=0x%08X,val=%d[0x%X])", key, val, val);
+			break;
+	}
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
-- (BOOL)fileManager:(NSFileManager*)manager shouldProceedAfterError:(NSDictionary*)errorInfo {
-	// エラーが起きるのはまずアクセス権がない場合に決まっているのでメッセージも決めうち
-	// 本来はエラーの原因を調べる必要がある
-	NSRunAlertPanel(NSLocalizedString(@"RecvDlg.Attach.NoPermission.Title", nil),
-					NSLocalizedString(@"RecvDlg.Attach.NoPermission.Msg", nill),
-					NSLocalizedString(@"RecvDlg.Attach.NoPermission.OK", nil),
-					nil, nil, [errorInfo objectForKey:@"Path"]);
-	return NO;
+// ファイル属性（NSFileManager用）作成
+- (NSMutableDictionary*)fileAttributes
+{
+	NSMutableDictionary* attr = [NSMutableDictionary dictionaryWithCapacity:6];
+
+	// アクセス権（安全のため0600は必ず付与）
+	if (permission != 0) {
+		[attr setObject:[NSNumber numberWithUnsignedInt:(permission|0600)]
+				 forKey:NSFilePosixPermissions];
+	}
+
+	// 作成日時
+	if (self.createTime) {
+		[attr setObject:self.createTime
+				 forKey:NSFileCreationDate];
+	}
+
+	// 更新日時
+	if (self.modifyTime) {
+		[attr setObject:self.modifyTime
+				 forKey:NSFileModificationDate];
+	}
+
+	// 拡張子非表示（ファイルの場合のみ）
+	if ([self isRegularFile]) {
+		[attr setObject:[NSNumber numberWithBool:((self.attribute|IPMSG_FILE_EXHIDDENOPT) != 0)]
+				 forKey:NSFileExtensionHidden];
+	}
+
+	// ファイルタイプ
+	if (hfsFileType != 0) {
+		[attr setObject:[NSNumber numberWithUnsignedLong:hfsFileType]
+				 forKey:NSFileHFSTypeCode];
+	}
+
+	// クリエータ
+	if (hfsCreator != 0) {
+		[attr setObject:[NSNumber numberWithUnsignedLong:hfsCreator]
+				 forKey:NSFileHFSCreatorCode];
+	}
+
+	return attr;
 }
-#endif
 
 @end

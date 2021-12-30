@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: UserManager.m
- *	Module		: ユーザ一覧管理クラス		
+ *	Module		: ユーザ一覧管理クラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
@@ -35,45 +35,43 @@
 /*----------------------------------------------------------------------------*
  * 初期化／解放
  *----------------------------------------------------------------------------*/
- 
+
 // 初期化
 - (id)init {
 	self		= [super init];
 	userList	= [[NSMutableArray alloc] init];
 	dialupSet	= [[NSMutableSet alloc] init];
 	lock		= [[NSRecursiveLock alloc] init];
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 	[lock setName:@"UserManagerLock"];
-#endif
 	return self;
 }
 
 // 解放
 - (void)dealloc {
-	[userList	release];
-	[dialupSet	release];
-	[lock		release];
+	[userList release];
+	[dialupSet release];
+	[lock release];
 	[super dealloc];
 }
 
 /*----------------------------------------------------------------------------*
  * ユーザ情報取得
  *----------------------------------------------------------------------------*/
- 
+
+// ユーザリストを返す
+- (NSArray*)users {
+	[lock lock];
+	NSArray* array = [NSArray arrayWithArray:userList];
+	[lock unlock];
+	return array;
+}
+
 // ユーザ数を返す
 - (int)numberOfUsers {
 	[lock lock];
 	int count = [userList count];
 	[lock unlock];
 	return count;
-}
-
-// 指定ユーザのインデックス番号を返す（見つからない場合NSNotFound）
-- (int)indexOfUser:(UserInfo*)user {
-	[lock lock];
-	int index = [userList indexOfObject:user];
-	[lock unlock];
-	return index;
 }
 
 // 指定インデックスのユーザ情報を返す（見つからない場合nil）
@@ -85,14 +83,15 @@
 }
 
 // 指定キーのユーザ情報を返す（見つからない場合nil）
-- (UserInfo*)userForLogOnUser:(NSString*)logOn address:(struct sockaddr_in*)addr {
+- (UserInfo*)userForLogOnUser:(NSString*)logOn address:(UInt32)addr port:(UInt16)port {
 	UserInfo*	info = nil;
+	int			i;
 	[lock lock];
-	for (int i = 0; i < [userList count]; i++) {
+	for (i = 0; i < [userList count]; i++) {
 		UserInfo* u = [userList objectAtIndex:i];
-		if ([[u logOnUser] isEqualToString:logOn] &&
-			([u addressNumber] == ntohl(addr->sin_addr.s_addr)) &&
-			([u portNo] == ntohs(addr->sin_port))) {
+		if ([u.logOnName isEqualToString:logOn] &&
+			(u.ipAddressNumber == addr) &&
+			(u.portNo == port)) {
 			info = [[u retain] autorelease];
 			break;
 		}
@@ -122,14 +121,26 @@
 			// あれば置き換え
 			[userList replaceObjectAtIndex:index withObject:info];
 		}
-		// リストのソート
-		[userList sortUsingSelector:@selector(compare:)];
 		// ダイアルアップユーザであればアドレス一覧を更新
-		if ([info dialup]) {
-			[dialupSet addObject:[[[info address] copy] autorelease]];
+		if (info.dialupConnect) {
+			[dialupSet addObject:[[info.ipAddress copy] autorelease]];
 		}
 		[lock unlock];
 		[self fireUserListChangeNotice];
+	}
+}
+
+// バージョン情報設定
+- (void)setVersion:(NSString*)version ofUser:(UserInfo*)user {
+	if (user) {
+		[lock lock];
+		int index = [userList indexOfObject:user];
+		if (index != NSNotFound) {
+			// あれば設定
+			user.version = version;
+			[self fireUserListChangeNotice];
+		}
+		[lock unlock];
 	}
 }
 
@@ -137,12 +148,12 @@
 - (void)removeUser:(UserInfo*)info {
 	if (info) {
 		[lock lock];
-		int index = [self indexOfUser:info];
+		int index = [userList indexOfObject:info];
 		if (index != NSNotFound) {
 			// あれば削除
 			[userList removeObjectAtIndex:index];
-			if ([dialupSet containsObject:[info address]]) {
-				[dialupSet removeObject:[info address]];
+			if ([dialupSet containsObject:info.ipAddress]) {
+				[dialupSet removeObject:info.ipAddress];
 			}
 			[self fireUserListChangeNotice];
 		}
@@ -155,19 +166,6 @@
 	[lock lock];
 	[userList removeAllObjects];
 	[dialupSet removeAllObjects];
-	[lock unlock];
-	[self fireUserListChangeNotice];
-}
-
-/*----------------------------------------------------------------------------*
- * その他
- *----------------------------------------------------------------------------*/
-
-// ユーザ一覧の再ソート
-- (void)sortUsers {
-	// リストのソート
-	[lock lock];
-	[userList sortUsingSelector:@selector(compare:)];
 	[lock unlock];
 	[self fireUserListChangeNotice];
 }

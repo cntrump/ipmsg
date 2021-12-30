@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: NoticeControl.m
- *	Module		: 通知ダイアログコントローラ		
+ *	Module		: 通知ダイアログコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -23,7 +23,7 @@
 - (id)initWithTitle:(NSString*)title message:(NSString*)msg date:(NSDate*)date {
 	NSPoint	centerPoint;
 	int		sw, sh, ww, wh;
-	
+
 	self = [super init];
 	// nibファイルロード
 	if (![NSBundle loadNibNamed:@"NoticeDialog.nib" owner:self]) {
@@ -41,12 +41,12 @@
 	ww	= [window frame].size.width;
 	wh	= [window frame].size.height;
 	centerPoint.x = (sw - ww) / 2 + (rand() % (sw / 4)) - sw / 8;
-	centerPoint.y = (sh - wh) / 2 + (rand() % (sh / 4)) - sh / 8; 
+	centerPoint.y = (sh - wh) / 2 + (rand() % (sh / 4)) - sh / 8;
 	[window setFrameOrigin:centerPoint];
-	
+
 	// ウィンドウメニューから除外
 	[window setExcludedFromWindowsMenu:YES];
-	
+
 	// ダイアログ表示
 	[window makeKeyAndOrderFront:self];
 

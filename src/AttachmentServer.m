@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: AttachmentServer.m
- *	Module		: 送信添付ファイル管理クラス		
+ *	Module		: 送信添付ファイル管理クラス
  *============================================================================*/
 
 #import "AttachmentServer.h"
@@ -37,14 +37,18 @@ typedef struct {
 /*============================================================================*
  * プライベートメソッド定義
  *============================================================================*/
- 
+
 @interface AttachmentServer(Private)
+- (BOOL)sendFile:(AttachmentFile*)file to:(int)sock sendHeader:(BOOL)flag;
+
 // 添付ファイルサーバ関連
 - (void)serverThread:(id)obj;
-- (BOOL)sendFile:(AttachmentFile*)file to:(int)sock sendHeader:(BOOL)flag;
-- (BOOL)sendDirectory:(AttachmentFile*)file to:(int)sock;
+- (BOOL)sendFile:(AttachmentFile*)file to:(int)sock useUTF8:(BOOL)flag;
+- (BOOL)sendDirectory:(AttachmentFile*)file to:(int)sock useUTF8:(BOOL)flag;
+- (BOOL)sendFileHeader:(AttachmentFile*)file to:(int)sock useUTF8:(BOOL)flag;
+- (BOOL)sendFileData:(AttachmentFile*)file to:(int)sock;
 - (void)attachSendThread:(id)obj;
-- (BOOL)parseAttachRequest:(char*)buffer into:(IPMsgAttachRequest*)req;
+- (BOOL)parseAttachRequest:(NSString*)buffer into:(IPMsgAttachRequest*)req;
 
 // その他
 - (void)fireAttachListChangeNotice;
@@ -76,10 +80,10 @@ typedef struct {
 
 // サーバ停止
 - (void)shutdownServer {
-	DBG0(@"Shutdown Attachment Server...");
+	DBG(@"Shutdown Attachment Server...");
 	shutdown = YES;
 	[serverLock lock];	// サーバロックがとれるのはサーバスレッドが終了した時
-	DBG0(@"Attachment Server finished.");
+	DBG(@"Attachment Server finished.");
 	[serverLock unlock];
 }
 
@@ -87,15 +91,15 @@ typedef struct {
  * 初期化／解放
  *----------------------------------------------------------------------------*/
 
-// 初期化 
+// 初期化
 - (id)init {
 	int					sockopt	= 1;		// ソケットオプション
 	struct sockaddr_in	addr;				// バインド用アドレス
 	int					portNo;				// ポート番号
-	
+
 	// 変数初期化
 	self		= [super init];
-	attachDic	= [[NSMutableDictionary alloc] init]; 
+	attachDic	= [[NSMutableDictionary alloc] init];
 	lockObj		= [[NSLock alloc] init];
 	serverLock	= [[NSLock alloc] init];
 	serverSock	= -1;
@@ -105,10 +109,10 @@ typedef struct {
 	if (portNo <= 0) {
 		portNo = IPMSG_DEFAULT_PORT;
 	}
-	
+
 	// ソケットオープン
 	if ((serverSock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		ERR0(@"serverSock:socket error");
+		ERR(@"serverSock:socket error");
 		// Dockアイコンバウンド
 		[NSApp requestUserAttention:NSCriticalRequest];
 		// エラーダイアログ表示
@@ -118,16 +122,16 @@ typedef struct {
 								nil, nil);
 		return self;
 	}
-	
+
 	// ソケットバインドアドレスの用意
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family			= AF_INET;
 	addr.sin_addr.s_addr	= htonl(INADDR_ANY);
 	addr.sin_port			= htons(portNo);
-	
+
 	// ソケットバインド
 	if (bind(serverSock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-		ERR0(@"serverSock:bind error");
+		ERR(@"serverSock:bind error");
 		// Dockアイコンバウンド
 		[NSApp requestUserAttention:NSCriticalRequest];
 		// エラーダイアログ表示
@@ -142,10 +146,10 @@ typedef struct {
 	// REUSE ADDR
 	sockopt = 1;
 	setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt));
-	
+
 	// サーバ初期化
 	if (listen(serverSock, 5) != 0) {
-		ERR0(@"serverSock:listen error");
+		ERR(@"serverSock:listen error");
 		// Dockアイコンバウンド
 		[NSApp requestUserAttention:NSCriticalRequest];
 		// エラーダイアログ表示
@@ -156,12 +160,12 @@ typedef struct {
 							nil, nil);
 		return self;
 	}
-	
+
 	// 添付要求受信スレッド
 	[NSThread detachNewThreadSelector:@selector(serverThread:) toTarget:self withObject:nil];
-	
+
 	valid = YES;
-	
+
 	return self;
 }
 
@@ -200,7 +204,7 @@ typedef struct {
 			if (dic) {
 				[attachDic setObject:dic forKey:mid];
 			} else {
-				ERR0(@"allocation/init error(dic)");
+				ERR(@"allocation/init error(dic)");
 			}
 			// 破棄タイマの設定
 			timer = [NSTimer scheduledTimerWithTimeInterval:(24 * 60 * 60)
@@ -211,7 +215,7 @@ typedef struct {
 			if (timer) {
 				[dic setObject:timer forKey:@"Timer"];
 			} else {
-				ERR0(@"release timer alloc/init error");
+				ERR(@"release timer alloc/init error");
 			}
 		}
 		if (dic) {
@@ -305,7 +309,7 @@ typedef struct {
 			attach = [dic objectForKey:fid];
 			if (attach) {
 				if (![attach containsUser:user]) {
-					[attach appendUser:user];
+					[attach addUser:user];
 				} else {
 					ERR(@"attach send user already exist(%@,%@,%@)", mid, fid, user);
 				}
@@ -343,7 +347,7 @@ typedef struct {
 		[self removeUser:user messageID:key];
 	}
 }
-	
+
 // 添付ファイル送信ユーザ削除
 - (void)removeUser:(UserInfo*)user messageID:(NSNumber*)mid {
 	NSMutableDictionary* dic;
@@ -415,7 +419,7 @@ typedef struct {
 /*----------------------------------------------------------------------------*
  * その他
  *----------------------------------------------------------------------------*/
- 
+
 - (int)numberOfMessageIDs {
 	return [attachDic count];
 }
@@ -488,10 +492,10 @@ typedef struct {
 	fd_set				fdSet;
 	struct timeval		tv;
 	int					ret;
-		
+
 	[serverLock lock];
-	
-	DBG0(@"ServerThread start.");
+
+	DBG(@"ServerThread start.");
 	while (!shutdown) {
 		FD_ZERO(&fdSet);
 		FD_SET(serverSock, &fdSet);
@@ -520,35 +524,40 @@ typedef struct {
 			}
 		}
 	}
-	DBG0(@"ServerThread end.");
+	DBG(@"ServerThread end.");
 
 	[serverLock unlock];
 	[pool release];
 }
 
 // ファイル送信スレッド
-- (void)attachSendThread:(id)obj {
+- (void)attachSendThread:(id)obj
+{
 	NSAutoreleasePool*	pool	= [[NSAutoreleasePool alloc] init];
 	int					sock	= [[obj objectAtIndex:0] intValue];		// 送信ソケットディスクリプタ
+	UInt32				ipAddr;
+	UInt16				ipPort;
 	struct sockaddr_in	addr;
 	int					waitTime;										// タイムアウト管理
 	fd_set				fdSet;											// ソケット監視用
 	struct timeval		tv;												// ソケット監視用
 	char				buf[256];										// リクエスト読み込みバッファ
 	int					ret;
-	
-	DBG(@"sendThread:start(fd=%d).", sock);
-	
-	addr.sin_addr.s_addr	= htonl([[obj objectAtIndex:1] unsignedLongValue]);
-	addr.sin_port			= htons([[MessageCenter sharedCenter] myPortNo]);
-	
+
+	DBG(@"start(fd=%d).", sock);
+
+	ipAddr					= [[obj objectAtIndex:1] unsignedLongValue];
+	ipPort					= [[MessageCenter sharedCenter] myPortNo];
+	addr.sin_addr.s_addr	= htonl(ipAddr);
+	addr.sin_port			= htons(ipPort);
+
 	// パラメタチェック
 	if (sock < 0) {
-		ERR(@"sendThread:no socket(%d)", sock);
+		ERR(@"no socket(%d)", sock);
 		[pool release];
 		[NSThread exit];
 	}
-	
+
 	for (waitTime = 0; waitTime < 30; waitTime++) {
 		// リクエスト受信待ち
 		memset(buf, 0, sizeof(buf));
@@ -558,14 +567,14 @@ typedef struct {
 		tv.tv_usec	= 0;
 		ret = select(sock + 1, &fdSet, NULL, NULL, &tv);
 		if (ret < 0) {
-			ERR(@"sendThread:select error(%d)", ret);
+			ERR(@"select error(%d)", ret);
 			break;
 		}
 		if (ret == 0) {
 			continue;
 		}
 		if (FD_ISSET(sock, &fdSet)) {
-			NSString*			logOn;
+			NSString*			str;
 			UserInfo*			user;
 			NSNumber*			mid;
 			NSNumber*			fid;
@@ -574,247 +583,289 @@ typedef struct {
 			IPMsgData			recvData;
 			IPMsgAttachRequest	req;
 			int					len;
+			BOOL				useUTF8;
+
 			// リクエスト読み込み
 			len = recv(sock, buf, sizeof(buf) - 1, 0);
 			if (len < 0) {
-				ERR(@"sendThread:recvError(%d)", len);
+				ERR(@"recvError(%d)", len);
 				break;
 			}
+
 			// リクエスト解析
 			buf[len] = '\0';
-			DBG(@"sendThread:recvRequest(%s)", buf);
+			DBG(@"recvRequest(%s)", buf);
 			if (![MessageCenter parseReceiveData:buf length:len into:&recvData]) {
-				ERR(@"sendThread:Command Parse Error(%s)", buf);
+				ERR(@"Command Parse Error(%s)", buf);
 				break;
 			}
+			useUTF8 = (BOOL)((recvData.command & IPMSG_UTF8OPT) != 0);
+
 			// ユーザの特定
-			logOn	= [NSString stringWithIPMsgCString:recvData.userName];
-			user	= [[UserManager sharedManager] userForLogOnUser:logOn address:&addr];
+			if (recvData.command & IPMSG_UTF8OPT) {
+				str = [NSString stringWithUTF8String:recvData.userName];
+			} else {
+				str = [NSString stringWithSJISString:recvData.userName];
+			}
+			user = [[UserManager sharedManager] userForLogOnUser:str
+														 address:ipAddr
+															port:ipPort];
 			if (!user) {
-				ERR(@"sendThread:User find error(%@/%s:%d)", logOn, inet_ntoa(addr.sin_addr), htons(addr.sin_port));
+				ERR(@"User find error(%@/%s:%d)",
+						str, inet_ntoa(addr.sin_addr), htons(addr.sin_port));
 				break;
 			}
-			// 添付ファイル解析
-			if (![self parseAttachRequest:recvData.extension into:&req]) {
-				ERR(@"sendThread:Attach parse Error(%s)", recvData.extension);
+
+			// 要求添付ファイル特定
+			str = [NSString stringWithUTF8String:recvData.extension];
+			if (![self parseAttachRequest:str into:&req]) {
+				ERR(@"Attach parse Error(%@)", str);
 				break;
 			}
 			mid		= [NSNumber numberWithInt:req.messageID];
 			fid		= [NSNumber numberWithInt:req.fileID];
 			attach	= [self attachmentWithMessageID:mid fileID:fid];
 			if (!attach) {
-				ERR(@"sendThread:attach not found.(%@/%@)", mid, fid);
+				ERR(@"attach not found.(%@/%@)", mid, fid);
 				break;
 			}
+
 			// 送信ユーザであるかチェック
 			if (![self containsUser:user messageID:mid fileID:fid]) {
-				ERR(@"sendThread:user(%@) not contained.", user);
+				ERR(@"user(%@) not contained.", user);
 				break;
 			}
+
 			// ファイル送信
 			file = [attach file];
 			if (!file) {
-				ERR0(@"sendThread:file invalid(nil)");
+				ERR(@"file invalid(nil)");
 				break;
 			}
 			switch (GET_MODE(recvData.command)) {
 			case IPMSG_GETFILEDATA:	// 通常ファイル
 				if (![file isRegularFile]) {
-					ERR(@"sendThread:type is not file(%@)", [file path]);
+					ERR(@"type is not file(%@)", file.path);
 					break;
 				}
-				if ([self sendFile:file to:sock sendHeader:NO]) {
+				if ([self sendFileData:file to:sock]) {
 					[self removeUser:user messageID:mid fileID:fid];
-					DBG0(@"sendThread:File Request processing complete.");
+					DBG(@"File Request processing complete.");
 				} else {
-					ERR(@"sendThread:sendFile error(%@)", [file path]);
+					ERR(@"sendFile error(%@)", file.path);
 				}
 				break;
 			case IPMSG_GETDIRFILES:	// ディレクトリ
 				if (![file isDirectory]) {
-					ERR(@"sendThread:type is not directory(%@)", [file path]);
+					ERR(@"type is not directory(%@)", file.path);
 					break;
 				}
-				if ([self sendDirectory:file to:sock]) {
+				if ([self sendDirectory:file to:sock useUTF8:useUTF8]) {
 					[self removeUser:user messageID:mid fileID:fid];
-					DBG0(@"sendThread:Dir Request processing complete.");
+					DBG(@"Dir Request processing complete.");
 				} else {
-					ERR(@"sendThread:sendDir error(%@)", [file path]);
+					ERR(@"sendDir error(%@)", file.path);
 				}
 				break;
 			default:	// その他
-				ERR(@"sendThread:invalid command([0x%08X],%@)", GET_MODE(recvData.command), [file path]);
+				ERR(@"invalid command([0x%08X],%@)", GET_MODE(recvData.command), file.path);
 				break;
 			}
 			break;
 		}
 	}
 	if (waitTime >= 30) {
-		ERR0(@"sendThread:recv TimeOut.");
+		ERR(@"recv TimeOut.");
 	}
-	
+
 	close(sock);
-	DBG(@"sendThread:finish.(fd=%d)", sock);
+	DBG(@"finish.(fd=%d)", sock);
 	[pool release];
 }
 
 // ディレクトリ送信
-- (BOOL)sendDirectory:(AttachmentFile*)dir to:(int)sock {
-	char*		header;
-	NSArray*	files;
-	int			i;
-	// ディレクトリヘッダ送信
-	header = (char*)[[dir stringForDirectoryHeader] ipmsgCString];
-	if (send(sock, header, strlen(header), 0) < 0) {
-		ERR(@"dir:dir header send error(%s,%@)", header, [dir path]);
+- (BOOL)sendDirectory:(AttachmentFile*)dir to:(int)sock useUTF8:(BOOL)utf8
+{
+	TRC(@"start dir(%@)", dir.path);
+
+	// ヘッダ送信
+	if (![self sendFileHeader:dir to:sock useUTF8:utf8]) {
+		ERR(@"header send error(%@)", dir.path);
 		return NO;
 	}
 
 	// ディレクトリ直下ファイル送信ループ
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	files = [fileManager contentsOfDirectoryAtPath:[dir path] error:NULL];
-#else
-	files = [fileManager directoryContentsAtPath:[dir path]];
-#endif
-if (files) {
-	for (i = 0; i < [files count]; i++) {
-//DBG(@"send:%@ %@", [dir path], [files objectAtIndex:i]);
+	NSArray* files = [fileManager contentsOfDirectoryAtPath:dir.path error:NULL];
+	for (NSString* file in files) {
+		NSString*		path;
+		AttachmentFile*	child;
 		NSDictionary*	attrs;
 		NSString*		type;
-		AttachmentFile* child;
-		child = [AttachmentFile fileWithDirectory:[dir path] file:[files objectAtIndex:i]];
+
+		path	= [dir.path stringByAppendingPathComponent:file];
+		child	= [AttachmentFile fileWithPath:path];
 		if (!child) {
-			ERR(@"dir:child[%d] of '%@' invalid(%@)", i, [dir path], [files objectAtIndex:i]);
+			ERR(@"child('%@') invalid", path);
 			continue;
 		}
-//		DBG(@"dir:child[%d] send start(%@)", i, [child name]);
-	#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-		attrs	= [fileManager attributesOfItemAtPath:[child path] error:NULL];
-	#else
-		attrs	= [fileManager fileAttributesAtPath:[child path] traverseLink:NO];
-	#endif
+
+		attrs	= [fileManager attributesOfItemAtPath:child.path error:NULL];
 		type	= [attrs objectForKey:NSFileType];
 		// 子ファイル
 		if ([type isEqualToString:NSFileTypeRegular]) {
+			// ヘッダ送信
+			if (![self sendFileHeader:child to:sock useUTF8:utf8]) {
+				ERR(@"header send error(%@)", child.path);
+				return NO;
+			}
 			// ファイルデータ送信
-			if (![self sendFile:child to:sock sendHeader:YES]) {
-				ERR(@"dir:file send error(%@[child[%d]of'%@'])", [child name], i, [dir path]);
+			if (![self sendFileData:child to:sock]) {
+				ERR(@"file send error(%@)", child.path);
 				return NO;
 			}
 		}
 		// 子ディレクトリ
 		else if ([type isEqualToString:NSFileTypeDirectory]) {
 			// ディレクトリ送信（再帰呼び出し）
-			if (![self sendDirectory:child to:sock]) {
-				ERR(@"dir:subdir send error(%@[child[%d]of'%@'])", [child name], i, [dir path]);
+			if (![self sendDirectory:child to:sock useUTF8:utf8]) {
+				ERR(@"subdir send error(%@)", child.path);
 				return NO;
 			}
 		}
 		// 非サポート
 		else {
-			ERR(@"dir:unsupported file type(%@,%@[child[%d]of'%@'])", type, [child name], i, [dir path]);
+			ERR(@"unsupported file type(%@,%@)", type, child.path);
 			continue;
 		}
 	}
-}
-	
+
 	// 親ディレクトリ復帰ヘッダ送信
-	header = "000B:.:0:3:";	// IPMSG_FILE_RETPARENT = 0x3
-	if (send(sock, header, strlen(header), 0) < 0) {
-		ERR(@"dir:to parent header send error(%s,%@)", header, [dir path]);
+	const char* dat = "000B:.:0:3:";	// IPMSG_FILE_RETPARENT = 0x3
+	if (send(sock, dat, strlen(dat), 0) < 0) {
+		ERR(@"to parent header send error(%s,%@)", dat, dir.path);
 		return NO;
 	}
-	
-//	DBG(@"SendDirComplete(%@)", [dir path]);
-			
+
+	TRC(@"complete dir(%@)", dir.path);
+
 	return YES;
 }
 
-// ファイル送信処理（ヘッダなし、ファイルデータのみ）
-- (BOOL)sendFile:(AttachmentFile*)file to:(int)sock sendHeader:(BOOL)flag {
-	// 送信準備
-	int				size		= 8192;
-	NSFileHandle*	fileHandle	= [NSFileHandle fileHandleForReadingAtPath:[file path]];
-	if (!fileHandle) {
-		ERR(@"sendFileData:Open Error(%@)", [file path]);
+// ファイル階層ヘッダ送信処理
+- (BOOL)sendFileHeader:(AttachmentFile*)file to:(int)sock useUTF8:(BOOL)utf8
+{
+	// ヘッダ編集（ファイル名に":"は使えないのでエスケープ不要）
+	NSString*	dh1	= [NSString stringWithFormat:@"%@:%llX:%X:%@:",
+											   file.name,
+											   file.size,
+											   file.attribute,
+											   [file makeExtendAttribute]];
+	NSUInteger	len	= strlen((utf8 ? [dh1 UTF8String] : [dh1 SJISString]));
+	NSString*	dh2	= [NSString stringWithFormat:@"%04X:%@", len + 5, dh1];
+	const char*	dat	= utf8 ? [dh2 UTF8String] : [dh2 SJISString];
+
+	// ファイルヘッダ送信
+	if (send(sock, dat, strlen(dat), 0) < 0) {
+		ERR(@"header send error(%s)", dh2);
 		return NO;
 	}
-	if (flag) {
-		// ファイルヘッダ送信
-		char* header = (char*)[[file stringForDirectoryHeader] ipmsgCString];
-		if (send(sock, header, strlen(header), 0) < 0) {
-			ERR(@"header send error(%s)", header);
-			[fileHandle closeFile];
-			return NO;
-		}
+
+	return YES;
+}
+
+// ファイルデータ送信処理
+- (BOOL)sendFileData:(AttachmentFile*)file to:(int)sock
+{
+	NSFileHandle*	fileHandle;
+	NSUInteger		size;
+
+	// ファイルオープン
+	fileHandle = [NSFileHandle fileHandleForReadingAtPath:file.path];
+	if (!fileHandle) {
+		ERR(@"sendFileData:Open Error(%@)", file.path);
+		return NO;
 	}
+
+	// 送信単位サイズ（将来ユーザ調整可能に？)
+	size = 8192;
+
 	// 送信ループ
 	while (YES) {
 		// ファイル読み込み
 		NSData*	data = [fileHandle readDataOfLength:size];
 		if (!data) {
-			ERR(@"sendFileData:Read Error(data is nil,path=%@)", [file path]);
+			ERR(@"sendFileData:Read Error(data is nil,path=%@)", file.path);
 			[fileHandle closeFile];
 			return NO;
 		}
 		// 送信完了チェック
 		if ([data length] == 0) {
-//			DBG(@"SendFileComplete1(%@)", [file path]);
+			TRC(@"SendFileComplete1(%@,size=%llu)", file.path, [file size]);
 			break;
 		}
 		// データ送信
 		if (send(sock, [data bytes], [data length], 0) < 0) {
-			ERR(@"sendFileData:Send Error(path=%@)", [file path]);
+			ERR(@"sendFileData:Send Error(path=%@)", file.path);
 			[fileHandle closeFile];
 			return NO;
 		}
 		if ([data length] != size) {
 			// 送信完了
-//			DBG(@"SendFileComplete2(%@)", [file path]);
+			TRC(@"SendFileComplete2(%@,size=%llu)", file.path, [file size]);
 			break;
 		}
 	}
-	
+
 	[fileHandle closeFile];
-	
+
 	return YES;
 }
 
 // 添付送信リクエスト情報解析
-- (BOOL)parseAttachRequest:(char*)buffer into:(IPMsgAttachRequest*)req {
-	char* ptr = buffer;
-	char* work;
-	if (!buffer) {
-		ERR0(@"Parameter error(buffer is NULL)");
-		return NO;
-	}
-	if (!req) {
-		ERR0(@"Parameter error(req is NULL)");
-		return NO;
-	}
-	
-	// メッセージID
-	req->messageID = strtoul(ptr, &work, 16);
-	if (*work != ':') {
-		ERR(@"messageID parse error(%s)", ptr);
-		return NO;
-	}
-	ptr = work + 1;
-	
-	// ファイルID
-	req->fileID = strtoul(ptr, &work, 16);
-	if (*work != ':') {
-		ERR(@"fileID parse error(%s)", ptr);
-		return NO;
-	}
-	ptr = work + 1;
+- (BOOL)parseAttachRequest:(NSString*)buffer into:(IPMsgAttachRequest*)req
+{
+	NSScanner*	scanner;
+	NSArray*	strs;
+	NSString*	str;
 
-	// オフセット
-	req->offset = strtoul(ptr, &work, 16);
-	if ((*work != ':') && (*work != '\0')) {
-		ERR(@"offset parse error(%s)", ptr);
+	// リクエスト分解
+	strs = [buffer componentsSeparatedByString:@":"];
+	if ([strs count] < 3) {
+		ERR(@"atach request format error(%@)", buffer);
 		return NO;
 	}
+
+	// メッセージID
+	str		= [strs objectAtIndex:0];
+	scanner = [NSScanner scannerWithString:str];
+	if (![scanner scanHexInt:&req->messageID]) {
+		ERR(@"messageID parse error(%@)", str);
+		return NO;
+	}
+
+	// ファイルID
+	str		= [strs objectAtIndex:1];
+	scanner = [NSScanner scannerWithString:str];
+	if (![scanner scanHexInt:&req->fileID]) {
+		ERR(@"fileID parse error(%@)", str);
+		return NO;
+	}
+
+	// オフセット（フォルダの場合は来ない。本当はファイルとフォルダ分けて処理すべき）
+	req->offset = 0;
+	if ([strs count] >= 3) {
+		str	= [strs objectAtIndex:2];
+		if ([str length] > 0) {
+			scanner = [NSScanner scannerWithString:str];
+			if (![scanner scanHexInt:&req->offset]) {
+				ERR(@"offset parse error(%@)", str);
+				return NO;
+			}
+		}
+	}
+
+	TRC(@"request:messageID=%d,fileID=%d,offset=%d",
+								req->messageID, req->fileID, req->offset);
 
 	return YES;
 }
@@ -824,8 +875,10 @@ if (files) {
  *----------------------------------------------------------------------------*/
 
 // 添付管理情報変更通知発行
-- (void)fireAttachListChangeNotice {
-	[[NSNotificationCenter defaultCenter] postNotificationName:NOTICE_ATTACH_LIST_CHANGED object:nil];
+- (void)fireAttachListChangeNotice
+{
+	[[NSNotificationCenter defaultCenter] postNotificationName:NOTICE_ATTACH_LIST_CHANGED
+														object:nil];
 }
 
 @end

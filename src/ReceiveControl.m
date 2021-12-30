@@ -1,9 +1,9 @@
 /*============================================================================*
- * (C) 2001-2010 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for MacOS X
+ *	Project		: IP Messenger for Mac OS X
  *	File		: ReceiveControl.m
- *	Module		: 受信メッセージウィンドウコントローラ		
+ *	Module		: 受信メッセージウィンドウコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
@@ -21,10 +21,6 @@
 
 #include <unistd.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
-typedef unsigned int NSUInteger;
-#endif
-
 /*============================================================================*
  * クラス実装
  *============================================================================*/
@@ -38,30 +34,30 @@ typedef unsigned int NSUInteger;
 // 初期化
 - (id)initWithRecvMessage:(RecvMessage*)msg {
 	Config*		config = [Config sharedConfig];
-	
+
 	self = [super init];
-	
+
 	if (!msg) {
 		[self autorelease];
 		return nil;
 	}
-	
+
 	if (![NSBundle loadNibNamed:@"ReceiveWindow.nib" owner:self]) {
 		[self autorelease];
 		return nil;
 	}
-	
+
 	// ログ出力
-	if ([config standardLogEnabled]) {
-		if (![msg locked] || ![config logChainedWhenOpen]) { 
+	if (config.standardLogEnabled) {
+		if (![msg locked] || !config.logChainedWhenOpen) {
 			[[LogManager standardLog] writeRecvLog:msg];
 			[msg setNeedLog:NO];
 		}
 	}
-	
+
 	// 表示内容の設定
-	[dateLabel setObjectValue:[msg receiveDate]];
-	[userNameLabel setStringValue:[[msg fromUser] summeryString]];
+	[dateLabel setObjectValue:msg.receiveDate];
+	[userNameLabel setStringValue:[[msg fromUser] summaryString]];
 	[messageArea setString:[msg appendix]];
 	if ([msg multicast]) {
 		[infoBox setTitle:NSLocalizedString(@"RecvDlg.BoxTitleMulti", nil)];
@@ -83,7 +79,7 @@ typedef unsigned int NSUInteger;
 	}
 
 	// クリッカブルURL設定
-	if ([config useClickableURL]) {
+	if (config.useClickableURL) {
 		NSMutableAttributedString*	attrStr;
 		NSScanner*					scanner;
 		NSCharacterSet*				charSet;
@@ -107,7 +103,7 @@ typedef unsigned int NSUInteger;
 					}
 					range.length	= [sentence length];
 					range.location	= [scanner scanLocation] - [sentence length];
-					[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];						
+					[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];
 					[attrStr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range];
 					[attrStr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:1] range:range];
 					break;
@@ -120,7 +116,7 @@ typedef unsigned int NSUInteger;
 			if (range.location != NSNotFound) {
 				range.location	= [scanner scanLocation] - [sentence length];
 				range.length	= [sentence length];
-				[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];						
+				[attrStr addAttribute:NSLinkAttributeName value:sentence range:range];
 				[attrStr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range];
 				[attrStr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:1] range:range];
 				continue;
@@ -133,22 +129,26 @@ typedef unsigned int NSUInteger;
 
 	if (![recvMsg sealed]) {
 		// 重要ログボタンの有効／無効
-		[altLogButton setEnabled:[config alternateLogEnabled]];
-	
+		if (config.alternateLogEnabled) {
+			[altLogButton setEnabled:config.alternateLogEnabled];
+		} else {
+			[altLogButton setHidden:YES];
+		}
+
 		// 添付ボタンの有効／無効
 		if ([[recvMsg attachments] count] > 0) {
 			[attachButton setEnabled:YES];
 		}
 	}
-	
+
 	[self setAttachHeader];
 	[attachTable reloadData];
 	[attachTable selectAll:self];
-	
+
 	downloader = nil;
 	pleaseCloseMe = NO;
 	attachSheetRefreshTimer = nil;
-	
+
 	return self;
 }
 
@@ -162,7 +162,7 @@ typedef unsigned int NSUInteger;
 /*----------------------------------------------------------------------------*
  * ウィンドウ表示
  *----------------------------------------------------------------------------*/
- 
+
 - (void)showWindow {
 	NSWindow* orgKeyWin = [NSApp keyWindow];
 	if (orgKeyWin) {
@@ -252,15 +252,15 @@ typedef unsigned int NSUInteger;
 					}
 					switch (result) {
 					case NSAlertDefaultReturn:
-						DBG0(@"overwrite ok.");
+						DBG(@"overwrite ok.");
 						break;
 					case NSAlertAlternateReturn:
-						DBG0(@"overwrite canceled.");
+						DBG(@"overwrite canceled.");
 						[attachTable deselectRow:index];	// 選択解除
 						index = [indexes indexGreaterThanIndex:index];
 						continue;
 					default:
-						ERR0(@"inernal error.");
+						ERR(@"inernal error.");
 						break;
 					}
 				}
@@ -269,7 +269,7 @@ typedef unsigned int NSUInteger;
 			}
 			[sheet orderOut:self];
 			if ([downloader numberOfTargets] == 0) {
-				WRN0(@"downloader has no targets");
+				WRN(@"downloader has no targets");
 				[downloader release];
 				downloader = nil;
 				return;
@@ -351,8 +351,8 @@ typedef unsigned int NSUInteger;
 		return;
 	}
 	if ([quotCheck state]) {
-		NSString* quote = [config quoteString];
-		
+		NSString* quote = config.quoteString;
+
 		// 選択範囲があれば選択範囲を引用、なければ全文引用
 		NSRange	range = [messageArea selectedRange];
 		if (range.length <= 0) {
@@ -398,18 +398,18 @@ typedef unsigned int NSUInteger;
 		   modalForWindow:window
 			modalDelegate:self
 		   didEndSelector:@selector(pwdSheetDidEnd:returnCode:contextInfo:)
-			  contextInfo:nil]; 
+			  contextInfo:nil];
 	} else {
 		// 封書消去
 		[sender removeFromSuperview];
 		[replyButton setEnabled:YES];
 		[quotCheck setEnabled:YES];
-		[altLogButton setEnabled:[[Config sharedConfig] alternateLogEnabled]];
+		[altLogButton setEnabled:[Config sharedConfig].alternateLogEnabled];
 		if ([[recvMsg attachments] count] > 0) {
 			[attachButton setEnabled:YES];
 			[attachDrawer open];
 		}
-	
+
 		// 封書開封通知送信
 		[[MessageCenter sharedCenter] sendOpenSealMessage:recvMsg];
 	}
@@ -422,9 +422,9 @@ typedef unsigned int NSUInteger;
 
 // パスワード入力シートOKボタン押下時処理
 - (IBAction)okPwdSheet:(id)sender {
-	NSString*	password	= [[Config sharedConfig] password];
+	NSString*	password	= [Config sharedConfig].password;
 	NSString*	input		= [pwdSheetField stringValue];
-	
+
 	// パスワードチェック
 	if (password) {
 		if ([password length] > 0) {
@@ -432,7 +432,7 @@ typedef unsigned int NSUInteger;
 				[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"RecvDlg.PwdChk.NoPwd", nil)];
 				return;
 			}
-			if (![password isEqualToString:[NSString stringWithCString:crypt([input UTF8String], "IP")]] &&
+			if (![password isEqualToString:[NSString stringWithCString:crypt([input UTF8String], "IP") encoding:NSUTF8StringEncoding]] &&
 				![password isEqualToString:input]) {
 				// 平文とも比較するのはv0.4までとの互換性のため
 				[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"RecvDlg.PwdChk.PwdErr", nil)];
@@ -445,21 +445,21 @@ typedef unsigned int NSUInteger;
 	[sealButton removeFromSuperview];
 	[replyButton setEnabled:YES];
 	[quotCheck setEnabled:YES];
-	[altLogButton setEnabled:[[Config sharedConfig] alternateLogEnabled]];
+	[altLogButton setEnabled:[Config sharedConfig].alternateLogEnabled];
 	if ([[recvMsg attachments] count] > 0) {
 		[attachButton setEnabled:YES];
 		[attachDrawer open];
 	}
-	
+
 	// ログ出力
 	if ([recvMsg needLog]) {
 		[[LogManager standardLog] writeRecvLog:recvMsg];
 		[recvMsg setNeedLog:NO];
 	}
-	
+
 	// 封書開封通知送信
 	[[MessageCenter sharedCenter] sendOpenSealMessage:recvMsg];
-	
+
 	[NSApp endSheet:pwdSheet returnCode:NSOKButton];
 }
 
@@ -471,7 +471,7 @@ typedef unsigned int NSUInteger;
 /*----------------------------------------------------------------------------*
  * 添付ファイル
  *----------------------------------------------------------------------------*/
- 
+
 - (void)downloadSheetRefresh:(NSTimer*)timer {
 	if (attachSheetRefreshTitle) {
 		unsigned num	= [downloader numberOfTargets];
@@ -625,7 +625,7 @@ typedef unsigned int NSUInteger;
 /*----------------------------------------------------------------------------*
  * NSTableDataSourceメソッド
  *----------------------------------------------------------------------------*/
- 
+
 - (int)numberOfRowsInTableView:(NSTableView*)aTableView {
 	if (aTableView == attachTable) {
 		return [[recvMsg attachments] count];
@@ -654,8 +654,8 @@ typedef unsigned int NSUInteger;
 		}
 		fileWrapper		= [[NSFileWrapper alloc] initRegularFileWithContents:nil];
 		textAttachment	= [[NSTextAttachment alloc] initWithFileWrapper:fileWrapper];
-		[(NSCell*)[textAttachment attachmentCell] setImage:[attach iconImage]];
-		cellValue		= [[[NSMutableAttributedString alloc] initWithString:[[attach file] name]] autorelease]; 
+		[(NSCell*)[textAttachment attachmentCell] setImage:attach.icon];
+		cellValue		= [[[NSMutableAttributedString alloc] initWithString:[[attach file] name]] autorelease];
 		[cellValue replaceCharactersInRange:NSMakeRange(0, 0)
 					   withAttributedString:[NSAttributedString attributedStringWithAttachment:textAttachment]];
 		[cellValue addAttribute:NSBaselineOffsetAttributeName
@@ -678,11 +678,11 @@ typedef unsigned int NSUInteger;
 		NSUInteger		index;
 		NSIndexSet*		selects = [attachTable selectedRowIndexes];
 		Attachment*		attach	= nil;
-		
+
 		index = [selects firstIndex];
 		while (index != NSNotFound) {
 			attach	= [[recvMsg attachments] objectAtIndex:index];
-			size	+= (float)[[attach file] size] / 1024;
+			size	+= (float)[attach file].size / 1024;
 			index	= [selects indexGreaterThanIndex:index];
 		}
 		[attachSaveButton setEnabled:([selects count] > 0)];
@@ -712,28 +712,6 @@ typedef unsigned int NSUInteger;
 	}
 }
 
-// ウィンドウサイズを標準に戻す
-- (void)resetReceiveWindowSize:(id)sender {
-	[[Config sharedConfig] resetReceiveWindowSize];
-}
-
-// ウィンドウサイズの保存
-- (void)saveReceiveWindowSize:(id)sender {
-	[[Config sharedConfig] setReceiveWindowSize:[[NSApp keyWindow] frame].size];
-}
-
-// ウィンドウ位置の保存
-- (void)saveReceiveWindowPosition:(id)sender {
-	Config* config = [Config sharedConfig];
-	if ([sender state]) {
-		[config resetReceiveWindowPosition];
-		[sender setState:NO];
-	} else {
-		[config setReceiveWindowPosition:[[NSApp keyWindow] frame].origin];
-		[sender setState:YES];
-	}
-}
-
 // メッセージ部フォントパネル表示
 - (void)showReceiveMessageFontPanel:(id)sender {
 	[[NSFontManager sharedFontManager] orderFrontFontPanel:self];
@@ -741,18 +719,18 @@ typedef unsigned int NSUInteger;
 
 // メッセージ部フォント保存
 - (void)saveReceiveMessageFont:(id)sender {
-	[[Config sharedConfig] setReceiveMessageFont:[messageArea font]];
+	[Config sharedConfig].receiveMessageFont = [messageArea font];
 }
 
 // メッセージ部フォントを標準に戻す
 - (void)resetReceiveMessageFont:(id)sender {
-	[messageArea setFont:[[Config sharedConfig] defaultReceiveMessageFont]];
+	[messageArea setFont:[Config sharedConfig].defaultReceiveMessageFont];
 }
 
 // 重要ログボタン押下時処理
 - (IBAction)writeAlternateLog:(id)sender
 {
-	if ([[Config sharedConfig] logWithSelectedRange]) {
+	if ([Config sharedConfig].logWithSelectedRange) {
 		[[LogManager alternateLog] writeRecvLog:recvMsg withRange:[messageArea selectedRange]];
 	} else {
 		[[LogManager alternateLog] writeRecvLog:recvMsg];
@@ -763,41 +741,41 @@ typedef unsigned int NSUInteger;
 // Nibファイルロード時処理
 - (void)awakeFromNib {
 	Config* config	= [Config sharedConfig];
-	NSPoint	pos		= [config receiveWindowPosition];
-	NSSize	size	= [config receiveWindowSize];
+	NSSize	size	= config.receiveWindowSize;
 	NSRect	frame	= [window frame];
-	
+
 	// ウィンドウ位置、サイズ決定
-	if ((pos.x != 0) || (pos.y != 0)) {
-		frame.origin.x = pos.x;
-		frame.origin.y = pos.y;
-	} else {
-		// 位置が固定されていない場合ランダム
-		int sw	= [[NSScreen mainScreen] visibleFrame].size.width;
-		int sh	= [[NSScreen mainScreen] visibleFrame].size.height;
-		int ww	= [window frame].size.width;
-		int wh	= [window frame].size.height;
-		frame.origin.x = (sw - ww) / 2 + (rand() % (sw / 4)) - sw / 8;
-		frame.origin.y = (sh - wh) / 2 + (rand() % (sh / 4)) - sh / 8; 
-	}
+	int sw	= [[NSScreen mainScreen] visibleFrame].size.width;
+	int sh	= [[NSScreen mainScreen] visibleFrame].size.height;
+	int ww	= [window frame].size.width;
+	int wh	= [window frame].size.height;
+	frame.origin.x = (sw - ww) / 2 + (rand() % (sw / 4)) - sw / 8;
+	frame.origin.y = (sh - wh) / 2 + (rand() % (sh / 4)) - sh / 8;
 	if ((size.width != 0) || (size.height != 0)) {
 		frame.size.width	= size.width;
 		frame.size.height	= size.height;
 	}
 	[window setFrame:frame display:NO];
-	
+
 	// 引用チェックをデフォルト判定
-	if ([config quoteCheckDefault]) {
+	if (config.quoteCheckDefault) {
 		[quotCheck setState:YES];
 	}
-	
+
 	// 添付リストの行設定
 	[attachTable setRowHeight:16.0];
-	
+
 	// 添付テーブルダブルクリック時処理
 	[attachTable setDoubleAction:@selector(attachTableDoubleClicked:)];
-	
+
 //	[attachSheetProgress setUsesThreadedAnimation:YES];
+}
+
+// ウィンドウリサイズ時処理
+- (void)windowDidResize:(NSNotification *)notification
+{
+	// ウィンドウサイズを保存
+	[Config sharedConfig].receiveWindowSize = [window frame].size;
 }
 
 // ウィンドウクローズ判定処理
@@ -815,7 +793,7 @@ typedef unsigned int NSUInteger;
 							recvMsg,
 							NSLocalizedString(@"RecvDlg.CloseWithAttach.Msg", nil));
 		[attachDrawer open];
-		return NO;	
+		return NO;
 	}
 	if (!pleaseCloseMe && ![replyButton isEnabled]) {
 		// 未開封だがクローズするか確認
