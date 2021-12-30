@@ -1,0 +1,96 @@
+
+/* Class = "NSWindow"; title = "Send Message"; ObjectID = "5"; */
+"5.title" = "送信メッセージ";
+
+/* Class = "NSButton"; ibShadowedToolTip = "Make message sealed"; ObjectID = "9"; */
+"9.ibShadowedToolTip" = "封書付きメッセージにします";
+
+/* Class = "NSButton"; ibShadowedToolTip = "Make message locked. Need (receiver's own) password to open."; ObjectID = "10"; */
+"10.ibShadowedToolTip" = "相手が封書を開封する際にパスワード入力を強制します";
+
+/* Class = "NSButton"; ibShadowedToolTip = "Refresh users list"; ObjectID = "27"; */
+"27.ibShadowedToolTip" = "ユーザリストを最新状態にします";
+
+/* Class = "NSBox"; title = "Title"; ObjectID = "32"; */
+"32.title" = "Title";
+
+/* Class = "NSTableColumn"; headerCell.title = "User"; ObjectID = "124"; */
+"124.headerCell.title" = "ユーザ";
+
+/* Class = "NSTableColumn"; headerCell.title = "Attachments"; ObjectID = "167"; */
+"167.headerCell.title" = "添付ファイル";
+
+/* Class = "NSButtonCell"; title = "Send"; ObjectID = "196"; */
+"196.title" = "送　信";
+
+/* Class = "NSButtonCell"; title = "Seal"; ObjectID = "197"; */
+"197.title" = "封書";
+
+/* Class = "NSButtonCell"; title = "Lock"; ObjectID = "198"; */
+"198.title" = "鍵";
+
+/* Class = "NSButtonCell"; title = "Refresh"; ObjectID = "199"; */
+"199.title" = "更　新";
+
+/* Class = "NSTextFieldCell"; title = "000 / 000"; ObjectID = "201"; */
+"201.title" = "000 / 000";
+
+/* Class = "NSTableColumn"; headerCell.title = "Group"; ObjectID = "217"; */
+"217.headerCell.title" = "グループ";
+
+/* Class = "NSTextFieldCell"; title = "Text Cell"; ObjectID = "218"; */
+"218.title" = "Text Cell";
+
+/* Class = "NSTableColumn"; headerCell.title = "Host"; ObjectID = "219"; */
+"219.headerCell.title" = "ホスト";
+
+/* Class = "NSTextFieldCell"; title = "Text Cell"; ObjectID = "220"; */
+"220.title" = "Text Cell";
+
+/* Class = "NSTableColumn"; headerCell.title = "IP Address"; ObjectID = "221"; */
+"221.headerCell.title" = "IPアドレス";
+
+/* Class = "NSTextFieldCell"; title = "Text Cell"; ObjectID = "222"; */
+"222.title" = "Text Cell";
+
+/* Class = "NSTableColumn"; headerCell.title = "Logon"; ObjectID = "223"; */
+"223.headerCell.title" = "ログオン";
+
+/* Class = "NSTextFieldCell"; title = "Text Cell"; ObjectID = "224"; */
+"224.title" = "Text Cell";
+
+/* Class = "NSTableColumn"; headerCell.title = "Version"; ObjectID = "225"; */
+"225.headerCell.title" = "バージョン";
+
+/* Class = "NSTextFieldCell"; title = "Text Cell"; ObjectID = "226"; */
+"226.title" = "Text Cell";
+
+/* Class = "NSSearchFieldCell"; placeholderString = "Search Users"; ObjectID = "245"; */
+"245.placeholderString" = "検索";
+
+/* Class = "NSMenuItem"; title = "User"; ObjectID = "248"; */
+"248.title" = "ユーザ";
+
+/* Class = "NSMenuItem"; title = "Group"; ObjectID = "249"; */
+"249.title" = "グループ";
+
+/* Class = "NSMenuItem"; title = "Host"; ObjectID = "250"; */
+"250.title" = "ホスト";
+
+/* Class = "NSMenuItem"; title = "Logon"; ObjectID = "253"; */
+"253.title" = "ログオン";
+
+/* Class = "NSMenuItem"; title = "Recent Search"; ObjectID = "255"; */
+"255.title" = "検索履歴";
+
+/* Class = "NSMenuItem"; title = "Searches"; ObjectID = "256"; */
+"256.title" = "検索";
+
+/* Class = "NSMenuItem"; title = "Clear Recent Search"; ObjectID = "257"; */
+"257.title" = "履歴を消去";
+
+/* Class = "NSMenuItem"; title = "No Recent Search"; ObjectID = "258"; */
+"258.title" = "検索履歴なし";
+
+/* Class = "NSTextFieldCell"; title = "Members"; ObjectID = "286"; */
+"286.title" = "ユーザ数";

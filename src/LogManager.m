@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: LogManager.m
  *	Module		: ログ管理クラス
  *============================================================================*/
@@ -19,13 +19,22 @@ static NSString* _HEAD_START	= @"=====================================\n";
 static NSString* _HEAD_END		= @"-------------------------------------\n";
 
 @interface LogManager()
+
+@property(retain)	NSFileManager*		fileMgr;
+@property(copy)		NSString*			typeBroadcast;
+@property(copy)		NSString*			typeMulticast;
+@property(copy)		NSString*			typeAutoReturn;
+@property(copy)		NSString*			typeLocked;
+@property(copy)		NSString*			typeSealed;
+@property(copy)		NSString*			typeAttached;
+@property(retain)	NSDateFormatter*	dateFormat;
+
 - (void)writeLog:(NSString*)msg;
+
 @end
 
 // クラス実装
 @implementation LogManager
-
-@synthesize filePath	= _filePath;
 
 /*============================================================================*
  * ファクトリ
@@ -34,20 +43,22 @@ static NSString* _HEAD_END		= @"-------------------------------------\n";
 // 標準ログ
 + (LogManager*)standardLog
 {
-	static LogManager* standardLog = nil;
-	if (!standardLog) {
-		standardLog = [[LogManager alloc] initWithPath:[Config sharedConfig].standardLogFile];
-	}
+	static LogManager*		standardLog = nil;
+	static dispatch_once_t	once;
+	dispatch_once(&once, ^{
+		standardLog = [[LogManager alloc] initWithPath:Config.sharedConfig.standardLogFile];
+	});
 	return standardLog;
 }
 
 // 重要ログ
 + (LogManager*)alternateLog
 {
-	static LogManager* alternateLog	= nil;
-	if (!alternateLog) {
-		alternateLog = [[LogManager alloc] initWithPath:[Config sharedConfig].alternateLogFile];
-	}
+	static LogManager*		alternateLog = nil;
+	static dispatch_once_t	once;
+	dispatch_once(&once, ^{
+		alternateLog = [[LogManager alloc] initWithPath:Config.sharedConfig.alternateLogFile];
+	});
 	return alternateLog;
 }
 
@@ -65,18 +76,18 @@ static NSString* _HEAD_END		= @"-------------------------------------\n";
 			[self release];
 			return nil;
 		}
-		_fileManager		= [[NSFileManager alloc] init];
-		self.filePath		= [path stringByExpandingTildeInPath];
-		_sTypeBroadcast		= NSLocalizedString(@"Log.Type.Broadcast", nil);
-		_sTypeMulticast		= NSLocalizedString(@"Log.Type.Multicast", nil);
-		_sTypeAutoReturn	= NSLocalizedString(@"Log.Type.AutoRet", nil);
-		_sTypeLocked		= NSLocalizedString(@"Log.Type.Locked", nil);
-		_sTypeSealed		= NSLocalizedString(@"Log.Type.Sealed", nil);
-		_sTypeAttached		= NSLocalizedString(@"Log.Type.Attachment", nil);
-		_dateFormat			= [[NSDateFormatter alloc] init];
-		[_dateFormat setFormatterBehavior:NSDateFormatterBehavior10_4];
-		[_dateFormat setDateStyle:NSDateFormatterFullStyle];
-		[_dateFormat setTimeStyle:NSDateFormatterMediumStyle];
+		_fileMgr		= NSFileManager.defaultManager;
+		_filePath		= [[path stringByExpandingTildeInPath] copy];
+		_typeBroadcast	= [NSLocalizedString(@"Log.Type.Broadcast", nil) copy];
+		_typeMulticast	= [NSLocalizedString(@"Log.Type.Multicast", nil) copy];
+		_typeAutoReturn	= [NSLocalizedString(@"Log.Type.AutoRet", nil) copy];
+		_typeLocked		= [NSLocalizedString(@"Log.Type.Locked", nil) copy];
+		_typeSealed		= [NSLocalizedString(@"Log.Type.Sealed", nil) copy];
+		_typeAttached	= [NSLocalizedString(@"Log.Type.Attachment", nil) copy];
+		_dateFormat		= [[NSDateFormatter alloc] init];
+		_dateFormat.formatterBehavior	= NSDateFormatterBehavior10_4;
+		_dateFormat.dateStyle			= NSDateFormatterFullStyle;
+		_dateFormat.timeStyle			= NSDateFormatterMediumStyle;
 	}
 	return self;
 }
@@ -84,8 +95,14 @@ static NSString* _HEAD_END		= @"-------------------------------------\n";
 // 解放
 - (void)dealloc
 {
-	[_fileManager release];
+	[_fileMgr release];
 	[_filePath release];
+	[_typeBroadcast release];
+	[_typeMulticast release];
+	[_typeAutoReturn release];
+	[_typeLocked release];
+	[_typeSealed release];
+	[_typeAttached release];
 	[_dateFormat release];
 	[super dealloc];
 }
@@ -107,29 +124,29 @@ static NSString* _HEAD_END		= @"-------------------------------------\n";
 	NSMutableString* msg = [NSMutableString string];
 	[msg appendString:_HEAD_START];
 	[msg appendString:@" From: "];
-	[msg appendString:[[info fromUser] summaryString]];
+	[msg appendString:info.fromUser.summaryString];
 	[msg appendString:@"\n  at "];
-	[msg appendString:[_dateFormat stringFromDate:info.receiveDate]];
-	if ([info broadcast]) {
-		[msg appendString:_sTypeBroadcast];
+	[msg appendString:[self.dateFormat stringFromDate:info.receiveDate]];
+	if (info.broadcast) {
+		[msg appendString:self.typeBroadcast];
 	}
-	if ([info absence]) {
-		[msg appendString:_sTypeAutoReturn];
+	if (info.absence) {
+		[msg appendString:self.typeAutoReturn];
 	}
-	if ([info multicast]) {
-		[msg appendString:_sTypeMulticast];
+	if (info.multicast) {
+		[msg appendString:self.typeMulticast];
 	}
-	if ([info locked]) {
-		[msg appendString:_sTypeLocked];
-	} else if ([info sealed]) {
-		[msg appendString:_sTypeSealed];
+	if (info.locked) {
+		[msg appendString:self.typeLocked];
+	} else if (info.sealed) {
+		[msg appendString:self.typeSealed];
 	}
 	[msg appendString:@"\n"];
 	[msg appendString:_HEAD_END];
 	if (range.length > 0) {
-		[msg appendString:[[info appendix] substringWithRange:range]];
+		[msg appendString:[info.message substringWithRange:range]];
 	} else {
-		[msg appendString:[info appendix]];
+		[msg appendString:info.message];
 	}
 	[msg appendString:@"\n\n"];
 
@@ -138,28 +155,28 @@ static NSString* _HEAD_END		= @"-------------------------------------\n";
 }
 
 // 送信ログ出力
-- (void)writeSendLog:(SendMessage*)info to:(NSArray*)to
+- (void)writeSendLog:(SendMessage*)info to:(NSArray<UserInfo*>*)to
 {
 	// メッセージ編集
 	NSMutableString* msg = [NSMutableString string];
 	[msg appendString:_HEAD_START];
 	for (UserInfo* user in to) {
 		[msg appendString:@" To: "];
-		[msg appendString:[user summaryString]];
+		[msg appendString:user.summaryString];
 		[msg appendString:@"\n"];
 	}
 	[msg appendString:@"  at "];
-	[msg appendString:[_dateFormat stringFromDate:[NSCalendarDate date]]];
-	if ([to count] > 1) {
-		[msg appendString:_sTypeMulticast];
+	[msg appendString:[self.dateFormat stringFromDate:[NSDate date]]];
+	if (to.count > 1) {
+		[msg appendString:self.typeMulticast];
 	}
 	if (info.locked) {
-		[msg appendString:_sTypeLocked];
+		[msg appendString:self.typeLocked];
 	} else if (info.sealed) {
-		[msg appendString:_sTypeSealed];
+		[msg appendString:self.typeSealed];
 	}
-	if ([info.attachments count] > 0) {
-		[msg appendString:_sTypeAttached];
+	if (info.attachments.count > 0) {
+		[msg appendString:self.typeAttached];
 	}
 	[msg appendString:@"\n"];
 	[msg appendString:_HEAD_END];
@@ -176,18 +193,18 @@ static NSString* _HEAD_END		= @"-------------------------------------\n";
 	if (!msg) {
 		return;
 	}
-	if ([msg length] <= 0) {
+	if (msg.length <= 0) {
 		return;
 	}
-	if (![_fileManager fileExistsAtPath:self.filePath]) {
+	if (![self.fileMgr fileExistsAtPath:self.filePath]) {
 		const Byte	dat[]	= { 0xEF, 0xBB, 0xBF };
 		NSData*		bom		= [NSData dataWithBytes:dat length:sizeof(dat)];
-		if (![_fileManager createFileAtPath:self.filePath contents:bom attributes:nil]) {
+		if (![self.fileMgr createFileAtPath:self.filePath contents:bom attributes:nil]) {
 			ERR(@"LogFile Create Error.(%@)", self.filePath);
 			return;
 		}
 	}
-	if (![_fileManager isWritableFileAtPath:self.filePath]) {
+	if (![self.fileMgr isWritableFileAtPath:self.filePath]) {
 		ERR(@"LogFile not writable.(%@)", self.filePath);
 		return;
 	}

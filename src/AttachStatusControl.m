@@ -1,161 +1,139 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: AttachStatusControl.m
  *	Module		: 添付ファイル状況表示パネルコントローラ
  *============================================================================*/
 
 #import "AttachStatusControl.h"
 #import "UserInfo.h"
-#import "Attachment.h"
-#import "AttachmentFile.h"
-#import "AttachmentServer.h"
+#import "SendAttachment.h"
+#import "RecvFile.h"
 #import "MessageCenter.h"
 #import "DebugLog.h"
+
+/*============================================================================*
+ * 定数定義
+ *============================================================================*/
 
 static NSString* ATTACHPNL_SIZE_W	= @"AttachStatusPanelWidth";
 static NSString* ATTACHPNL_SIZE_H	= @"AttachStatusPanelHeight";
 static NSString* ATTACHPNL_POS_X	= @"AttachStatusPanelOriginX";
 static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 
+/*============================================================================*
+ * クラス実装
+ *============================================================================*/
+
 @implementation AttachStatusControl
 
-- (id)init {
+/*----------------------------------------------------------------------------*/
+#pragma mark - 初期化/解放
+/*----------------------------------------------------------------------------*/
+
+- (instancetype)init
+{
 	self = [super init];
 	if (self) {
 		// データのロード
-		[attachTable reloadData];
+		[_attachTable reloadData];
 
 		// 添付リスト変更の通知登録
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(attachListChanged:)
-													 name:NOTICE_ATTACH_LIST_CHANGED
-												   object:nil];
+		NSNotificationCenter* nc = NSNotificationCenter.defaultCenter;
+		[nc addObserver:self
+			   selector:@selector(attachListChanged:)
+				   name:kIPMsgAttachmentListChangedNotification
+				 object:nil];
 	}
 	return self;
 }
 
-- (void)dealloc {
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
+- (void)dealloc
+{
+	[NSNotificationCenter.defaultCenter removeObserver:self];
 	[super dealloc];
 }
 
-- (IBAction)buttonPressed:(id)sender {
-	if (sender == deleteButton) {
-		id item = [attachTable itemAtRow:[attachTable selectedRow]];
-		if ([item isKindOfClass:[NSNumber class]]) {
-			if ([AttachmentServer isAvailable]) {
-				[[AttachmentServer sharedServer] removeAttachmentByMessageID:item];
-				[attachTable deselectAll:self];
+/*----------------------------------------------------------------------------*/
+#pragma mark - イベントハンドラ
+/*----------------------------------------------------------------------------*/
+
+- (IBAction)buttonPressed:(id)sender
+{
+	if (sender == self.deleteButton) {
+		id item = [self.attachTable itemAtRow:self.attachTable.selectedRow];
+		if ([item isKindOfClass:SendAttachment.class]) {
+			if (MessageCenter.isAttachmentAvailable) {
+				SendAttachment* attach = item;
+				[MessageCenter.sharedCenter removeAttachment:attach];
+				[self.attachTable deselectAll:self];
 			}
-		} else if ([item isKindOfClass:[Attachment class]]) {
-			if ([AttachmentServer isAvailable]) {
-				int	i;
-				for (i = [attachTable selectedRow]; i >= 0; i--) {
-					id val = [attachTable itemAtRow:i];
-					if ([val isKindOfClass:[NSNumber class]]) {
-						[[AttachmentServer sharedServer] removeAttachmentByMessageID:val fileID:[item fileID]];
-						[attachTable deselectAll:self];
-						break;
-					}
-				}
-			}
-		} else if ([item isKindOfClass:[UserInfo class]]) {
-			if ([AttachmentServer isAvailable]) {
-				int			i;
-				NSNumber*	fid = nil;
-				for (i = [attachTable selectedRow]; i >= 0; i--) {
-					id val = [attachTable itemAtRow:i];
-					if ([val isKindOfClass:[Attachment class]]) {
-						if (fid == nil) {
-							fid = [val fileID];
-						}
-					} else if ([val isKindOfClass:[NSNumber class]]) {
-						if (fid) {
-							[[AttachmentServer sharedServer] removeUser:item messageID:val fileID:fid];
-							[attachTable deselectAll:self];
-						} else {
-							ERR(@"Internal Error(fid is nil)");
-						}
-						break;
-					}
-				}
-			}
+		} else {
+			ERR(@"Unsupported deletion(item=%@)", item);
 		}
 	} else {
 		ERR(@"Unknown Button Pressed(%@)", sender);
 	}
 }
 
-- (IBAction)checkboxChanged:(id)sender {
-	if (sender == dispAlwaysCheck) {
-		[panel setHidesOnDeactivate:([dispAlwaysCheck state] == NSOffState)];
+- (IBAction)checkboxChanged:(id)sender
+{
+	if (sender == self.dispAlwaysCheck) {
+		self.panel.hidesOnDeactivate = (self.dispAlwaysCheck.state == NSControlStateValueOff);
 	} else {
 		ERR(@"Unknown Checkbox Changed(%@)", sender);
 	}
 }
 
-- (void)attachListChanged:(NSNotification*)aNotification {
-	[attachTable reloadData];
+- (void)attachListChanged:(NSNotification*)aNotification
+{
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self.attachTable reloadData];
+	});
 }
 
-- (int)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(id)item {
+/*----------------------------------------------------------------------------*/
+#pragma mark - NSOutlineView
+/*----------------------------------------------------------------------------*/
+
+- (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(id)item
+{
 	if (!item) {
-		if ([AttachmentServer isAvailable]) {
-			return [[AttachmentServer sharedServer] numberOfMessageIDs];
+		if (MessageCenter.isAttachmentAvailable) {
+			return MessageCenter.sharedCenter.sentAttachments.count;
 		}
-	} else if ([item isKindOfClass:[NSNumber class]]) {
-		if ([AttachmentServer isAvailable]) {
-			return [[AttachmentServer sharedServer] numberOfAttachmentsInMessageID:item];
-		}
-	} else if ([item isKindOfClass:[Attachment class]]) {
-		return [item numberOfUsers];
+	} else if ([item isKindOfClass:SendAttachment.class]) {
+		SendAttachment* attach = item;
+		return attach.remainUsers.count;
 	} else {
 		WRN(@"not yet(number of children of %@)", item);
 	}
 	return 0;
 }
 
-- (id)outlineView:(NSOutlineView *)outlineView child:(int)index ofItem:(id)item {
+- (id)outlineView:(NSOutlineView *)outlineView child:(NSInteger)index ofItem:(id)item
+{
 	if (!item) {
-		if ([AttachmentServer isAvailable]) {
-			return [[AttachmentServer sharedServer] messageIDAtIndex:index];
+		if (MessageCenter.isAttachmentAvailable) {
+			return MessageCenter.sharedCenter.sentAttachments[index];
 		}
-	} else if ([item isKindOfClass:[NSNumber class]]) {
-		if ([AttachmentServer isAvailable]) {
-			return [[AttachmentServer sharedServer] attachmentInMessageID:item atIndex:index];
-		}
-	} else if ([item isKindOfClass:[Attachment class]]) {
-		return [item userAtIndex:index];
+	} else if ([item isKindOfClass:SendAttachment.class]) {
+		SendAttachment* attach = item;
+		return attach.remainUsers[index];
 	} else {
-		WRN(@"not yet(#%d child of %@)", index, item);
+		WRN(@"not yet(#%ld child of %@)", index, item);
 	}
 	return nil;
 }
 
-- (id)outlineView:(NSOutlineView*)outlineView objectValueForTableColumn:(NSTableColumn*)tableColumn byItem:(id)item {
-	if ([item isKindOfClass:[NSNumber class]]) {
-		return [NSString stringWithFormat:@"Message[ID:%@]", item];
-	} else if ([item isKindOfClass:[Attachment class]]) {
-		Attachment*	sendAttach = item;
-		return [NSString stringWithFormat:@"%@ (Remain Users:%d)",
-						[[sendAttach file] name], [sendAttach numberOfUsers]];
-	} else if ([item isKindOfClass:[UserInfo class]]) {
-		UserInfo* user = item;
-		return user.summaryString;
-	}
-	return item;
-}
-
-- (BOOL)outlineView:(NSOutlineView *)outlineView isItemExpandable:(id)item {
+- (BOOL)outlineView:(NSOutlineView*)outlineView isItemExpandable:(id)item
+{
 	if (!item) {
-		return ([[AttachmentServer sharedServer] numberOfMessageIDs] > 0);
-	} else if ([item isKindOfClass:[NSNumber class]]) {
+		return (MessageCenter.sharedCenter.sentAttachments.count > 0);
+	} else if ([item isKindOfClass:SendAttachment.class]) {
 		return YES;
-	} else if ([item isKindOfClass:[Attachment class]]) {
-		return YES;
-	} else if ([item isKindOfClass:[UserInfo class]]) {
+	} else if ([item isKindOfClass:UserInfo.class]) {
 		return NO;
 	} else {
 		WRN(@"not yet(isExpandable %@)", item);
@@ -163,50 +141,79 @@ static NSString* ATTACHPNL_POS_Y	= @"AttachStatusPanelOriginY";
 	return NO;
 }
 
-- (void)outlineViewSelectionDidChange:(NSNotification *)notification {
-	[deleteButton setEnabled:([attachTable selectedRow] != -1)];
+- (id)outlineView:(NSOutlineView*)outlineView objectValueForTableColumn:(NSTableColumn*)tableColumn byItem:(id)item
+{
+	if ([item isKindOfClass:SendAttachment.class]) {
+		SendAttachment*	sendAttach = item;
+		return [NSString stringWithFormat:@"%@ (Remain Users:%ld)", sendAttach.name, sendAttach.remainUsers.count];
+	} else if ([item isKindOfClass:UserInfo.class]) {
+		UserInfo* user = item;
+		return user.summaryString;
+	}
+	return item;
 }
 
-- (void)windowDidMove:(NSNotification *)aNotification {
-	if ([panel isVisible]) {
-		NSUserDefaults*	defaults	= [NSUserDefaults standardUserDefaults];
-		NSPoint			origin		= [panel frame].origin;
-		[defaults setObject:[NSNumber numberWithFloat:origin.x] forKey:ATTACHPNL_POS_X];
-		[defaults setObject:[NSNumber numberWithFloat:origin.y] forKey:ATTACHPNL_POS_Y];
+- (BOOL)outlineView:(NSOutlineView *)outlineView shouldSelectItem:(id)item
+{
+	return [item isKindOfClass:SendAttachment.class];
+}
+
+- (void)outlineViewSelectionDidChange:(NSNotification*)notification
+{
+	self.deleteButton.enabled = (self.attachTable.selectedRow != -1);
+}
+
+/*----------------------------------------------------------------------------*/
+#pragma mark - NSWindow
+/*----------------------------------------------------------------------------*/
+
+- (void)windowDidMove:(NSNotification*)aNotification
+{
+	if (self.panel.visible) {
+		NSUserDefaults*	ud		= NSUserDefaults.standardUserDefaults;
+		NSPoint			origin	= self.panel.frame.origin;
+		[ud setObject:@(origin.x) forKey:ATTACHPNL_POS_X];
+		[ud setObject:@(origin.y) forKey:ATTACHPNL_POS_Y];
 	}
 }
 
-- (void)windowDidResize:(NSNotification *)aNotification {
-	if ([panel isVisible]) {
-		NSUserDefaults*	defaults	= [NSUserDefaults standardUserDefaults];
-		NSSize			size		= [panel frame].size;
-		[defaults setObject:[NSNumber numberWithFloat:size.width] forKey:ATTACHPNL_SIZE_W];
-		[defaults setObject:[NSNumber numberWithFloat:size.height] forKey:ATTACHPNL_SIZE_H];
+- (void)windowDidResize:(NSNotification*)aNotification
+{
+	if (self.panel.visible) {
+		NSUserDefaults*	ud		= NSUserDefaults.standardUserDefaults;
+		NSSize			size	= self.panel.frame.size;
+		[ud setObject:@(size.width) forKey:ATTACHPNL_SIZE_W];
+		[ud setObject:@(size.height) forKey:ATTACHPNL_SIZE_H];
 	}
 }
+
+/*----------------------------------------------------------------------------*/
+#pragma mark - NSObject
+/*----------------------------------------------------------------------------*/
 
 // 初期化
-- (void)awakeFromNib {
-	NSUserDefaults*	defaults	= [NSUserDefaults standardUserDefaults];
-	NSNumber*		originX		= [defaults objectForKey:ATTACHPNL_POS_X];
-	NSNumber*		originY		= [defaults objectForKey:ATTACHPNL_POS_Y];
-	NSNumber*		sizeWidth	= [defaults objectForKey:ATTACHPNL_SIZE_W];
-	NSNumber*		sizeHeight	= [defaults objectForKey:ATTACHPNL_SIZE_H];
+- (void)awakeFromNib
+{
+	NSUserDefaults*	ud			= NSUserDefaults.standardUserDefaults;
+	NSNumber*		originX		= [ud objectForKey:ATTACHPNL_POS_X];
+	NSNumber*		originY		= [ud objectForKey:ATTACHPNL_POS_Y];
+	NSNumber*		sizeWidth	= [ud objectForKey:ATTACHPNL_SIZE_W];
+	NSNumber*		sizeHeight	= [ud objectForKey:ATTACHPNL_SIZE_H];
 	NSRect			windowFrame;
-	if ((originX != nil) && (originY != nil) && (sizeWidth != nil) && (sizeHeight != nil)) {
-		windowFrame.origin.x	= [originX floatValue];
-		windowFrame.origin.y	= [originY floatValue];
-		windowFrame.size.width	= [sizeWidth floatValue];
-		windowFrame.size.height	= [sizeHeight floatValue];
+	if (originX && originY && sizeWidth && sizeHeight) {
+		windowFrame.origin.x	= originX.floatValue;
+		windowFrame.origin.y	= originY.floatValue;
+		windowFrame.size.width	= sizeWidth.floatValue;
+		windowFrame.size.height	= sizeHeight.floatValue;
 	} else {
-		NSRect screenFrame		= [[NSScreen mainScreen] frame];
-		windowFrame				= [panel frame];
+		NSRect screenFrame		= NSScreen.mainScreen.frame;
+		windowFrame				= self.panel.frame;
 		windowFrame.origin.x	= screenFrame.size.width - windowFrame.size.width - 5;
 		windowFrame.origin.y	= screenFrame.size.height - windowFrame.size.height
-									- [[NSStatusBar systemStatusBar] thickness] - 5;
+											- NSStatusBar.systemStatusBar.thickness - 5;
 	}
-	[panel setFrame:windowFrame display:NO];
-	[panel setFloatingPanel:NO];
+	[self.panel setFrame:windowFrame display:NO];
+	self.panel.floatingPanel = NO;
 }
 
 @end

@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: DebugLog.m
  *	Module		: デバッグログ機能
  *	Description	: デバッグログ出力関数
@@ -24,10 +24,12 @@ void IPMsgLog(NSString* level, const char* file, int line, const char* func, NSS
 	NSString*				str;
 	const char*				pFile;
 	if (!format) {
+		format = [[NSDateFormatter alloc] init];
+		format.locale = [[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"] autorelease];
 #if LOG_SHOW_DATE
-		format = [[NSDateFormatter alloc] initWithDateFormat:@"%Y/%m/%d %H:%M:%S.%F" allowNaturalLanguage:NO];
+		format.dateFormat = @"yyyy/MM/dd HH:mm:ss.SSS";
 #else
-		format = [[NSDateFormatter alloc] initWithDateFormat:@"%H:%M:%S.%F" allowNaturalLanguage:NO];
+		format.dateFormat = @"HH:mm:ss.SSS";
 #endif
 	}
 	if (!writeLock) {

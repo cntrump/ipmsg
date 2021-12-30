@@ -1,12 +1,11 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: NoticeControl.m
  *	Module		: 通知ダイアログコントローラ
  *============================================================================*/
 
-#import <Cocoa/Cocoa.h>
 #import "NoticeControl.h"
 
 /*============================================================================*
@@ -15,50 +14,55 @@
 
 @implementation NoticeControl
 
-/*----------------------------------------------------------------------------*
- * 初期化
- *----------------------------------------------------------------------------*/
-
 // 初期化
-- (id)initWithTitle:(NSString*)title message:(NSString*)msg date:(NSDate*)date {
-	NSPoint	centerPoint;
-	int		sw, sh, ww, wh;
-
+- (instancetype)initWithTitle:(NSString*)title message:(NSString*)msg date:(NSDate*)date
+{
 	self = [super init];
-	// nibファイルロード
-	if (![NSBundle loadNibNamed:@"NoticeDialog.nib" owner:self]) {
-		[self autorelease];
-		return nil;
+	if (self) {
+		// nibファイルロード
+		if (![NSBundle.mainBundle loadNibNamed:@"NoticeDialog"
+										 owner:self
+							   topLevelObjects:nil]) {
+			[self release];
+			return nil;
+		}
+
+		if (!date) {
+			date = [NSDate date];
+		}
+
+		// 表示文字列設定
+		_titleLabel.stringValue		= title;
+		_messageLabel.stringValue	= msg;
+		_dateLabel.objectValue		= date;
+
+		// 画面表示位置計算
+		NSSize	screenSize = NSScreen.mainScreen.visibleFrame.size;
+		NSRect	windowRect = _window.frame;
+		NSPoint	centerPoint;
+		int		sw, sh, ww, wh;
+		sw	= screenSize.width;
+		sh	= screenSize.height;
+		ww	= windowRect.size.width;
+		wh	= windowRect.size.height;
+		centerPoint.x = (sw - ww) / 2 + (arc4random_uniform(INT32_MAX) % (sw / 4)) - sw / 8;
+		centerPoint.y = (sh - wh) / 2 + (arc4random_uniform(INT32_MAX) % (sh / 4)) - sh / 8;
+
+		_window.frameOrigin	= centerPoint;
+
+		// ウィンドウメニューから除外
+		_window.excludedFromWindowsMenu	= YES;
+
+		// ダイアログ表示
+		[_window makeKeyAndOrderFront:self];
 	}
-	// 表示文字列設定
-	[titleLabel		setStringValue:title];
-	[messageLabel	setStringValue:msg];
-	[dateLabel		setObjectValue:((date) ? date : [NSCalendarDate date])];
-
-	// 画面表示位置計算
-	sw	= [[NSScreen mainScreen] visibleFrame].size.width;
-	sh	= [[NSScreen mainScreen] visibleFrame].size.height;
-	ww	= [window frame].size.width;
-	wh	= [window frame].size.height;
-	centerPoint.x = (sw - ww) / 2 + (rand() % (sw / 4)) - sw / 8;
-	centerPoint.y = (sh - wh) / 2 + (rand() % (sh / 4)) - sh / 8;
-	[window setFrameOrigin:centerPoint];
-
-	// ウィンドウメニューから除外
-	[window setExcludedFromWindowsMenu:YES];
-
-	// ダイアログ表示
-	[window makeKeyAndOrderFront:self];
 
 	return self;
 }
 
-/*----------------------------------------------------------------------------*
- * その他
- *----------------------------------------------------------------------------*/
-
 // ウィンドウクローズ時処理
-- (void)windowWillClose:(NSNotification*)aNotification {
+- (void)windowWillClose:(NSNotification*)aNotification
+{
 	[self release];
 }
 

@@ -1,80 +1,39 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: RecvMessage.h
  *	Module		: 受信メッセージクラス
  *============================================================================*/
 
 #import <Foundation/Foundation.h>
-#import <netinet/in.h>
 
 @class UserInfo;
+@class RecvFile;
+@class RecvClipboard;
 
 /*============================================================================*
  * クラス定義
  *============================================================================*/
 
-@interface RecvMessage : NSObject <NSCopying>
-{
-	UserInfo*			fromUser;		// 送信元ユーザ
-	BOOL				unknownUser;	// 未知のユーザフラグ
-	NSString*			logOnUser;		// ログイン名
-	NSString*			hostName;		// ホスト名
-	unsigned long		command;		// コマンド番号
-	NSString*			appendix;		// 追加部
-	NSString*			appendixOption;	// 追加部オプション
-	NSMutableArray*		attachments;	// 添付ファイル
-	NSMutableArray*		hostList;		// ホストリスト
-	int					continueCount;	// ホストリスト継続ユーザ番号
-	BOOL				needLog;		// ログ出力フラグ
+@interface RecvMessage : NSObject
 
-	NSInteger			_packetNo;
-	NSDate*				_date;
-	struct sockaddr_in	_address;
-
-}
-
-@property(readonly)	NSInteger			packetNo;		// パケット番号
-@property(readonly)	NSDate*				receiveDate;	// 受信日時
-//@property(readonly)	struct sockaddr_in	fromAddress;	// 送信元アドレス
-
-// ファクトリ
-+ (RecvMessage*)messageWithBuffer:(const void*)buf
-						   length:(NSUInteger)len
-							 from:(struct sockaddr_in)addr;
-
-// 初期化／解放
-- (id)initWithBuffer:(const void*)buf
-			  length:(NSUInteger)len
-				from:(struct sockaddr_in)addr;
-
-// getter（相手情報）
-- (UserInfo*)fromUser;
-- (BOOL)isUnknownUser;
-
-// getter（共通）
-//- (NSString*)logOnUser;
-//- (NSString*)hostName;
-- (unsigned long)command;
-- (NSString*)appendix;
-//- (NSString*)appendixOption;
-
-// getter（IPMSG_SENDMSGのみ）
-- (BOOL)sealed;
-- (BOOL)locked;
-- (BOOL)multicast;
-- (BOOL)broadcast;
-- (BOOL)absence;
-- (NSArray*)attachments;
-
-// getter（IPMSG_ANSLISTのみ）
-- (NSArray*)hostList;
-- (int)hostListContinueCount;
+@property(assign)	NSInteger					packetNo;		// パケット番号
+@property(copy)		NSDate*						receiveDate;	// 受信日時
+@property(retain)	UserInfo*					fromUser;		// 送信元ユーザ
+@property(copy)		NSString*					message;		// メッセージ本文
+@property(assign)	NSInteger					secureLevel;	// 暗号化レベル
+@property(assign)	BOOL						doubt;			// 偽装メッセージの疑い
+@property(assign)	BOOL						sealed;			// 封書付きメッセージ
+@property(assign)	BOOL						locked;			// 鍵付きメッセージ
+@property(assign)	BOOL						multicast;		// マルチキャスト
+@property(assign)	BOOL						broadcast;		// 一斉通報
+@property(assign)	BOOL						absence;		// 不在モード中
+@property(retain)	NSArray<RecvFile*>*			attachments;	// 添付ファイル
+@property(retain)	NSArray<RecvClipboard*>*	clipboards;		// 埋め込みクリップボード
+@property(assign)	BOOL						needLog;		// ログ保存要否
 
 // その他
 - (void)removeDownloadedAttachments;
-- (BOOL)needLog;
-- (void)setNeedLog:(BOOL)flag;
 
 @end

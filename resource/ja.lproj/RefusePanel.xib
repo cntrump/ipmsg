@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15400" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15400"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="PrefControl">
+            <connections>
+                <outlet property="refuseSheet" destination="2Zf-Bc-Gle" id="g6V-Um-0Yl"/>
+                <outlet property="refuseSheetCancelButton" destination="49m-Qf-509" id="xLJ-Mt-sE6"/>
+                <outlet property="refuseSheetCondPopup" destination="EKF-X1-ss8" id="nuc-Tv-mDv"/>
+                <outlet property="refuseSheetErrorLabel" destination="LNb-qg-tpQ" id="lnM-YY-DsC"/>
+                <outlet property="refuseSheetField" destination="6Gg-aN-t65" id="WT1-Rv-fuy"/>
+                <outlet property="refuseSheetOKButton" destination="Awf-KD-K2H" id="45u-yH-MlO"/>
+                <outlet property="refuseSheetTargetPopup" destination="Aus-LU-gDd" id="ZMa-cN-GnY"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="受信拒否" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="2Zf-Bc-Gle" userLabel="RefusePanel" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="116" y="217" width="552" height="135"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
+            <value key="minSize" type="size" width="550" height="135"/>
+            <view key="contentView" id="g7X-9P-vst">
+                <rect key="frame" x="0.0" y="0.0" width="552" height="135"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="49m-Qf-509">
+                        <rect key="frame" x="328" y="12" width="105" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="キャンセル" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="nbN-vt-Pth">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="buttonPressed:" target="-2" id="yqx-Ha-PnW"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Awf-KD-K2H">
+                        <rect key="frame" x="433" y="12" width="105" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="2Vm-J0-aSO">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="buttonPressed:" target="-2" id="XwZ-Yg-hN1"/>
+                        </connections>
+                    </button>
+                    <box fixedFrame="YES" title="通知拒否条件" translatesAutoresizingMaskIntoConstraints="NO" id="iV1-sw-sOE">
+                        <rect key="frame" x="20" y="60" width="512" height="68"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <view key="contentView" id="yUc-T9-ZDK">
+                            <rect key="frame" x="3" y="3" width="506" height="51"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <subviews>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Aus-LU-gDd">
+                                    <rect key="frame" x="11" y="13" width="136" height="26"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <popUpButtonCell key="cell" type="push" title="ユーザ名" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="cqa-1e-OSG" id="jOu-GK-ylk">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu"/>
+                                        <menu key="menu" title="OtherViews" id="qHV-g4-yOv">
+                                            <items>
+                                                <menuItem title="ユーザ名" state="on" id="cqa-1e-OSG"/>
+                                                <menuItem title="グループ名" id="zOa-34-R1Q"/>
+                                                <menuItem title="マシン名" id="s2x-Ck-aXm"/>
+                                                <menuItem title="ログオン名" id="wmL-s2-bno"/>
+                                                <menuItem title="IPアドレス" id="VVt-lO-FzK"/>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                </popUpButton>
+                                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZpI-Qr-ixv">
+                                    <rect key="frame" x="149" y="19" width="20" height="17"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="が" id="eTb-p7-Srh">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Gg-aN-t65">
+                                    <rect key="frame" x="174" y="17" width="193" height="22"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="QyB-Zm-uB8">
+                                        <font key="font" metaFont="system"/>
+                                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EKF-X1-ss8">
+                                    <rect key="frame" x="372" y="13" width="123" height="26"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                    <popUpButtonCell key="cell" type="push" title="と一致する" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="4fa-dY-zCA" id="4Hm-02-49S">
+                                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" metaFont="menu"/>
+                                        <menu key="menu" title="OtherViews" id="aWO-2f-w0c">
+                                            <items>
+                                                <menuItem title="と一致する" state="on" id="4fa-dY-zCA"/>
+                                                <menuItem title="を含む" id="GDS-st-6Po"/>
+                                                <menuItem title="で始まる" id="PlM-X7-63G"/>
+                                                <menuItem title="で終わる" id="0lT-YD-wZe"/>
+                                            </items>
+                                        </menu>
+                                    </popUpButtonCell>
+                                </popUpButton>
+                            </subviews>
+                        </view>
+                        <font key="titleFont" size="13" name="HiraginoSans-W3"/>
+                    </box>
+                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LNb-qg-tpQ">
+                        <rect key="frame" x="17" y="22" width="312" height="14"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
+                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="エラーメッセージ" id="UET-ft-h1z">
+                            <font key="font" metaFont="smallSystem"/>
+                            <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                </subviews>
+            </view>
+            <connections>
+                <outlet property="initialFirstResponder" destination="6Gg-aN-t65" id="r5N-wm-QBM"/>
+            </connections>
+            <point key="canvasLocation" x="139" y="-129"/>
+        </window>
+    </objects>
+</document>

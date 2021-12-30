@@ -1,12 +1,11 @@
 /*============================================================================*
- * (C) 2001-2014 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: PrefControl.m
  *	Module		: 環境設定パネルコントローラ
  *============================================================================*/
 
-#import <Cocoa/Cocoa.h>
 #import "PrefControl.h"
 #import "AppControl.h"
 #import "Config.h"
@@ -20,6 +19,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+/*============================================================================*
+ * 定数定義
+ *============================================================================*/
+
 #define	_BETA_MODE	(0)				// betaバージョン以外では無効(0)にすること
 
 #define EVERY_DAY	(60 * 60 * 24)
@@ -27,212 +30,223 @@
 #define EVERY_MONTH	(EVERY_DAY * 30)
 
 /*============================================================================*
+ * マクロ定義
+ *============================================================================*/
+
+#define _Bool2State(val)	((val) ? NSControlStateValueOn : NSControlStateValueOff)
+#define _State2Bool(val)	((val) == NSControlStateValueOn)
+
+/*============================================================================*
  * クラス実装
  *============================================================================*/
 
 @implementation PrefControl
 
-/*----------------------------------------------------------------------------*
- * 最新状態に更新
- *----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+#pragma mark - 公開メソッド
+/*----------------------------------------------------------------------------*/
 
-- (void)update {
-	Config*		config = [Config sharedConfig];
-	NSString*	work;
+// 表示を最新化する
+- (void)update
+{
+	Config* config = Config.sharedConfig;
 
 	// 全般タブ
-	[baseUserNameField			setStringValue:	config.userName];
-	[baseGroupNameField 		setStringValue:	config.groupName];
-	[receiveStatusBarCheckBox	setState:		config.useStatusBar];
+	self.baseUserNameField.stringValue		= config.userName;
+	self.baseGroupNameField.stringValue		= config.groupName;
+	self.receiveStatusBarCheckBox.state		= _Bool2State(config.useStatusBar);
 
 	// 送信タブ
-	[sendQuotField				setStringValue:	config.quoteString];
-	[sendSingleClickCheck		setState:		config.openNewOnDockClick];
-	[sendDefaultSealCheck		setState:		config.sealCheckDefault];
-	[sendHideWhenReplyCheck		setState:		config.hideReceiveWindowOnReply];
-	[sendOpenNotifyCheck		setState:		config.noticeSealOpened];
-	[sendMultipleUserCheck		setState:		config.allowSendingToMultiUser];
+	self.sendQuotField.stringValue			= config.quoteString;
+	self.sendSingleClickCheck.state			= _Bool2State(config.openNewOnDockClick);
+	self.sendDefaultSealCheck.state			= _Bool2State(config.sealCheckDefault);
+	self.sendHideWhenReplyCheck.state		= _Bool2State(config.hideReceiveWindowOnReply);
+	self.sendOpenNotifyCheck.state			= _Bool2State(config.noticeSealOpened);
+	self.sendMultipleUserCheck.state		= _Bool2State(config.allowSendingToMultiUser);
 	// 受信タブ
-	work = config.receiveSoundName;
-	if (work && ([work length] > 0)) {
-		[receiveSoundPopup selectItemWithTitle:(work)];
+	if (config.receiveSoundName.length > 0) {
+		[self.receiveSoundPopup selectItemWithTitle:config.receiveSoundName];
 	} else {
-		[receiveSoundPopup selectItemAtIndex:0];
+		[self.receiveSoundPopup selectItemAtIndex:0];
 	}
-	[receiveDefaultQuotCheck	setState:config.quoteCheckDefault];
-	[receiveNonPopupCheck		setState:config.nonPopup];
-	[receiveNonPopupModeMatrix	setEnabled:config.nonPopup];
-	[receiveNonPopupBoundMatrix setEnabled:config.nonPopup];
-	[receiveNonPopupBoundMatrix	selectCellWithTag:config.iconBoundModeInNonPopup];
+	self.receiveDefaultQuotCheck.state		= _Bool2State(config.quoteCheckDefault);
+	self.receiveNonPopupCheck.state			= _Bool2State(config.nonPopup);
+	self.receiveNonPopupModeMatrix.enabled	= _Bool2State(config.nonPopup);
+	self.receiveNonPopupBoundMatrix.enabled	= _Bool2State(config.nonPopup);
+	[self.receiveNonPopupBoundMatrix selectCellWithTag:config.iconBoundModeInNonPopup];
 	if (config.nonPopupWhenAbsence) {
-		[receiveNonPopupModeMatrix selectCellAtRow:1 column:0];
+		[self.receiveNonPopupModeMatrix selectCellAtRow:1 column:0];
 	}
-	[receiveClickableURLCheck	setState:config.useClickableURL];
+	self.receiveClickableURLCheck.state		= _Bool2State(config.useClickableURL);
 
 	// ネットワークタブ
-	[netPortNoField				setIntegerValue:config.portNo];
-	[netDialupCheck				setState:		config.dialup];
+	self.netPortNoField.integerValue		= config.portNo;
+	self.netDialupCheck.state				= _Bool2State(config.dialup);
 
 	// ログタブ
-	[logStdEnableCheck			setState:		config.standardLogEnabled];
-	[logStdWhenOpenChainCheck	setState:		config.logChainedWhenOpen];
-	[logStdWhenOpenChainCheck	setEnabled:		config.standardLogEnabled];
-	[logStdPathField			setStringValue:	config.standardLogFile];
-	[logStdPathField			setEnabled:		config.standardLogEnabled];
-	[logStdPathRefButton		setEnabled:		config.standardLogEnabled];
-	[logAltEnableCheck			setState:		config.alternateLogEnabled];
-	[logAltSelectionCheck		setState:		config.logWithSelectedRange];
-	[logAltSelectionCheck		setEnabled:		config.alternateLogEnabled];
-	[logAltPathField			setStringValue:	config.alternateLogFile];
-	[logAltPathField			setEnabled:		config.alternateLogEnabled];
-	[logAltPathRefButton		setEnabled:		config.alternateLogEnabled];
+	self.logStdEnableCheck.state			= _Bool2State(config.standardLogEnabled);
+	self.logStdWhenOpenChainCheck.state		= _Bool2State(config.logChainedWhenOpen);
+	self.logStdWhenOpenChainCheck.enabled	= config.standardLogEnabled;
+	self.logStdPathField.stringValue		= config.standardLogFile;
+	self.logStdPathField.enabled			= config.standardLogEnabled;
+	self.logStdPathRefButton.enabled		= config.standardLogEnabled;
+	self.logAltEnableCheck.state			= _Bool2State(config.alternateLogEnabled);
+	self.logAltSelectionCheck.state			= _Bool2State(config.logWithSelectedRange);
+	self.logAltSelectionCheck.enabled		= config.alternateLogEnabled;
+	self.logAltPathField.stringValue		= config.alternateLogFile;
+	self.logAltPathField.enabled			= config.alternateLogEnabled;
+	self.logAltPathRefButton.enabled		= config.alternateLogEnabled;
 
 #if _BETA_MODE
 	// 強制的にソフトウェアアップデートを行うように設定する
 	config.updateAutomaticCheck	= YES;
-	config.updateCheckInterval		= 60 * 60 * 12;
+	config.updateCheckInterval	= 60 * 60 * 12;
 #endif
 
 	// アップデートタブ
-	BOOL			autoCheck	= config.updateAutomaticCheck;
-	NSTimeInterval	interval	= config.updateCheckInterval;
-	[updateCheckAutoCheck setState:autoCheck];
-	[updateTypeMatrix setEnabled:autoCheck];
-	if (interval == EVERY_MONTH) {
-		[updateTypeMatrix selectCellWithTag:3];
-	} else if (interval == EVERY_WEEK) {
-		[updateTypeMatrix selectCellWithTag:2];
+	self.updateCheckAutoCheck.state			= _Bool2State(config.updateAutomaticCheck);
+	self.updateTypeMatrix.enabled			= config.updateAutomaticCheck;
+	if (config.updateCheckInterval == EVERY_MONTH) {
+		[self.updateTypeMatrix selectCellWithTag:3];
+	} else if (config.updateCheckInterval == EVERY_WEEK) {
+		[self.updateTypeMatrix selectCellWithTag:2];
 	} else {
-		[updateTypeMatrix selectCellWithTag:1];
+		[self.updateTypeMatrix selectCellWithTag:1];
 	}
 #if _BETA_MODE
 	// 変更できないようにする
-	[updateCheckAutoCheck setEnabled:NO];
-	[updateTypeMatrix setEnabled:NO];
+	self.updateCheckAutoCheck.enabled		= NO;
+	self.updateTypeMatrix.enabled			= NO;
 #else
-	[updateBetaTestLabel setHidden:YES];
+	self.updateBetaTestLabel.hidden			= YES;
 #endif
 }
 
-/*----------------------------------------------------------------------------*
- *  ボタン押下時処理
- *----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+#pragma mark - イベントハンドラ
+/*----------------------------------------------------------------------------*/
 
-- (IBAction)buttonPressed:(id)sender {
+- (IBAction)buttonPressed:(id)sender
+{
 	// パスワード変更ボタン（シートオープン）
-	if (sender == basePasswordButton) {
-		NSString* password = [Config sharedConfig].password;
+	if (sender == self.basePasswordButton) {
+		NSString* password = Config.sharedConfig.password;
 		// フィールドの内容を最新に
-		[pwdSheetOldPwdField setEnabled:NO];
-		[pwdSheet setInitialFirstResponder:pwdSheetNewPwdField1];
-		if (password) {
-			if ([password length] > 0) {
-				[pwdSheetOldPwdField setEnabled:YES];
-				[pwdSheet setInitialFirstResponder:pwdSheetOldPwdField];
-			}
+		self.pwdSheetOldPwdField.enabled		= NO;
+		self.pwdSheet.initialFirstResponder		= self.pwdSheetNewPwdField1;
+		if (password.length > 0) {
+			self.pwdSheetOldPwdField.enabled	= YES;
+			self.pwdSheet.initialFirstResponder	= self.pwdSheetOldPwdField;
 		}
-		[pwdSheetOldPwdField setStringValue:@""];
-		[pwdSheetNewPwdField1 setStringValue:@""];
-		[pwdSheetNewPwdField2 setStringValue:@""];
-		[pwdSheetErrorLabel setStringValue:@""];
+		self.pwdSheetOldPwdField.stringValue	= @"";
+		self.pwdSheetNewPwdField1.stringValue	= @"";
+		self.pwdSheetNewPwdField2.stringValue	= @"";
+		self.pwdSheetErrorLabel.stringValue		= @"";
 		// シート表示
-		[NSApp beginSheet:pwdSheet
-		   modalForWindow:panel
-			modalDelegate:self
-		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-			  contextInfo:nil];
+		[self.panel beginSheet:self.pwdSheet completionHandler:^(NSModalResponse returnCode) {
+			if (returnCode == NSModalResponseOK) {
+				// パスワード値変更
+				NSString* newPwd = self.pwdSheetNewPwdField1.stringValue;
+				if (newPwd.length > 0) {
+					char* encPwd = crypt(newPwd.UTF8String, "IP");
+					Config.sharedConfig.password = [NSString stringWithCString:encPwd
+																	  encoding:NSUTF8StringEncoding];
+				} else {
+					Config.sharedConfig.password = @"";
+				}
+			}
+		}];
 	}
 	// パスワード変更シート変更（OK）ボタン
-	else if (sender == pwdSheetOKButton) {
-		NSString*	oldPwd		= [pwdSheetOldPwdField stringValue];
-		NSString*	newPwd1		= [pwdSheetNewPwdField1 stringValue];
-		NSString*	newPwd2		= [pwdSheetNewPwdField2 stringValue];
-		NSString*	password	= [Config sharedConfig].password;
-		[pwdSheetErrorLabel setStringValue:@""];
+	else if (sender == self.pwdSheetOKButton) {
+		NSString* oldPwd	= self.pwdSheetOldPwdField.stringValue;
+		NSString* newPwd1	= self.pwdSheetNewPwdField1.stringValue;
+		NSString* newPwd2	= self.pwdSheetNewPwdField2.stringValue;
+		NSString* password	= Config.sharedConfig.password;
+		self.pwdSheetErrorLabel.stringValue	= @"";
 		// 旧パスワードチェック
 		if (password) {
-			if ([password length] > 0) {
-				if ([oldPwd length] <= 0) {
-					[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.NoOldPwd", nil)];
+			if (password.length > 0) {
+				if (oldPwd.length <= 0) {
+					self.pwdSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.PwdMod.NoOldPwd", nil);
 					return;
 				}
-				if (![password isEqualToString:[NSString stringWithCString:crypt([oldPwd UTF8String], "IP") encoding:NSUTF8StringEncoding]] &&
+				char* encPwd = crypt(oldPwd.UTF8String, "IP");
+				if (![password isEqualToString:[NSString stringWithCString:encPwd
+																  encoding:NSUTF8StringEncoding]] &&
 					![password isEqualToString:oldPwd]) {
 					// 平文とも比較するのはv0.4までとの互換性のため
-					[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.OldPwdErr", nil)];
+					self.pwdSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.PwdMod.OldPwdErr", nil);
 					return;
 				}
 			}
 		}
 		// 新パスワード２回入力チェック
 		if (![newPwd1 isEqualToString:newPwd2]) {
-			[pwdSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.PwdMod.NewPwdErr", nil)];
+			self.pwdSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.PwdMod.NewPwdErr", nil);
 			return;
 		}
 		// ここまでくれば正しいのでパスワード値変更
-		if ([newPwd1 length] > 0) {
-			[Config sharedConfig].password	= [NSString stringWithCString:crypt([newPwd1 UTF8String], "IP") encoding:NSUTF8StringEncoding];
-		} else {
-			[Config sharedConfig].password	= @"";
-		}
-		[NSApp endSheet:pwdSheet returnCode:NSOKButton];
+		[self.panel endSheet:self.pwdSheet returnCode:NSModalResponseOK];
 	}
 	// パスワード変更シートキャンセルボタン
-	else if (sender == pwdSheetCancelButton) {
-		[NSApp endSheet:pwdSheet returnCode:NSCancelButton];
+	else if (sender == self.pwdSheetCancelButton) {
+		[self.panel endSheet:self.pwdSheet returnCode:NSModalResponseCancel];
 	}
 	// ブロードキャストアドレス追加ボタン（シートオープン）
-	else if (sender == netBroadAddButton) {
+	else if (sender == self.netBroadAddButton) {
 		// フィールドの内容を初期化
-		[bcastSheetField setStringValue:@""];
-		[bcastSheetErrorLabel setStringValue:@""];
-		[bcastSheetMatrix selectCellAtRow:0 column:0];
-		[bcastSheetResolveCheck setEnabled:NO];
-		[bcastSheet setInitialFirstResponder:bcastSheetField];
+		self.bcastSheetField.stringValue		= @"";
+		self.bcastSheetErrorLabel.stringValue	= @"";
+		[self.bcastSheetMatrix selectCellAtRow:0 column:0];
+		self.bcastSheetResolveCheck.enabled		= NO;
+		self.bcastSheet.initialFirstResponder	= self.bcastSheetField;
 
 		// シート表示
-		[NSApp beginSheet:bcastSheet
-		   modalForWindow:panel
-			modalDelegate:self
-		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-			  contextInfo:nil];
+		[self.panel beginSheet:self.bcastSheet completionHandler:^(NSModalResponse returnCode) {
+			if (returnCode == NSModalResponseOK) {
+				dispatch_async(dispatch_get_main_queue(), ^{
+					[self.netBroadAddressTable reloadData];
+				});
+			}
+		}];
 	}
 	// ブロードキャストアドレス削除ボタン
-	else if (sender == netBroadDeleteButton) {
-		int index = [netBroadAddressTable selectedRow];
+	else if (sender == self.netBroadDeleteButton) {
+		NSInteger index = self.netBroadAddressTable.selectedRow;
 		if (index != -1) {
-			[[Config sharedConfig] removeBroadcastAtIndex:index];
-			[netBroadAddressTable reloadData];
-			[netBroadAddressTable deselectAll:self];
+			[Config.sharedConfig removeBroadcastAtIndex:index];
+			[self.netBroadAddressTable reloadData];
+			[self.netBroadAddressTable deselectAll:self];
 		}
 	}
 	// ブロードキャストシートOKボタン
-	else if (sender == bcastSheetOKButton) {
+	else if (sender == self.bcastSheetOKButton) {
 		Config*		config	= [Config sharedConfig];
-		NSString*	string	= [bcastSheetField stringValue];
-		BOOL		ip		= ([bcastSheetMatrix selectedColumn] == 0);
+		NSString*	string	= self.bcastSheetField.stringValue;
+		BOOL		ip		= (self.bcastSheetMatrix.selectedColumn == 0);
 		// 入力文字列チェック
-		if ([string length] <= 0) {
+		if (string.length <= 0) {
 			if (ip) {
-				[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.EmptyIP", nil)];
+				self.bcastSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Broadcast.EmptyIP", nil);
 			} else {
-				[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.EmptyHost", nil)];
+				self.bcastSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Broadcast.EmptyHost", nil);
 			}
 			return;
 		}
 		// IPアドレス設定の場合
 		if (ip) {
-			unsigned long 	inetaddr = inet_addr([string UTF8String]);
+			in_addr_t	 	inetaddr = inet_addr(string.UTF8String);
 			struct in_addr	addr;
 			NSString*		strAddr;
 			if (inetaddr == INADDR_NONE) {
-				[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.WrongIP", nil)];
+				self.bcastSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Broadcast.WrongIP", nil);
 				return;
 			}
 			addr.s_addr = inetaddr;
 			strAddr		= [NSString stringWithCString:inet_ntoa(addr) encoding:NSUTF8StringEncoding];
 			if ([config containsBroadcastWithAddress:strAddr]) {
-				[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.ExistIP", nil)];
+				self.bcastSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Broadcast.ExistIP", nil);
 				return;
 			}
 			[config addBroadcastWithAddress:strAddr];
@@ -240,131 +254,137 @@
 		// ホスト名設定の場合
 		else {
 			// アドレス確認
-			if ([bcastSheetResolveCheck state]) {
+			if (self.bcastSheetResolveCheck.state == NSControlStateValueOn) {
 				if (![[NSHost hostWithName:string] address]) {
-					[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.UnknownHost", nil)];
+					self.bcastSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Broadcast.UnknownHost", nil);
 					return;
 				}
 			}
 			if ([config containsBroadcastWithHost:string]) {
-				[bcastSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Broadcast.ExistHost", nil)];
+				self.bcastSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Broadcast.ExistHost", nil);
 				return;
 			}
 			[config addBroadcastWithHost:string];
 		}
-		[bcastSheetErrorLabel setStringValue:@""];
-		[netBroadAddressTable reloadData];
-		[NSApp endSheet:bcastSheet returnCode:NSOKButton];
+		self.bcastSheetErrorLabel.stringValue = @"";
+		[self.panel endSheet:self.bcastSheet returnCode:NSModalResponseOK];
 	}
 	// ブロードキャストシートキャンセルボタン
-	else if (sender == bcastSheetCancelButton) {
-		[NSApp endSheet:bcastSheet returnCode:NSCancelButton];
+	else if (sender == self.bcastSheetCancelButton) {
+		[self.panel endSheet:self.bcastSheet returnCode:NSModalResponseCancel];
 	}
 	// 不在追加ボタン／編集ボタン
-	else if ((sender == absenceAddButton) || (sender == absenceEditButton)) {
-		NSString* title		= @"";
-		NSString* msg		= @"";
-		absenceEditIndex	= -1;
-		if (sender == absenceEditButton) {
-			Config* config		= [Config sharedConfig];
-			absenceEditIndex	= [absenceTable selectedRow];
-			title				= [config absenceTitleAtIndex:absenceEditIndex];
-			msg					= [config absenceMessageAtIndex:absenceEditIndex];
+	else if ((sender == self.absenceAddButton) || (sender == self.absenceEditButton)) {
+		NSString* title	= @"";
+		NSString* msg	= @"";
+		self.absenceEditIndex = -1;
+		if (sender == self.absenceEditButton) {
+			self.absenceEditIndex = self.absenceTable.selectedRow;
+			Config* config	= Config.sharedConfig;
+			title			= [config absenceTitleAtIndex:self.absenceEditIndex];
+			msg				= [config absenceMessageAtIndex:self.absenceEditIndex];
 		}
 		// フィールドの内容を初期化
-		[absenceSheetTitleField setStringValue:title];
-		[absenceSheetMessageArea setString:msg];
-		[absenceSheetErrorLabel setStringValue:@""];
-		[absenceSheet setInitialFirstResponder:absenceSheetTitleField];
+		self.absenceSheetTitleField.stringValue	= title;
+		self.absenceSheetMessageArea.string		= msg;
+		self.absenceSheetErrorLabel.stringValue	= @"";
+		self.absenceSheet.initialFirstResponder	= self.absenceSheetTitleField;
 
 		// シート表示
-		[NSApp beginSheet:absenceSheet
-		   modalForWindow:panel
-			modalDelegate:self
-		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-			  contextInfo:nil];
+		[self.panel beginSheet:self.absenceSheet completionHandler:^(NSModalResponse returnCode) {
+			if (returnCode == NSModalResponseOK) {
+				// NOP
+			}
+		}];
 	}
 	// 不在削除ボタン
-	else if (sender == absenceDeleteButton) {
-		Config*		config	= [Config sharedConfig];
+	else if (sender == self.absenceDeleteButton) {
+		Config*		config	= Config.sharedConfig;
 		NSInteger	absIdx	= config.absenceIndex;
-		NSInteger	rmvIdx	= [absenceTable selectedRow];
+		NSInteger	rmvIdx	= self.absenceTable.selectedRow;
 		[config removeAbsenceAtIndex:rmvIdx];
 		if (rmvIdx == absIdx) {
 			config.absenceIndex = -1;
-			[[MessageCenter sharedCenter] broadcastAbsence];
+			[MessageCenter.sharedCenter broadcastAbsence];
 		} else if (rmvIdx < absIdx) {
 			config.absenceIndex = absIdx - 1;
 		}
-		[absenceTable reloadData];
-		[absenceTable deselectAll:self];
-		[[NSApp delegate] buildAbsenceMenu];
+		[self.absenceTable reloadData];
+		[self.absenceTable deselectAll:self];
+		[(AppControl*)NSApp.delegate buildAbsenceMenu];
 	}
 	// 不在上へボタン
-	else if (sender == absenceUpButton) {
-		Config*		config	= [Config sharedConfig];
+	else if (sender == self.absenceUpButton) {
+		Config*		config	= Config.sharedConfig;
 		NSInteger	absIdx	= config.absenceIndex;
-		NSInteger	upIdx	= [absenceTable selectedRow];
+		NSInteger	upIdx	= self.absenceTable.selectedRow;
 		[config upAbsenceAtIndex:upIdx];
 		if (upIdx == absIdx) {
 			config.absenceIndex = absIdx - 1;
 		} else if (upIdx == absIdx + 1) {
 			config.absenceIndex = absIdx + 1;
 		}
-		[absenceTable reloadData];
-		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:upIdx-1] byExtendingSelection:NO];
-		[[NSApp delegate] buildAbsenceMenu];
+		[self.absenceTable reloadData];
+		[self.absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:upIdx-1] byExtendingSelection:NO];
+		[(AppControl*)NSApp.delegate buildAbsenceMenu];
 	}
 	// 不在下へボタン
-	else if (sender == absenceDownButton) {
-		Config* config	= [Config sharedConfig];
+	else if (sender == self.absenceDownButton) {
+		Config*		config	= Config.sharedConfig;
 		NSInteger	absIdx	= config.absenceIndex;
-		NSInteger	downIdx	= [absenceTable selectedRow];
-		NSInteger	index	= [absenceTable selectedRow];
+		NSInteger	downIdx	= self.absenceTable.selectedRow;
+		NSInteger	index	= self.absenceTable.selectedRow;
 		[config downAbsenceAtIndex:downIdx];
 		if (downIdx == absIdx) {
 			config.absenceIndex = absIdx + 1;
 		} else if (downIdx == absIdx - 1) {
 			config.absenceIndex = absIdx - 1;
 		}
-		[absenceTable reloadData];
-		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
-		[[NSApp delegate] buildAbsenceMenu];
+		[self.absenceTable reloadData];
+		[self.absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
+		[(AppControl*)NSApp.delegate buildAbsenceMenu];
 	}
 	// 不在定義初期化ボタン
-	else if (sender == absenceResetButton) {
-		// 不在モードを解除して送信するか確認
-		NSBeginCriticalAlertSheet(	NSLocalizedString(@"Pref.AbsenceReset.Title", nil),
-									NSLocalizedString(@"Pref.AbsenceReset.OK", nil),
-									NSLocalizedString(@"Pref.AbsenceReset.Cancel", nil),
-									nil,
-									panel,
-									self,
-									@selector(sheetDidEnd:returnCode:contextInfo:),
-									nil,
-									sender,
-									NSLocalizedString(@"Pref.AbsenceReset.Msg", nil));
+	else if (sender == self.absenceResetButton) {
+		// 不在定義リセットの確認
+		NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+		alert.alertStyle		= NSAlertStyleWarning;
+		alert.messageText		= NSLocalizedString(@"Pref.AbsenceReset.Title", nil);
+		alert.informativeText	= NSLocalizedString(@"Pref.AbsenceReset.Msg", nil);
+		[alert addButtonWithTitle:NSLocalizedString(@"Pref.AbsenceReset.OK", nil)];
+		[alert addButtonWithTitle:NSLocalizedString(@"Pref.AbsenceReset.Cancel", nil)];
+		[alert beginSheetModalForWindow:self.panel completionHandler:^(NSModalResponse returnCode) {
+			if (returnCode == NSAlertFirstButtonReturn) {
+				// 不在定義をリセット
+				dispatch_async(dispatch_get_main_queue(), ^() {
+					[Config.sharedConfig resetAllAbsences];
+					[self.absenceTable reloadData];
+					[self.absenceTable deselectAll:self];
+					[(AppControl*)NSApp.delegate buildAbsenceMenu];
+				});
+			}
+		}];
 	}
 	// 不在シートOKボタン
-	else if (sender == absenceSheetOKButton) {
-		Config*		config	= [Config sharedConfig];
-		NSString*	title	= [absenceSheetTitleField stringValue];
-		NSString*	msg		= [NSString stringWithString:[absenceSheetMessageArea string]];
-		NSInteger	index	= [absenceTable selectedRow];
+	else if (sender == self.absenceSheetOKButton) {
+		Config*		config	= Config.sharedConfig;
+		NSString*	title	= self.absenceSheetTitleField.stringValue;
+		NSString*	msg		= [NSString stringWithString:self.absenceSheetMessageArea.string];
+		NSInteger	index	= self.absenceTable.selectedRow;
 		NSInteger	absIdx	= config.absenceIndex;
-		[absenceSheetErrorLabel setStringValue:@""];
+		self.absenceSheetErrorLabel.stringValue = @"";
 		// タイトルチェック
-		if ([title length] <= 0) {
-			[absenceSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Absence.NoTitle", nil)];
+		if (title.length <= 0) {
+			self.absenceSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Absence.NoTitle", nil);
 			return;
 		}
-		if ([msg length] <= 0) {
-			[absenceSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Absence.NoMessage", nil)];
+		if (msg.length <= 0) {
+			self.absenceSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Absence.NoMessage", nil);
 			return;
 		}
-		if (absenceEditIndex == -1) {
+		if (self.absenceEditIndex == -1) {
 			if ([config containsAbsenceTitle:title]) {
-				[absenceSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Absence.ExistTitle", nil)];
+				self.absenceSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Absence.ExistTitle", nil);
 				return;
 			}
 			if (index == -1) {
@@ -378,132 +398,130 @@
 		} else {
 			[config setAbsenceTitle:title message:msg atIndex:index];
 			if (absIdx == index) {
-				[[MessageCenter sharedCenter] broadcastAbsence];
+				[MessageCenter.sharedCenter broadcastAbsence];
 			}
 		}
-		[absenceTable reloadData];
-		[absenceTable deselectAll:self];
-		[absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:((index == -1) ? 0 : (index))]
-				  byExtendingSelection:NO];
-		[[NSApp delegate] buildAbsenceMenu];
-		[NSApp endSheet:absenceSheet returnCode:NSOKButton];
+		[self.absenceTable reloadData];
+		[self.absenceTable deselectAll:self];
+		[self.absenceTable selectRowIndexes:[NSIndexSet indexSetWithIndex:((index == -1) ? 0 : (index))]
+					   byExtendingSelection:NO];
+		[(AppControl*)NSApp.delegate buildAbsenceMenu];
+		[self.panel endSheet:self.absenceSheet returnCode:NSModalResponseOK];
 	}
 	// 不在シートCancelボタン
-	else if (sender == absenceSheetCancelButton) {
-		[NSApp endSheet:absenceSheet returnCode:NSCancelButton];
+	else if (sender == self.absenceSheetCancelButton) {
+		[self.panel endSheet:self.absenceSheet returnCode:NSModalResponseCancel];
 	}
 	// 通知拒否追加ボタン／編集ボタン
-	else if ((sender == refuseAddButton) || (sender == refuseEditButton)) {
+	else if ((sender == self.refuseAddButton) || (sender == self.refuseEditButton)) {
 		IPRefuseTarget		target		= 0;
 		NSString* 			string		= @"";
 		IPRefuseCondition	condition	= 0;
 
-		refuseEditIndex	= -1;
-		if (sender == refuseEditButton) {
-			RefuseInfo*	info;
-			refuseEditIndex	= [refuseTable selectedRow];
-			info			= [[Config sharedConfig] refuseInfoAtIndex:refuseEditIndex];
-			target			= [info target];
-			string			= [info string];
-			condition		= [info condition];
+		self.refuseEditIndex	= -1;
+		if (sender == self.refuseEditButton) {
+			self.refuseEditIndex	= self.refuseTable.selectedRow;
+			RefuseInfo*	info = [Config.sharedConfig refuseInfoAtIndex:self.refuseEditIndex];
+			target		= info.target;
+			string		= info.string;
+			condition	= info.condition;
 		}
 		// フィールドの内容を初期化
-		[refuseSheetField setStringValue:string];
-		[refuseSheetTargetPopup selectItemAtIndex:target];
-		[refuseSheetCondPopup selectItemAtIndex:condition];
-		[refuseSheetErrorLabel setStringValue:@""];
-		[refuseSheet setInitialFirstResponder:refuseSheetTargetPopup];
+		self.refuseSheetField.stringValue		= string;
+		[self.refuseSheetTargetPopup selectItemAtIndex:target];
+		[self.refuseSheetCondPopup selectItemAtIndex:condition];
+		self.refuseSheetErrorLabel.stringValue	= @"";
+		self.refuseSheet.initialFirstResponder	= self.refuseSheetTargetPopup;
 
 		// シート表示
-		[NSApp beginSheet:refuseSheet
-		   modalForWindow:panel
-			modalDelegate:self
-		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-			  contextInfo:nil];
+		[self.panel beginSheet:self.refuseSheet completionHandler:^(NSModalResponse returnCode) {
+			if (returnCode == NSModalResponseOK) {
+				// NOP
+			}
+		}];
 	}
 	// 通知拒否削除ボタン
-	else if (sender == refuseDeleteButton) {
-		[[Config sharedConfig] removeRefuseInfoAtIndex:[refuseTable selectedRow]];
-		[refuseTable reloadData];
-		[refuseTable deselectAll:self];
+	else if (sender == self.refuseDeleteButton) {
+		[Config.sharedConfig removeRefuseInfoAtIndex:self.refuseTable.selectedRow];
+		[self.refuseTable reloadData];
+		[self.refuseTable deselectAll:self];
 // broadcast entry?
 	}
 	// 通知拒否上へボタン
-	else if (sender == refuseUpButton) {
-		int index = [refuseTable selectedRow];
-		[[Config sharedConfig] upRefuseInfoAtIndex:index];
-		[refuseTable reloadData];
-		[refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index-1] byExtendingSelection:NO];
+	else if (sender == self.refuseUpButton) {
+		NSInteger index = self.refuseTable.selectedRow;
+		[Config.sharedConfig upRefuseInfoAtIndex:index];
+		[self.refuseTable reloadData];
+		[self.refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index-1] byExtendingSelection:NO];
 // broadcast entry?
 	}
 	// 通知拒否下へボタン
-	else if (sender == refuseDownButton) {
-		int index = [refuseTable selectedRow];
-		[[Config sharedConfig] downRefuseInfoAtIndex:index];
-		[refuseTable reloadData];
-		[refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
+	else if (sender == self.refuseDownButton) {
+		NSInteger index = self.refuseTable.selectedRow;
+		[Config.sharedConfig downRefuseInfoAtIndex:index];
+		[self.refuseTable reloadData];
+		[self.refuseTable selectRowIndexes:[NSIndexSet indexSetWithIndex:index+1] byExtendingSelection:NO];
 // broadcast entry?
 	}
 	// 通知拒否シートOKボタン
-	else if (sender == refuseSheetOKButton) {
-		Config*				cfg			= [Config sharedConfig];
-		IPRefuseTarget		target		= [refuseSheetTargetPopup indexOfSelectedItem];
-		NSString*			string		= [refuseSheetField stringValue];
-		IPRefuseCondition	condition	= [refuseSheetCondPopup indexOfSelectedItem];
-		NSInteger			index		= [refuseTable selectedRow];
-		RefuseInfo*			info;
+	else if (sender == self.refuseSheetOKButton) {
+		Config*				cfg			= Config.sharedConfig;
+		IPRefuseTarget		target		= self.refuseSheetTargetPopup.indexOfSelectedItem;
+		NSString*			string		= self.refuseSheetField.stringValue;
+		IPRefuseCondition	condition	= self.refuseSheetCondPopup.indexOfSelectedItem;
+		NSInteger			index		= self.refuseTable.selectedRow;
 		// 入力文字チェック
-		if ([string length] <= 0) {
-			[refuseSheetErrorLabel setStringValue:NSLocalizedString(@"Pref.Refuse.Error.NoInput", nil)];
+		if (string.length <= 0) {
+			self.refuseSheetErrorLabel.stringValue = NSLocalizedString(@"Pref.Refuse.Error.NoInput", nil);
 			return;
 		}
 
-		info = [[[RefuseInfo alloc] initWithTarget:target string:string condition:condition] autorelease];
-		if (refuseEditIndex == -1) {
+		RefuseInfo* info = [[[RefuseInfo alloc] initWithTarget:target string:string condition:condition] autorelease];
+		if (self.refuseEditIndex == -1) {
 			// 新規
 			if (index == -1) {
 				[cfg addRefuseInfo:info];
 			} else {
 				[cfg insertRefuseInfo:info atIndex:index];
 			}
-			[refuseTable deselectAll:self];
+			[self.refuseTable deselectAll:self];
 		} else {
 			// 変更
-			[cfg setRefuseInfo:info atIndex:refuseEditIndex];
+			[cfg setRefuseInfo:info atIndex:self.refuseEditIndex];
 		}
-		[refuseTable reloadData];
-		[NSApp endSheet:refuseSheet returnCode:NSOKButton];
+		[self.refuseTable reloadData];
+		[self.panel endSheet:self.refuseSheet returnCode:NSModalResponseOK];
 	}
 	// 通知拒否シートCancelボタン
-	else if (sender == refuseSheetCancelButton) {
-		[NSApp endSheet:refuseSheet returnCode:NSCancelButton];
+	else if (sender == self.refuseSheetCancelButton) {
+		[self.panel endSheet:self.refuseSheet returnCode:NSModalResponseCancel];
 	}
 	// 標準ログファイル参照ボタン／重要ログファイル参照ボタン
-	else if ((sender == logStdPathRefButton) || (sender == logAltPathRefButton)) {
-		NSSavePanel*	sp = [NSSavePanel savePanel];
+	else if ((sender == self.logStdPathRefButton) || (sender == self.logAltPathRefButton)) {
+		NSSavePanel*	sp = NSSavePanel.savePanel;
 		NSString*		orgPath;
 		// SavePanel 設定
-		if (sender == logStdPathRefButton) {
-			orgPath = [Config sharedConfig].standardLogFile;
+		if (sender == self.logStdPathRefButton) {
+			orgPath = Config.sharedConfig.standardLogFile;
 		} else {
-			orgPath = [Config sharedConfig].alternateLogFile;
+			orgPath = Config.sharedConfig.alternateLogFile;
 		}
 		sp.prompt				= NSLocalizedString(@"Log.File.SaveSheet.OK", nil);
-		sp.directoryURL			= [NSURL fileURLWithPath:[orgPath stringByDeletingLastPathComponent]];
-		sp.nameFieldStringValue = [orgPath lastPathComponent];
+		sp.directoryURL			= [NSURL fileURLWithPath:orgPath.stringByDeletingLastPathComponent];
+		sp.nameFieldStringValue = orgPath.lastPathComponent;
 		// シート表示
-		[sp beginSheetModalForWindow:panel completionHandler:^(NSInteger result) {
-			if (result == NSOKButton) {
+		[sp beginSheetModalForWindow:self.panel completionHandler:^(NSInteger result) {
+			if (result == NSModalResponseOK) {
 				NSString* fn = [sp.URL.path stringByAbbreviatingWithTildeInPath];
 				// 標準ログ選択
-				if (sender == logStdPathRefButton) {
-					[Config sharedConfig].standardLogFile = fn;
-					[logStdPathField setStringValue:fn];
+				if (sender == self.logStdPathRefButton) {
+					Config.sharedConfig.standardLogFile	= fn;
+					self.logStdPathField.stringValue	= fn;
 				}
 				// 重要ログ選択
 				else {
-					[Config sharedConfig].alternateLogFile = fn;
-					[logAltPathField setStringValue:fn];
+					Config.sharedConfig.alternateLogFile	= fn;
+					self.logAltPathField.stringValue		= fn;
 				}
 			}
 		}];
@@ -518,32 +536,33 @@
  *  Matrix変更時処理
  *----------------------------------------------------------------------------*/
 
-- (IBAction)matrixChanged:(id)sender {
-	Config* config = [Config sharedConfig];
+- (IBAction)matrixChanged:(id)sender
+{
+	Config* config = Config.sharedConfig;
 	// 受信：ノンポップアップ受信モード
-	if (sender == receiveNonPopupModeMatrix) {
-		config.nonPopupWhenAbsence = ([receiveNonPopupModeMatrix selectedRow] == 1);
+	if (sender == self.receiveNonPopupModeMatrix) {
+		config.nonPopupWhenAbsence = (self.receiveNonPopupModeMatrix.selectedRow == 1);
 	}
 	// 受信：ノンポップアップ時アイコンバウンド設定
-	else if (sender == receiveNonPopupBoundMatrix) {
-		config.iconBoundModeInNonPopup = [[sender selectedCell] tag];
+	else if (sender == self.receiveNonPopupBoundMatrix) {
+		config.iconBoundModeInNonPopup = self.receiveNonPopupBoundMatrix.selectedCell.tag;
 	}
 	// ブロードキャスト種別
-	else if (sender == bcastSheetMatrix) {
-		[bcastSheetResolveCheck setEnabled:([bcastSheetMatrix selectedColumn] == 1)];
+	else if (sender == self.bcastSheetMatrix) {
+		self.bcastSheetResolveCheck.enabled	= (self.bcastSheetMatrix.selectedColumn == 1);
 	}
 	// アップデートチェック種別
-	else if (sender == updateTypeMatrix) {
-		switch ([[sender selectedCell] tag]) {
-			case 1:
-				config.updateCheckInterval = EVERY_DAY;
-				break;
-			case 2:
-				config.updateCheckInterval = EVERY_WEEK;
-				break;
-			case 3:
-				config.updateCheckInterval = EVERY_MONTH;
-				break;
+	else if (sender == self.updateTypeMatrix) {
+		switch (self.updateTypeMatrix.selectedCell.tag) {
+		case 1:
+			config.updateCheckInterval = EVERY_DAY;
+			break;
+		case 2:
+			config.updateCheckInterval = EVERY_WEEK;
+			break;
+		case 3:
+			config.updateCheckInterval = EVERY_MONTH;
+			break;
 		}
 	}
 	// その他
@@ -556,17 +575,18 @@
  *  テキストフィールド変更時処理
  *----------------------------------------------------------------------------*/
 
-- (BOOL)control:(NSControl*)control textShouldEndEditing:(NSText*)fieldEditor {
+- (BOOL)control:(NSControl*)control textShouldEndEditing:(NSText*)fieldEditor
+{
 	// 全般：ユーザ名
-	if (control == baseUserNameField) {
-		NSRange r = [[fieldEditor string] rangeOfString:@":"];
+	if (control == self.baseUserNameField) {
+		NSRange r = [fieldEditor.string rangeOfString:@":"];
 		if (r.location != NSNotFound) {
 			return NO;
 		}
 	}
 	// 全般：グループ名
-	else if (control == baseGroupNameField) {
-		NSRange r = [[fieldEditor string] rangeOfString:@":"];
+	else if (control == self.baseGroupNameField) {
+		NSRange r = [fieldEditor.string rangeOfString:@":"];
 		if (r.location != NSNotFound) {
 			return NO;
 		}
@@ -574,46 +594,39 @@
 	return YES;
 }
 
-- (void)controlTextDidEndEditing:(NSNotification*)aNotification {
-	Config* config	= [Config sharedConfig];
-	id		obj		= [aNotification object];
+- (void)controlTextDidEndEditing:(NSNotification*)aNotification
+{
+	Config* config	= Config.sharedConfig;
+	id		obj		= aNotification.object;
 	// 全般：ユーザ名
-	if (obj == baseUserNameField) {
-		config.userName	= [baseUserNameField stringValue];
-		[[MessageCenter sharedCenter] broadcastAbsence];
+	if (obj == self.baseUserNameField) {
+		config.userName	= self.baseUserNameField.stringValue;
+		[MessageCenter.sharedCenter broadcastAbsence];
 	}
 	// 全般：グループ名
-	else if (obj == baseGroupNameField) {
-		config.groupName = [baseGroupNameField stringValue];
-		[[MessageCenter sharedCenter] broadcastAbsence];
+	else if (obj == self.baseGroupNameField) {
+		config.groupName = self.baseGroupNameField.stringValue;
+		[MessageCenter.sharedCenter broadcastAbsence];
 	}
 	// 全般：ポート番号
-	else if (obj == netPortNoField) {
-		config.portNo = [netPortNoField integerValue];
+	else if (obj == self.netPortNoField) {
+		config.portNo = self.netPortNoField.integerValue;
 	}
 	// 送信：引用文字列
-	else if (obj == sendQuotField) {
-		config.quoteString	= [sendQuotField stringValue];
+	else if (obj == self.sendQuotField) {
+		config.quoteString = self.sendQuotField.stringValue;
 	}
 	// ログ：標準ログ
-	else if (obj == logStdPathField) {
-		NSString* path = [logStdPathField stringValue];
-		config.standardLogFile = path;
-		[LogManager standardLog].filePath	= path;
-		if (config.standardLogEnabled) {
-			AppControl* appCtl = (AppControl*)[NSApp delegate];
-			[appCtl checkLogConversion:YES path:path];
-		}
+	else if (obj == self.logStdPathField) {
+		NSString* path = self.logStdPathField.stringValue;
+		config.standardLogFile			= path;
+		LogManager.standardLog.filePath	= path;
 	}
 	// ログ：重要ログ
-	else if (obj == logAltPathField) {
-		NSString* path = [logAltPathField stringValue];
-		config.alternateLogFile = path;
-		[LogManager alternateLog].filePath	= path;
-		if (config.alternateLogEnabled) {
-			AppControl* appCtl = (AppControl*)[NSApp delegate];
-			[appCtl checkLogConversion:NO path:path];
-		}
+	else if (obj == self.logAltPathField) {
+		NSString* path = self.logAltPathField.stringValue;
+		config.alternateLogFile				= path;
+		LogManager.alternateLog.filePath	= path;
 	}
 	// その他（バグ）
 	else {
@@ -625,12 +638,13 @@
  *  チェックボックス変更時処理
  *----------------------------------------------------------------------------*/
 
-- (IBAction)checkboxChanged:(id)sender {
-	Config* config = [Config sharedConfig];
+- (IBAction)checkboxChanged:(id)sender
+{
+	Config* config = Config.sharedConfig;
 	// 全般：ステータスバーを使用するか
-	if (sender == receiveStatusBarCheckBox) {
-		AppControl* appCtl = (AppControl*)[NSApp delegate];
-		config.useStatusBar = [receiveStatusBarCheckBox state];
+	if (sender == self.receiveStatusBarCheckBox) {
+		AppControl* appCtl = (AppControl*)NSApp.delegate;
+		config.useStatusBar = _State2Bool(self.receiveStatusBarCheckBox.state);
 		if (config.useStatusBar) {
 			[appCtl initStatusBar];
 		} else {
@@ -638,80 +652,72 @@
 		}
 	}
 	// 送信：DOCKのシングルクリックで新規送信ウィンドウ
-	else if (sender == sendSingleClickCheck) {
-		config.openNewOnDockClick = [sendSingleClickCheck state];
+	else if (sender == self.sendSingleClickCheck) {
+		config.openNewOnDockClick = _State2Bool(self.sendSingleClickCheck.state);
 	}
 	// 送信：引用チェックをデフォルト
-	else if (sender == sendDefaultSealCheck) {
-		config.sealCheckDefault = [sendDefaultSealCheck state];
+	else if (sender == self.sendDefaultSealCheck) {
+		config.sealCheckDefault = _State2Bool(self.sendDefaultSealCheck.state);
 	}
 	// 送信：返信時に受信ウィンドウをクローズ
-	else if (sender == sendHideWhenReplyCheck) {
-		config.hideReceiveWindowOnReply = [sendHideWhenReplyCheck state];
+	else if (sender == self.sendHideWhenReplyCheck) {
+		config.hideReceiveWindowOnReply = _State2Bool(self.sendHideWhenReplyCheck.state);
 	}
 	// 送信：開封通知を行う
-	else if (sender == sendOpenNotifyCheck) {
-		config.noticeSealOpened = [sendOpenNotifyCheck state];
+	else if (sender == self.sendOpenNotifyCheck) {
+		config.noticeSealOpened = _State2Bool(self.sendOpenNotifyCheck.state);
 	}
 	// 送信：複数ユーザ宛送信を許可
-	else if (sender == sendMultipleUserCheck) {
-		config.allowSendingToMultiUser = [sendMultipleUserCheck state];
+	else if (sender == self.sendMultipleUserCheck) {
+		config.allowSendingToMultiUser = _State2Bool(self.sendMultipleUserCheck.state);
 	}
 	// 受信：引用チェックをデフォルト
-	else if (sender == receiveDefaultQuotCheck) {
-		config.quoteCheckDefault = [receiveDefaultQuotCheck state];
+	else if (sender == self.receiveDefaultQuotCheck) {
+		config.quoteCheckDefault = _State2Bool(self.receiveDefaultQuotCheck.state);
 	}
 	// 受信：ノンポップアップ受信
-	else if (sender == receiveNonPopupCheck) {
-		config.nonPopup = [receiveNonPopupCheck state];
-		[receiveNonPopupModeMatrix setEnabled:[receiveNonPopupCheck state]];
-		[receiveNonPopupBoundMatrix setEnabled:[receiveNonPopupCheck state]];
+	else if (sender == self.receiveNonPopupCheck) {
+		config.nonPopup = _State2Bool(self.receiveNonPopupCheck.state);
+		self.receiveNonPopupModeMatrix.enabled	= _State2Bool(self.receiveNonPopupCheck.state);
+		self.receiveNonPopupBoundMatrix.enabled	= _State2Bool(self.receiveNonPopupCheck.state);
 	}
 	// 受信：クリッカブルURL
-	else if (sender == receiveClickableURLCheck) {
-		config.useClickableURL = [receiveClickableURLCheck state];
+	else if (sender == self.receiveClickableURLCheck) {
+		config.useClickableURL = _State2Bool(self.receiveClickableURLCheck.state);
 	}
 	// ネットワーク：ダイアルアップ接続
-	else if (sender == netDialupCheck) {
-		config.dialup = [netDialupCheck state];
+	else if (sender == self.netDialupCheck) {
+		config.dialup = _State2Bool(self.netDialupCheck.state);
 	}
 	// ログ：標準ログを使用する
-	else if (sender == logStdEnableCheck) {
-		BOOL enable = [logStdEnableCheck state];
-		config.standardLogEnabled = enable;
-		if (enable) {
-			AppControl* appCtl = (AppControl*)[NSApp delegate];
-			[appCtl checkLogConversion:YES path:[logStdPathField stringValue]];
-		}
-		[logStdPathField setEnabled:enable];
-		[logStdWhenOpenChainCheck setEnabled:enable];
-		[logStdPathRefButton setEnabled:enable];
+	else if (sender == self.logStdEnableCheck) {
+		BOOL enable = _State2Bool(self.logStdEnableCheck.state);
+		config.standardLogEnabled				= enable;
+		self.logStdPathField.enabled			= enable;
+		self.logStdWhenOpenChainCheck.enabled	= enable;
+		self.logStdPathRefButton.enabled		= enable;
 	}
 	// ログ：錠前付きは開封後にログ
-	else if (sender == logStdWhenOpenChainCheck) {
-		config.logChainedWhenOpen = [logStdWhenOpenChainCheck state];
+	else if (sender == self.logStdWhenOpenChainCheck) {
+		config.logChainedWhenOpen = _State2Bool(self.logStdWhenOpenChainCheck.state);
 	}
 	// ログ：重要ログを使用する
-	else if (sender == logAltEnableCheck) {
-		BOOL enable = [logAltEnableCheck state];
-		config.alternateLogEnabled	= enable;
-		if (enable) {
-			AppControl* appCtl = (AppControl*)[NSApp delegate];
-			[appCtl checkLogConversion:NO path:[logAltPathField stringValue]];
-		}
-		[logAltPathField setEnabled:enable];
-		[logAltSelectionCheck setEnabled:enable];
-		[logAltPathRefButton setEnabled:enable];
+	else if (sender == self.logAltEnableCheck) {
+		BOOL enable = _State2Bool(self.logAltEnableCheck.state);
+		config.alternateLogEnabled			= enable;
+		self.logAltPathField.enabled		= enable;
+		self.logAltSelectionCheck.enabled	= enable;
+		self.logAltPathRefButton.enabled	= enable;
 	}
 	// ログ：選択範囲を記録
-	else if (sender == logAltSelectionCheck) {
-		config.logWithSelectedRange = [logAltSelectionCheck state];
+	else if (sender == self.logAltSelectionCheck) {
+		config.logWithSelectedRange = _State2Bool(self.logAltSelectionCheck.state);
 	}
 	// アップデート：自動チェック
-	else if (sender == updateCheckAutoCheck) {
-		BOOL check = ([updateCheckAutoCheck state] == NSOnState);
-		config.updateAutomaticCheck = check;
-		[updateTypeMatrix setEnabled:check];
+	else if (sender == self.updateCheckAutoCheck) {
+		BOOL check = _State2Bool(self.updateCheckAutoCheck.state);
+		config.updateAutomaticCheck		= check;
+		self.updateTypeMatrix.enabled	= check;
 	}
 	// 不明（バグ）
 	else {
@@ -723,12 +729,13 @@
  *  プルダウン変更時処理
  *----------------------------------------------------------------------------*/
 
-- (IBAction)popupChanged:(id)sender {
-	Config* config = [Config sharedConfig];
+- (IBAction)popupChanged:(id)sender
+{
+	Config* config = Config.sharedConfig;
 	// 受信音
-	if (sender == receiveSoundPopup) {
-		if ([receiveSoundPopup indexOfSelectedItem] > 0) {
-			config.receiveSoundName = [receiveSoundPopup titleOfSelectedItem];
+	if (sender == self.receiveSoundPopup) {
+		if (self.receiveSoundPopup.indexOfSelectedItem > 0) {
+			config.receiveSoundName = self.receiveSoundPopup.titleOfSelectedItem;
 			[config.receiveSound play];
 		} else {
 			config.receiveSoundName = nil;
@@ -740,93 +747,23 @@
 	}
 }
 
-/*----------------------------------------------------------------------------*
- *  リスト選択変更時処理
- *----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+#pragma mark - NSTableView
+/*----------------------------------------------------------------------------*/
 
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
-	id tbl = [aNotification object];
-	// ブロードキャストリスト
-	if (tbl == netBroadAddressTable) {
-		// １つ以上のアドレスが選択されていない場合は削除ボタンが押下不可
-		[netBroadDeleteButton setEnabled:([netBroadAddressTable numberOfSelectedRows] > 0)];
-	}
-	// 不在リスト
-	else if (tbl == absenceTable) {
-		int index = [absenceTable selectedRow];
-		[absenceEditButton setEnabled:(index != -1)];
-		[absenceDeleteButton setEnabled:(index != -1)];
-		[absenceUpButton setEnabled:(index > 0)];
-		[absenceDownButton setEnabled:((index >= 0) && (index < [absenceTable numberOfRows] - 1))];
-	}
-	// 通知拒否リスト
-	else if (tbl == refuseTable) {
-		int index = [refuseTable selectedRow];
-		[refuseEditButton setEnabled:(index != -1)];
-		[refuseDeleteButton setEnabled:(index != -1)];
-		[refuseUpButton setEnabled:(index > 0)];
-		[refuseDownButton setEnabled:((index >= 0) && (index < [refuseTable numberOfRows] - 1))];
-	}
-	// その他（バグ）
-	else {
-		ERR(@"unknown table selection changed (%@)", tbl);
-	}
-}
-
-// テーブルダブルクリック時処理
-- (void)tableDoubleClicked:(id)sender {
-	int index = [sender selectedRow];
-	// 不在定義リスト
-	if (sender == absenceTable) {
-		if (index >= 0) {
-			[absenceEditButton performClick:self];
-		}
-	}
-	// 通知拒否条件リスト
-	else if (sender == refuseTable) {
-		if (index >= 0) {
-			[refuseEditButton performClick:self];
-		}
-	}
-	// その他（バグ）
-	else {
-		ERR(@"unknown table double clicked (%@)", sender);
-	}
-}
-
-/*----------------------------------------------------------------------------*
- *  シート終了時処理
- *----------------------------------------------------------------------------*/
-
-- (void)sheetDidEnd:(NSWindow*)sheet returnCode:(int)code contextInfo:(void*)info {
-	// 不在定義リセット
-	if (info == absenceResetButton) {
-		if (code == NSOKButton) {
-			[[Config sharedConfig] resetAllAbsences];
-			[absenceTable reloadData];
-			[absenceTable deselectAll:self];
-			[[NSApp delegate] buildAbsenceMenu];
-		}
-	}
-	[sheet orderOut:self];
-}
-
-/*----------------------------------------------------------------------------*
- * NSTableDataSourceメソッド
- *----------------------------------------------------------------------------*/
-
-- (int)numberOfRowsInTableView:(NSTableView*)aTableView {
+- (NSInteger)numberOfRowsInTableView:(NSTableView*)aTableView
+{
 	// ブロードキャスト
-	if (aTableView == netBroadAddressTable) {
-		return [[Config sharedConfig] numberOfBroadcasts];
+	if (aTableView == self.netBroadAddressTable) {
+		return Config.sharedConfig.numberOfBroadcasts;
 	}
 	// 不在
-	else if (aTableView == absenceTable) {
-		return [[Config sharedConfig] numberOfAbsences];
+	else if (aTableView == self.absenceTable) {
+		return Config.sharedConfig.numberOfAbsences;
 	}
 	// 通知拒否
-	else if (aTableView == refuseTable) {
-		return [[Config sharedConfig] numberOfRefuseInfo];
+	else if (aTableView == self.refuseTable) {
+		return Config.sharedConfig.numberOfRefuseInfo;
 	}
 	// その他（バグ）
 	else {
@@ -835,20 +772,20 @@
 	return 0;
 }
 
-- (id)tableView:(NSTableView*)aTableView
-		objectValueForTableColumn:(NSTableColumn*)aTableColumn
-		row:(int)rowIndex {
+- (id)tableView:(NSTableView*)aTableView objectValueForTableColumn:(NSTableColumn*)aTableColumn
+			row:(NSInteger)rowIndex
+{
 	// ブロードキャスト
-	if (aTableView == netBroadAddressTable) {
-		return [[Config sharedConfig] broadcastAtIndex:rowIndex];
+	if (aTableView == self.netBroadAddressTable) {
+		return [Config.sharedConfig broadcastAtIndex:rowIndex];
 	}
 	// 不在
-	else if (aTableView == absenceTable) {
-		return [[Config sharedConfig] absenceTitleAtIndex:rowIndex];
+	else if (aTableView == self.absenceTable) {
+		return [Config.sharedConfig absenceTitleAtIndex:rowIndex];
 	}
 	// 通知拒否リスト
-	else if (aTableView == refuseTable) {
-		return [[Config sharedConfig] refuseInfoAtIndex:rowIndex];
+	else if (aTableView == self.refuseTable) {
+		return [Config.sharedConfig refuseInfoAtIndex:rowIndex];
 	}
 	// その他（バグ）
 	else {
@@ -857,56 +794,111 @@
 	return nil;
 }
 
-/*----------------------------------------------------------------------------*
- *  その他
- *----------------------------------------------------------------------------*/
-
-- (void)dealloc {
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[super dealloc];
+- (void)tableViewSelectionDidChange:(NSNotification*)aNotification
+{
+	id tbl = [aNotification object];
+	// ブロードキャストリスト
+	if (tbl == self.netBroadAddressTable) {
+		// １つ以上のアドレスが選択されていない場合は削除ボタンが押下不可
+		self.netBroadDeleteButton.enabled = (self.netBroadAddressTable.numberOfSelectedRows > 0);
+	}
+	// 不在リスト
+	else if (tbl == self.absenceTable) {
+		NSInteger index = self.absenceTable.selectedRow;
+		self.absenceEditButton.enabled		= (index != -1);
+		self.absenceDeleteButton.enabled	= (index != -1);
+		self.absenceUpButton.enabled		= (index > 0);
+		self.absenceDownButton.enabled		= ((index >= 0) && (index < self.absenceTable.numberOfRows - 1));
+	}
+	// 通知拒否リスト
+	else if (tbl == self.refuseTable) {
+		NSInteger index = self.refuseTable.selectedRow;
+		self.refuseEditButton.enabled	= (index != -1);
+		self.refuseDeleteButton.enabled	= (index != -1);
+		self.refuseUpButton.enabled		= (index > 0);
+		self.refuseDownButton.enabled	= ((index >= 0) && (index < self.refuseTable.numberOfRows - 1));
+	}
+	// その他（バグ）
+	else {
+		ERR(@"unknown table selection changed (%@)", tbl);
+	}
 }
 
+// テーブルダブルクリック時処理
+- (void)tableDoubleClicked:(id)sender
+{
+	NSInteger index = [sender selectedRow];
+	// 不在定義リスト
+	if (sender == self.absenceTable) {
+		if (index >= 0) {
+			[self.absenceEditButton performClick:self];
+		}
+	}
+	// 通知拒否条件リスト
+	else if (sender == self.refuseTable) {
+		if (index >= 0) {
+			[self.refuseEditButton performClick:self];
+		}
+	}
+	// その他（バグ）
+	else {
+		ERR(@"unknown table double clicked (%@)", sender);
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+#pragma mark - NSWindow
+/*----------------------------------------------------------------------------*/
+
+// ウィンドウ表示時
+- (void)windowDidBecomeKey:(NSNotification*)aNotification
+{
+	[self update];
+}
+
+// ウィンドウクローズ時
+- (void)windowWillClose:(NSNotification*)aNotification
+{
+	// 設定を保存
+	[Config.sharedConfig save];
+}
+
+/*----------------------------------------------------------------------------*/
+#pragma mark - NSObject
+/*----------------------------------------------------------------------------*/
+
 // 初期化
-- (void)awakeFromNib {
+- (void)awakeFromNib
+{
+	// 拒否条件パネルをロード（英語と日本語でレイアウトが異なるため外だし）
+	if (self.refuseSheet != nil) {
+		// 追加のxib読み込みでawakeFromNibが呼ばれてしまうので無限ループにならないように
+		return;
+	}
+	if (![NSBundle.mainBundle loadNibNamed:@"RefusePanel" owner:self topLevelObjects:nil]) {
+		self.refuseSheet = nil;
+	}
 
 	// サウンドプルダウンを準備
-	NSFileManager*	fm		= [NSFileManager defaultManager];
-	NSArray*		dirs	= NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSAllDomainsMask, YES);
-	int				i, j;
-
-	for (i = 0; i < [dirs count]; i++) {
-		NSString*	dir		= [[dirs objectAtIndex:i] stringByAppendingPathComponent:@"Sounds"];
-		NSArray*	files	= [fm contentsOfDirectoryAtPath:dir error:NULL];
-		if (!files) {
-			continue;
-		}
-		for (j = 0; j < [files count]; j++) {
-			[receiveSoundPopup addItemWithTitle:[[files objectAtIndex:j] stringByDeletingPathExtension]];
+	NSFileManager*		fm		= NSFileManager.defaultManager;
+	NSArray<NSString*>*	dirs	= NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSAllDomainsMask, YES);
+	for (NSString* dirBase in dirs) {
+		NSString*			dir		= [dirBase stringByAppendingPathComponent:@"Sounds"];
+		NSArray<NSString*>*	files	= [fm contentsOfDirectoryAtPath:dir error:NULL];
+		for (NSString* file in files) {
+			[self.receiveSoundPopup addItemWithTitle:[file stringByDeletingPathExtension]];
 		}
 	}
 
 	// テーブルダブルクリック時設定
-	[absenceTable setDoubleAction:@selector(tableDoubleClicked:)];
-	[refuseTable setDoubleAction:@selector(tableDoubleClicked:)];
-
-	// テーブルドラッグ設定
+	self.absenceTable.doubleAction	= @selector(tableDoubleClicked:);
+	self.refuseTable.doubleAction	= @selector(tableDoubleClicked:);
 
 	// コントロールの設定値を最新状態に
 	[self update];
 
 	// 画面中央に移動
-	[panel center];
-}
-
-// ウィンドウ表示時
-- (void)windowDidBecomeKey:(NSNotification *)aNotification {
-	[self update];
-}
-
-// ウィンドウクローズ時
-- (void)windowWillClose:(NSNotification *)aNotification {
-	// 設定を保存
-	[[Config sharedConfig] save];
+	[self.panel center];
 }
 
 @end

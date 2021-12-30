@@ -1,7 +1,7 @@
 /*============================================================================*
  * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: main.m
  *	Module		: アプリケーションエントリポイント
  *	Description	: アプリケーションメイン関数（ProjectBuilderによる自動生成）

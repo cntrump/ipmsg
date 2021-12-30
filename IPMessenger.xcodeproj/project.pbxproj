@@ -3,13 +3,18 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F7196E9013842A5300BE747B /* LogConvertController.h in Headers */ = {isa = PBXBuildFile; fileRef = F7196E8E13842A5300BE747B /* LogConvertController.h */; };
-		F7196E9113842A5300BE747B /* LogConvertController.m in Sources */ = {isa = PBXBuildFile; fileRef = F7196E8F13842A5300BE747B /* LogConvertController.m */; };
-		F7196FE211C40B5300BA4491 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F79BE0AB11C159E10088D0A5 /* Sparkle.framework */; };
+		546D548D835FF929D2CF8A33 /* Pods_IPMessenger.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B65DC0902E36A46F9DAB193 /* Pods_IPMessenger.framework */; };
+		F70A1EDE2322366900BE33F2 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F70A1EDD2322366900BE33F2 /* Images.xcassets */; };
+		F70E84232326733B0003AB04 /* NoticeDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = F70E84252326733B0003AB04 /* NoticeDialog.xib */; };
+		F70E8430232674BE0003AB04 /* PortChangeDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = F70E842E232674BE0003AB04 /* PortChangeDialog.xib */; };
+		F70E84342326752D0003AB04 /* ReceiveWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = F70E84322326752D0003AB04 /* ReceiveWindow.xib */; };
+		F70E8438232676A70003AB04 /* SendWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = F70E8436232676A70003AB04 /* SendWindow.xib */; };
+		F70E843C232677260003AB04 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = F70E843A232677260003AB04 /* MainMenu.xib */; };
+		F71A0E9B2351CACE0091A546 /* RefusePanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = F71A0E9D2351CACE0091A546 /* RefusePanel.xib */; };
 		F734531A0C454622001D5375 /* SendControl.h in Headers */ = {isa = PBXBuildFile; fileRef = F5269D350203CE5501A86403 /* SendControl.h */; };
 		F734531B0C454622001D5375 /* AppControl.h in Headers */ = {isa = PBXBuildFile; fileRef = F5269D390203CED401A86403 /* AppControl.h */; };
 		F734531C0C454622001D5375 /* NoticeControl.h in Headers */ = {isa = PBXBuildFile; fileRef = F5269D40020411A401A86403 /* NoticeControl.h */; };
@@ -23,26 +28,15 @@
 		F73453240C454622001D5375 /* LogManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 64CD0450027F05C200C69EE8 /* LogManager.h */; };
 		F73453250C454622001D5375 /* RetryInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 64DAAE0B02A0BDE2001FC8E1 /* RetryInfo.h */; };
 		F73453260C454622001D5375 /* RefuseInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 6426F20302C59B8700A80003 /* RefuseInfo.h */; };
-		F73453270C454622001D5375 /* WindowManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 64A2D09A02CF020900A80003 /* WindowManager.h */; };
 		F73453280C454622001D5375 /* ReceiveMessageView.h in Headers */ = {isa = PBXBuildFile; fileRef = 6417D5BB02EA9BF400A80003 /* ReceiveMessageView.h */; };
 		F73453290C454622001D5375 /* SendMessageView.h in Headers */ = {isa = PBXBuildFile; fileRef = 64A845CF02EB14CD00A80003 /* SendMessageView.h */; };
 		F734532A0C454622001D5375 /* PortChangeControl.h in Headers */ = {isa = PBXBuildFile; fileRef = F52964AC02F6EBF501A80004 /* PortChangeControl.h */; };
-		F734532B0C454622001D5375 /* AttachmentServer.h in Headers */ = {isa = PBXBuildFile; fileRef = F51E8DF20326721501A80003 /* AttachmentServer.h */; };
-		F734532C0C454622001D5375 /* Attachment.h in Headers */ = {isa = PBXBuildFile; fileRef = F51E8DF6032673F001A80003 /* Attachment.h */; };
+		F734532C0C454622001D5375 /* RecvAttachment.h in Headers */ = {isa = PBXBuildFile; fileRef = F51E8DF6032673F001A80003 /* RecvAttachment.h */; };
 		F734532D0C454622001D5375 /* DebugLog.h in Headers */ = {isa = PBXBuildFile; fileRef = F52F17710344A90101A80003 /* DebugLog.h */; };
-		F734532F0C454622001D5375 /* AttachmentClient.h in Headers */ = {isa = PBXBuildFile; fileRef = F53330EF0369A757012E428F /* AttachmentClient.h */; };
-		F73453300C454622001D5375 /* IPMessenger.h in Headers */ = {isa = PBXBuildFile; fileRef = F599B3C8036A445D01A80003 /* IPMessenger.h */; };
-		F73453310C454622001D5375 /* NSStringIPMessenger.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A78372037E820401C10C8C /* NSStringIPMessenger.h */; };
+		F73453310C454622001D5375 /* NSString+IPMessenger.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A78372037E820401C10C8C /* NSString+IPMessenger.h */; };
 		F73453320C454622001D5375 /* AttachStatusControl.h in Headers */ = {isa = PBXBuildFile; fileRef = F5411AE50387AF0001B5C499 /* AttachStatusControl.h */; };
-		F73453330C454622001D5375 /* AttachmentFile.h in Headers */ = {isa = PBXBuildFile; fileRef = F52567A603A2026001DDF8B6 /* AttachmentFile.h */; };
+		F73453330C454622001D5375 /* RecvFile.h in Headers */ = {isa = PBXBuildFile; fileRef = F52567A603A2026001DDF8B6 /* RecvFile.h */; };
 		F73453350C454622001D5375 /* RecvMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = F7FA4CA103C5A67300F04150 /* RecvMessage.h */; };
-		F734533D0C454622001D5375 /* IPMsg.icns in Resources */ = {isa = PBXBuildFile; fileRef = F538AD5A0275CC1401A86404 /* IPMsg.icns */; };
-		F734533E0C454622001D5375 /* IPMsgAbsence.icns in Resources */ = {isa = PBXBuildFile; fileRef = F538AD5B0275CC1401A86404 /* IPMsgAbsence.icns */; };
-		F734533F0C454622001D5375 /* IPMsgAbsenceReverse.icns in Resources */ = {isa = PBXBuildFile; fileRef = 64C55AB80278E2F900F306A7 /* IPMsgAbsenceReverse.icns */; };
-		F73453400C454622001D5375 /* IPMsgReverse.icns in Resources */ = {isa = PBXBuildFile; fileRef = 64C55AB70278E2F900F306A7 /* IPMsgReverse.icns */; };
-		F73453420C454622001D5375 /* AltLog.icns in Resources */ = {isa = PBXBuildFile; fileRef = F5FEFAD003AB352701F0AD6A /* AltLog.icns */; };
-		F73453430C454622001D5375 /* Attach.icns in Resources */ = {isa = PBXBuildFile; fileRef = F5FEFAD203AB3F7701F0AD6A /* Attach.icns */; };
-		F73453440C454622001D5375 /* AttachS.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F5FEFAD603AB49DB01F0AD6A /* AttachS.tiff */; };
 		F73453470C454622001D5375 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		F73453480C454622001D5375 /* SendControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F5269D360203CE5501A86403 /* SendControl.m */; };
 		F73453490C454622001D5375 /* AppControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F5269D3A0203CED401A86403 /* AppControl.m */; };
@@ -57,51 +51,33 @@
 		F73453520C454622001D5375 /* LogManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 64CD0451027F05C200C69EE8 /* LogManager.m */; };
 		F73453530C454622001D5375 /* RetryInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 64DAAE0C02A0BDE2001FC8E1 /* RetryInfo.m */; };
 		F73453540C454622001D5375 /* RefuseInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 6426F20402C59B8700A80003 /* RefuseInfo.m */; };
-		F73453550C454622001D5375 /* WindowManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 64A2D09B02CF020900A80003 /* WindowManager.m */; };
 		F73453560C454622001D5375 /* ReceiveMessageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6417D5BC02EA9BF400A80003 /* ReceiveMessageView.m */; };
 		F73453570C454622001D5375 /* SendMessageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 64A845D002EB14CD00A80003 /* SendMessageView.m */; };
 		F73453580C454622001D5375 /* PortChangeControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F52964AD02F6EBF501A80004 /* PortChangeControl.m */; };
-		F73453590C454622001D5375 /* AttachmentServer.m in Sources */ = {isa = PBXBuildFile; fileRef = F51E8DF30326721501A80003 /* AttachmentServer.m */; };
-		F734535A0C454622001D5375 /* Attachment.m in Sources */ = {isa = PBXBuildFile; fileRef = F51E8DFC0326754901A80003 /* Attachment.m */; };
-		F734535C0C454622001D5375 /* AttachmentClient.m in Sources */ = {isa = PBXBuildFile; fileRef = F53330F00369A757012E428F /* AttachmentClient.m */; };
+		F734535A0C454622001D5375 /* RecvAttachment.m in Sources */ = {isa = PBXBuildFile; fileRef = F51E8DFC0326754901A80003 /* RecvAttachment.m */; };
 		F734535D0C454622001D5375 /* DebugLog.m in Sources */ = {isa = PBXBuildFile; fileRef = F57BE9FD037DF9E901F89D99 /* DebugLog.m */; };
-		F734535E0C454622001D5375 /* NSStringIPMessenger.m in Sources */ = {isa = PBXBuildFile; fileRef = F5A78373037E820401C10C8C /* NSStringIPMessenger.m */; };
+		F734535E0C454622001D5375 /* NSString+IPMessenger.m in Sources */ = {isa = PBXBuildFile; fileRef = F5A78373037E820401C10C8C /* NSString+IPMessenger.m */; };
 		F734535F0C454622001D5375 /* AttachStatusControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F5411AE60387AF0001B5C499 /* AttachStatusControl.m */; };
-		F73453600C454622001D5375 /* AttachmentFile.m in Sources */ = {isa = PBXBuildFile; fileRef = F52567A703A2026001DDF8B6 /* AttachmentFile.m */; };
+		F73453600C454622001D5375 /* RecvFile.m in Sources */ = {isa = PBXBuildFile; fileRef = F52567A703A2026001DDF8B6 /* RecvFile.m */; };
 		F73453620C454622001D5375 /* RecvMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = F7FA4CA203C5A67300F04150 /* RecvMessage.m */; };
-		F743AB1311C10B7A003B098E /* dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = F743AB1211C10B79003B098E /* dsa_pub.pem */; };
+		F74EF9442383C8480079CE16 /* RecvClipboard.h in Headers */ = {isa = PBXBuildFile; fileRef = F74EF9432383C8480079CE16 /* RecvClipboard.h */; };
+		F74EF9462383C8520079CE16 /* RecvClipboard.m in Sources */ = {isa = PBXBuildFile; fileRef = F74EF9452383C8520079CE16 /* RecvClipboard.m */; };
+		F77375C9239DE517001F369C /* NSData+IPMessenger.h in Headers */ = {isa = PBXBuildFile; fileRef = F77375C8239DE517001F369C /* NSData+IPMessenger.h */; };
+		F77375CB239DE525001F369C /* NSData+IPMessenger.m in Sources */ = {isa = PBXBuildFile; fileRef = F77375CA239DE525001F369C /* NSData+IPMessenger.m */; };
 		F77D69641397A95B00BA58D6 /* SendHeaderView.h in Headers */ = {isa = PBXBuildFile; fileRef = F77D69621397A95B00BA58D6 /* SendHeaderView.h */; };
 		F77D69651397A95B00BA58D6 /* SendHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = F77D69631397A95B00BA58D6 /* SendHeaderView.m */; };
-		F794E5BA13855BCC003FB780 /* LogConvertDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = F794E5B913855BCC003FB780 /* LogConvertDialog.xib */; };
+		F783456E238BF3E900982043 /* CryptoCapability.h in Headers */ = {isa = PBXBuildFile; fileRef = F783456D238BF3E900982043 /* CryptoCapability.h */; };
+		F7834574238BFD3C00982043 /* CryptoCapability.m in Sources */ = {isa = PBXBuildFile; fileRef = F7834573238BFD3C00982043 /* CryptoCapability.m */; };
+		F7834576238BFD6F00982043 /* CryptoManager.m in Sources */ = {isa = PBXBuildFile; fileRef = F7834575238BFD6F00982043 /* CryptoManager.m */; };
+		F7834579238CE89B00982043 /* RSAPublicKey.m in Sources */ = {isa = PBXBuildFile; fileRef = F7834578238CE89B00982043 /* RSAPublicKey.m */; };
+		F783457C238D238700982043 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F783457B238D238700982043 /* Security.framework */; };
 		F799CF7F10EE727500773B8C /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F799CF7E10EE727500773B8C /* SystemConfiguration.framework */; };
 		F799D03010EE736800773B8C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F799D02F10EE736800773B8C /* Cocoa.framework */; };
-		F79BE0AC11C159E10088D0A5 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F79BE0AB11C159E10088D0A5 /* Sparkle.framework */; };
-		F7BC02BD1382522900EDBC81 /* LogConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = F7BC02BB1382522900EDBC81 /* LogConverter.h */; };
-		F7BC02BE1382522900EDBC81 /* LogConverter.m in Sources */ = {isa = PBXBuildFile; fileRef = F7BC02BC1382522900EDBC81 /* LogConverter.m */; };
+		F7B38DA3237C6450006385C7 /* SendAttachment.h in Headers */ = {isa = PBXBuildFile; fileRef = F7B38DA2237C6450006385C7 /* SendAttachment.h */; };
+		F7B38DA5237C6463006385C7 /* SendAttachment.m in Sources */ = {isa = PBXBuildFile; fileRef = F7B38DA4237C6463006385C7 /* SendAttachment.m */; };
 		F7C81E72138D7A2E00E329B5 /* Acknowledgement.pdf in Resources */ = {isa = PBXBuildFile; fileRef = F7C81E71138D7A2E00E329B5 /* Acknowledgement.pdf */; };
-		F7E66CA71361A9120014B3D7 /* menu_alternate.png in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CA41361A9120014B3D7 /* menu_alternate.png */; };
-		F7E66CA81361A9120014B3D7 /* menu_highlight.png in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CA51361A9120014B3D7 /* menu_highlight.png */; };
-		F7E66CA91361A9120014B3D7 /* menu_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CA61361A9120014B3D7 /* menu_normal.png */; };
-		F7E66CC31361ABBA0014B3D7 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CC11361ABBA0014B3D7 /* MainMenu.nib */; };
 		F7E66CCE1361ABC80014B3D7 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CC41361ABC80014B3D7 /* Localizable.strings */; };
-		F7E66CCF1361ABC80014B3D7 /* NoticeDialog.nib in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CC61361ABC80014B3D7 /* NoticeDialog.nib */; };
-		F7E66CD01361ABC80014B3D7 /* PortChangeDialog.nib in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CC81361ABC80014B3D7 /* PortChangeDialog.nib */; };
-		F7E66CD11361ABC80014B3D7 /* ReceiveWindow.nib in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CCA1361ABC80014B3D7 /* ReceiveWindow.nib */; };
-		F7E66CD21361ABC80014B3D7 /* SendWindow.nib in Resources */ = {isa = PBXBuildFile; fileRef = F7E66CCC1361ABC80014B3D7 /* SendWindow.nib */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		F743AAE911C1003A003B098E /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				F7196FE211C40B5300BA4491 /* Sparkle.framework in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -111,23 +87,19 @@
 		6426F20402C59B8700A80003 /* RefuseInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RefuseInfo.m; sourceTree = "<group>"; };
 		648FC3560260947000A86403 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		648FC35B0260954200A86403 /* Config.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Config.m; sourceTree = "<group>"; };
-		64A2D09A02CF020900A80003 /* WindowManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowManager.h; sourceTree = "<group>"; };
-		64A2D09B02CF020900A80003 /* WindowManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WindowManager.m; sourceTree = "<group>"; };
 		64A845CF02EB14CD00A80003 /* SendMessageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendMessageView.h; sourceTree = "<group>"; };
 		64A845D002EB14CD00A80003 /* SendMessageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendMessageView.m; sourceTree = "<group>"; };
 		64C4C4920272FF5300A86403 /* PrefControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PrefControl.m; sourceTree = "<group>"; };
-		64C55AB70278E2F900F306A7 /* IPMsgReverse.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = IPMsgReverse.icns; sourceTree = "<group>"; };
-		64C55AB80278E2F900F306A7 /* IPMsgAbsenceReverse.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = IPMsgAbsenceReverse.icns; sourceTree = "<group>"; };
 		64CD0450027F05C200C69EE8 /* LogManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogManager.h; sourceTree = "<group>"; };
 		64CD0451027F05C200C69EE8 /* LogManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LogManager.m; sourceTree = "<group>"; };
 		64DAAE0B02A0BDE2001FC8E1 /* RetryInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RetryInfo.h; sourceTree = "<group>"; };
 		64DAAE0C02A0BDE2001FC8E1 /* RetryInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RetryInfo.m; sourceTree = "<group>"; };
-		F51E8DF20326721501A80003 /* AttachmentServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AttachmentServer.h; sourceTree = "<group>"; };
-		F51E8DF30326721501A80003 /* AttachmentServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AttachmentServer.m; sourceTree = "<group>"; };
-		F51E8DF6032673F001A80003 /* Attachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attachment.h; sourceTree = "<group>"; };
-		F51E8DFC0326754901A80003 /* Attachment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Attachment.m; sourceTree = "<group>"; };
-		F52567A603A2026001DDF8B6 /* AttachmentFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AttachmentFile.h; sourceTree = "<group>"; };
-		F52567A703A2026001DDF8B6 /* AttachmentFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AttachmentFile.m; sourceTree = "<group>"; };
+		8B65DC0902E36A46F9DAB193 /* Pods_IPMessenger.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IPMessenger.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A745B7A2DFB40FE6CF56F7B8 /* Pods-IPMessenger.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IPMessenger.debug.xcconfig"; path = "Target Support Files/Pods-IPMessenger/Pods-IPMessenger.debug.xcconfig"; sourceTree = "<group>"; };
+		F51E8DF6032673F001A80003 /* RecvAttachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RecvAttachment.h; sourceTree = "<group>"; };
+		F51E8DFC0326754901A80003 /* RecvAttachment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RecvAttachment.m; sourceTree = "<group>"; };
+		F52567A603A2026001DDF8B6 /* RecvFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RecvFile.h; sourceTree = "<group>"; };
+		F52567A703A2026001DDF8B6 /* RecvFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RecvFile.m; sourceTree = "<group>"; };
 		F5269D350203CE5501A86403 /* SendControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendControl.h; sourceTree = "<group>"; };
 		F5269D360203CE5501A86403 /* SendControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendControl.m; sourceTree = "<group>"; };
 		F5269D390203CED401A86403 /* AppControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppControl.h; sourceTree = "<group>"; };
@@ -148,54 +120,55 @@
 		F52964AC02F6EBF501A80004 /* PortChangeControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PortChangeControl.h; sourceTree = "<group>"; };
 		F52964AD02F6EBF501A80004 /* PortChangeControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PortChangeControl.m; sourceTree = "<group>"; };
 		F52F17710344A90101A80003 /* DebugLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DebugLog.h; sourceTree = "<group>"; };
-		F53330EF0369A757012E428F /* AttachmentClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AttachmentClient.h; sourceTree = "<group>"; };
-		F53330F00369A757012E428F /* AttachmentClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AttachmentClient.m; sourceTree = "<group>"; };
-		F538AD5A0275CC1401A86404 /* IPMsg.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = IPMsg.icns; sourceTree = "<group>"; };
-		F538AD5B0275CC1401A86404 /* IPMsgAbsence.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = IPMsgAbsence.icns; sourceTree = "<group>"; };
 		F5411AE50387AF0001B5C499 /* AttachStatusControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AttachStatusControl.h; sourceTree = "<group>"; };
 		F5411AE60387AF0001B5C499 /* AttachStatusControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AttachStatusControl.m; sourceTree = "<group>"; };
 		F57BE9FD037DF9E901F89D99 /* DebugLog.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DebugLog.m; sourceTree = "<group>"; };
-		F599B3C8036A445D01A80003 /* IPMessenger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IPMessenger.h; sourceTree = "<group>"; };
-		F5A78372037E820401C10C8C /* NSStringIPMessenger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringIPMessenger.h; sourceTree = "<group>"; };
-		F5A78373037E820401C10C8C /* NSStringIPMessenger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringIPMessenger.m; sourceTree = "<group>"; };
-		F5FEFAD003AB352701F0AD6A /* AltLog.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AltLog.icns; sourceTree = "<group>"; };
-		F5FEFAD203AB3F7701F0AD6A /* Attach.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Attach.icns; sourceTree = "<group>"; };
-		F5FEFAD603AB49DB01F0AD6A /* AttachS.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = AttachS.tiff; sourceTree = "<group>"; };
-		F7196E83138428F400BE747B /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/LogConvertDialog.xib; sourceTree = "<group>"; };
-		F7196E8E13842A5300BE747B /* LogConvertController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogConvertController.h; sourceTree = "<group>"; };
-		F7196E8F13842A5300BE747B /* LogConvertController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LogConvertController.m; sourceTree = "<group>"; };
+		F5A78372037E820401C10C8C /* NSString+IPMessenger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+IPMessenger.h"; sourceTree = "<group>"; };
+		F5A78373037E820401C10C8C /* NSString+IPMessenger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+IPMessenger.m"; sourceTree = "<group>"; };
+		F70A1EDD2322366900BE33F2 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		F70B71DE23410706001EA563 /* Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Release.entitlements; sourceTree = "<group>"; };
+		F71A0E9C2351CACE0091A546 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/RefusePanel.xib; sourceTree = "<group>"; };
+		F71A0EA02351CB680091A546 /* ja */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = ja; path = ja.lproj/RefusePanel.xib; sourceTree = "<group>"; };
+		F71A0EA123521D6C0091A546 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/MainMenu.strings; sourceTree = "<group>"; };
+		F72B898A2350D5F400ADB9D8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		F72B898B2350D5F400ADB9D8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SendWindow.xib; sourceTree = "<group>"; };
+		F72B898C2350D5F400ADB9D8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/ReceiveWindow.xib; sourceTree = "<group>"; };
+		F72B898D2350D5F400ADB9D8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/NoticeDialog.xib; sourceTree = "<group>"; };
+		F72B898E2350D5F400ADB9D8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/PortChangeDialog.xib; sourceTree = "<group>"; };
+		F72B89962350EE2700ADB9D8 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/PortChangeDialog.strings; sourceTree = "<group>"; };
+		F72B899C2350EFFB00ADB9D8 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/NoticeDialog.strings; sourceTree = "<group>"; };
+		F72B899F2350F20500ADB9D8 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/ReceiveWindow.strings; sourceTree = "<group>"; };
+		F72B89A22350FAF600ADB9D8 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/SendWindow.strings; sourceTree = "<group>"; };
 		F734536C0C454622001D5375 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F734536F0C454622001D5375 /* IPMessenger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IPMessenger.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		F743AB1211C10B79003B098E /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dsa_pub.pem; sourceTree = "<group>"; };
+		F74EF9432383C8480079CE16 /* RecvClipboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RecvClipboard.h; sourceTree = "<group>"; };
+		F74EF9452383C8520079CE16 /* RecvClipboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RecvClipboard.m; sourceTree = "<group>"; };
+		F74FFC3923C0FBBD00058F59 /* Debug.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Debug.entitlements; sourceTree = "<group>"; };
+		F77375C8239DE517001F369C /* NSData+IPMessenger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+IPMessenger.h"; sourceTree = "<group>"; };
+		F77375CA239DE525001F369C /* NSData+IPMessenger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+IPMessenger.m"; sourceTree = "<group>"; };
 		F77D69621397A95B00BA58D6 /* SendHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendHeaderView.h; sourceTree = "<group>"; };
 		F77D69631397A95B00BA58D6 /* SendHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendHeaderView.m; sourceTree = "<group>"; };
-		F794E5BB13855BDE003FB780 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Japanese; path = Japanese.lproj/LogConvertDialog.xib; sourceTree = "<group>"; };
+		F783456A238BECEA00982043 /* CryptoManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CryptoManager.h; sourceTree = "<group>"; };
+		F783456D238BF3E900982043 /* CryptoCapability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CryptoCapability.h; sourceTree = "<group>"; };
+		F7834573238BFD3C00982043 /* CryptoCapability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CryptoCapability.m; sourceTree = "<group>"; };
+		F7834575238BFD6F00982043 /* CryptoManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CryptoManager.m; sourceTree = "<group>"; };
+		F7834578238CE89B00982043 /* RSAPublicKey.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RSAPublicKey.m; sourceTree = "<group>"; };
+		F783457A238CE8B900982043 /* RSAPublicKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RSAPublicKey.h; sourceTree = "<group>"; };
+		F783457B238D238700982043 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		F799CF7E10EE727500773B8C /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		F799D02F10EE736800773B8C /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		F799D16C10EE73C900773B8C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F799D17010EE73D300773B8C /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		F799D29310EE741500773B8C /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		F79BE0AB11C159E10088D0A5 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = framework/Sparkle.framework; sourceTree = "<group>"; };
-		F7BC02BB1382522900EDBC81 /* LogConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogConverter.h; sourceTree = "<group>"; };
-		F7BC02BC1382522900EDBC81 /* LogConverter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LogConverter.m; sourceTree = "<group>"; };
+		F7B38DA2237C6450006385C7 /* SendAttachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendAttachment.h; sourceTree = "<group>"; };
+		F7B38DA4237C6463006385C7 /* SendAttachment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendAttachment.m; sourceTree = "<group>"; };
+		F7BF217D230E731C00569076 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F7BF2184230E732600569076 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F7C81E71138D7A2E00E329B5 /* Acknowledgement.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = Acknowledgement.pdf; sourceTree = "<group>"; };
-		F7E66CA41361A9120014B3D7 /* menu_alternate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_alternate.png; sourceTree = "<group>"; };
-		F7E66CA51361A9120014B3D7 /* menu_highlight.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_highlight.png; sourceTree = "<group>"; };
-		F7E66CA61361A9120014B3D7 /* menu_normal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menu_normal.png; sourceTree = "<group>"; };
-		F7E66CC21361ABBA0014B3D7 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
-		F7E66CC51361ABC80014B3D7 /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
-		F7E66CC71361ABC80014B3D7 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/NoticeDialog.nib; sourceTree = "<group>"; };
-		F7E66CC91361ABC80014B3D7 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/PortChangeDialog.nib; sourceTree = "<group>"; };
-		F7E66CCB1361ABC80014B3D7 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/ReceiveWindow.nib; sourceTree = "<group>"; };
-		F7E66CCD1361ABC80014B3D7 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/SendWindow.nib; sourceTree = "<group>"; };
-		F7E66CD31361ABD30014B3D7 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Japanese; path = Japanese.lproj/Localizable.strings; sourceTree = "<group>"; };
-		F7E66CD41361ABD30014B3D7 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = Japanese; path = Japanese.lproj/MainMenu.nib; sourceTree = "<group>"; };
-		F7E66CD51361ABD30014B3D7 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = Japanese; path = Japanese.lproj/NoticeDialog.nib; sourceTree = "<group>"; };
-		F7E66CD61361ABD30014B3D7 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = Japanese; path = Japanese.lproj/PortChangeDialog.nib; sourceTree = "<group>"; };
-		F7E66CD71361ABD30014B3D7 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = Japanese; path = Japanese.lproj/ReceiveWindow.nib; sourceTree = "<group>"; };
-		F7E66CD81361ABD30014B3D7 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = Japanese; path = Japanese.lproj/SendWindow.nib; sourceTree = "<group>"; };
 		F7FA4CA103C5A67300F04150 /* RecvMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RecvMessage.h; sourceTree = "<group>"; };
 		F7FA4CA203C5A67300F04150 /* RecvMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RecvMessage.m; sourceTree = "<group>"; };
+		FB0E7E4D3633048BEE0C9108 /* Pods-IPMessenger.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IPMessenger.release.xcconfig"; path = "Target Support Files/Pods-IPMessenger/Pods-IPMessenger.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -205,7 +178,8 @@
 			files = (
 				F799CF7F10EE727500773B8C /* SystemConfiguration.framework in Frameworks */,
 				F799D03010EE736800773B8C /* Cocoa.framework in Frameworks */,
-				F79BE0AC11C159E10088D0A5 /* Sparkle.framework in Frameworks */,
+				F783457C238D238700982043 /* Security.framework in Frameworks */,
+				546D548D835FF929D2CF8A33 /* Pods_IPMessenger.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,8 +192,9 @@
 				64253EAE026818A200A0FC6F /* Application */,
 				F5269D4F020433CA01A86403 /* User */,
 				F5269D4402041BF801A86403 /* Message */,
-				F7BC02DB1382634E00EDBC81 /* Log */,
 				F51E8DF103266ECD01A80003 /* Attachment */,
+				F7834577238BFDA600982043 /* Crypto */,
+				F7BC02DB1382634E00EDBC81 /* Log */,
 				F5269D300203C9EE01A86403 /* UI */,
 				F57BE9FC037DF99A01F89D99 /* Utility */,
 			);
@@ -261,6 +236,7 @@
 				29B97317FDCFA39411CA2CEA /* resource */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
+				FFDAE2910FFD2CAAF334BD6B /* Pods */,
 			);
 			name = IPMessenger;
 			sourceTree = "<group>";
@@ -268,12 +244,13 @@
 		29B97317FDCFA39411CA2CEA /* resource */ = {
 			isa = PBXGroup;
 			children = (
-				F7C81E71138D7A2E00E329B5 /* Acknowledgement.pdf */,
 				F734536C0C454622001D5375 /* Info.plist */,
+				F70A1EDD2322366900BE33F2 /* Images.xcassets */,
 				F7E66CC41361ABC80014B3D7 /* Localizable.strings */,
-				F743AB1211C10B79003B098E /* dsa_pub.pem */,
-				F775679203CEBF4E00141840 /* Icons */,
-				F775679303CEBF6500141840 /* Nibs */,
+				F775679303CEBF6500141840 /* XIBs */,
+				F74FFC3923C0FBBD00058F59 /* Debug.entitlements */,
+				F70B71DE23410706001EA563 /* Release.entitlements */,
+				F7C81E71138D7A2E00E329B5 /* Acknowledgement.pdf */,
 			);
 			path = resource;
 			sourceTree = "<group>";
@@ -281,8 +258,10 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F783457B238D238700982043 /* Security.framework */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+				8B65DC0902E36A46F9DAB193 /* Pods_IPMessenger.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -290,7 +269,6 @@
 		64253EAE026818A200A0FC6F /* Application */ = {
 			isa = PBXGroup;
 			children = (
-				F599B3C8036A445D01A80003 /* IPMessenger.h */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 				F5269D390203CED401A86403 /* AppControl.h */,
 				F5269D3A0203CED401A86403 /* AppControl.m */,
@@ -303,14 +281,14 @@
 		F51E8DF103266ECD01A80003 /* Attachment */ = {
 			isa = PBXGroup;
 			children = (
-				F51E8DF6032673F001A80003 /* Attachment.h */,
-				F51E8DFC0326754901A80003 /* Attachment.m */,
-				F52567A603A2026001DDF8B6 /* AttachmentFile.h */,
-				F52567A703A2026001DDF8B6 /* AttachmentFile.m */,
-				F51E8DF20326721501A80003 /* AttachmentServer.h */,
-				F51E8DF30326721501A80003 /* AttachmentServer.m */,
-				F53330EF0369A757012E428F /* AttachmentClient.h */,
-				F53330F00369A757012E428F /* AttachmentClient.m */,
+				F51E8DF6032673F001A80003 /* RecvAttachment.h */,
+				F51E8DFC0326754901A80003 /* RecvAttachment.m */,
+				F52567A603A2026001DDF8B6 /* RecvFile.h */,
+				F52567A703A2026001DDF8B6 /* RecvFile.m */,
+				F74EF9432383C8480079CE16 /* RecvClipboard.h */,
+				F74EF9452383C8520079CE16 /* RecvClipboard.m */,
+				F7B38DA2237C6450006385C7 /* SendAttachment.h */,
+				F7B38DA4237C6463006385C7 /* SendAttachment.m */,
 			);
 			name = Attachment;
 			sourceTree = "<group>";
@@ -318,10 +296,6 @@
 		F5269D300203C9EE01A86403 /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				64A2D09A02CF020900A80003 /* WindowManager.h */,
-				64A2D09B02CF020900A80003 /* WindowManager.m */,
-				F7196E8E13842A5300BE747B /* LogConvertController.h */,
-				F7196E8F13842A5300BE747B /* LogConvertController.m */,
 				F52964AC02F6EBF501A80004 /* PortChangeControl.h */,
 				F52964AD02F6EBF501A80004 /* PortChangeControl.m */,
 				F5269D40020411A401A86403 /* NoticeControl.h */,
@@ -377,40 +351,38 @@
 			children = (
 				F52F17710344A90101A80003 /* DebugLog.h */,
 				F57BE9FD037DF9E901F89D99 /* DebugLog.m */,
-				F5A78372037E820401C10C8C /* NSStringIPMessenger.h */,
-				F5A78373037E820401C10C8C /* NSStringIPMessenger.m */,
+				F5A78372037E820401C10C8C /* NSString+IPMessenger.h */,
+				F5A78373037E820401C10C8C /* NSString+IPMessenger.m */,
+				F77375C8239DE517001F369C /* NSData+IPMessenger.h */,
+				F77375CA239DE525001F369C /* NSData+IPMessenger.m */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
 		};
-		F775679203CEBF4E00141840 /* Icons */ = {
+		F775679303CEBF6500141840 /* XIBs */ = {
 			isa = PBXGroup;
 			children = (
-				F5FEFAD003AB352701F0AD6A /* AltLog.icns */,
-				F5FEFAD203AB3F7701F0AD6A /* Attach.icns */,
-				F5FEFAD603AB49DB01F0AD6A /* AttachS.tiff */,
-				F538AD5A0275CC1401A86404 /* IPMsg.icns */,
-				64C55AB70278E2F900F306A7 /* IPMsgReverse.icns */,
-				F538AD5B0275CC1401A86404 /* IPMsgAbsence.icns */,
-				64C55AB80278E2F900F306A7 /* IPMsgAbsenceReverse.icns */,
-				F7E66CA61361A9120014B3D7 /* menu_normal.png */,
-				F7E66CA41361A9120014B3D7 /* menu_alternate.png */,
-				F7E66CA51361A9120014B3D7 /* menu_highlight.png */,
+				F70E843A232677260003AB04 /* MainMenu.xib */,
+				F71A0E9D2351CACE0091A546 /* RefusePanel.xib */,
+				F70E8436232676A70003AB04 /* SendWindow.xib */,
+				F70E84322326752D0003AB04 /* ReceiveWindow.xib */,
+				F70E84252326733B0003AB04 /* NoticeDialog.xib */,
+				F70E842E232674BE0003AB04 /* PortChangeDialog.xib */,
 			);
-			name = Icons;
+			name = XIBs;
 			sourceTree = "<group>";
 		};
-		F775679303CEBF6500141840 /* Nibs */ = {
+		F7834577238BFDA600982043 /* Crypto */ = {
 			isa = PBXGroup;
 			children = (
-				F7E66CC61361ABC80014B3D7 /* NoticeDialog.nib */,
-				F7E66CC81361ABC80014B3D7 /* PortChangeDialog.nib */,
-				F7E66CCA1361ABC80014B3D7 /* ReceiveWindow.nib */,
-				F7E66CCC1361ABC80014B3D7 /* SendWindow.nib */,
-				F7E66CC11361ABBA0014B3D7 /* MainMenu.nib */,
-				F794E5B913855BCC003FB780 /* LogConvertDialog.xib */,
+				F783456A238BECEA00982043 /* CryptoManager.h */,
+				F7834575238BFD6F00982043 /* CryptoManager.m */,
+				F783456D238BF3E900982043 /* CryptoCapability.h */,
+				F7834573238BFD3C00982043 /* CryptoCapability.m */,
+				F783457A238CE8B900982043 /* RSAPublicKey.h */,
+				F7834578238CE89B00982043 /* RSAPublicKey.m */,
 			);
-			name = Nibs;
+			name = Crypto;
 			sourceTree = "<group>";
 		};
 		F7BC02DB1382634E00EDBC81 /* Log */ = {
@@ -418,10 +390,17 @@
 			children = (
 				64CD0450027F05C200C69EE8 /* LogManager.h */,
 				64CD0451027F05C200C69EE8 /* LogManager.m */,
-				F7BC02BB1382522900EDBC81 /* LogConverter.h */,
-				F7BC02BC1382522900EDBC81 /* LogConverter.m */,
 			);
 			name = Log;
+			sourceTree = "<group>";
+		};
+		FFDAE2910FFD2CAAF334BD6B /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A745B7A2DFB40FE6CF56F7B8 /* Pods-IPMessenger.debug.xcconfig */,
+				FB0E7E4D3633048BEE0C9108 /* Pods-IPMessenger.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -432,33 +411,31 @@
 			buildActionMask = 2147483647;
 			files = (
 				F734531A0C454622001D5375 /* SendControl.h in Headers */,
+				F7B38DA3237C6450006385C7 /* SendAttachment.h in Headers */,
 				F734531B0C454622001D5375 /* AppControl.h in Headers */,
 				F734531C0C454622001D5375 /* NoticeControl.h in Headers */,
+				F74EF9442383C8480079CE16 /* RecvClipboard.h in Headers */,
 				F734531D0C454622001D5375 /* MessageCenter.h in Headers */,
 				F734531E0C454622001D5375 /* UserInfo.h in Headers */,
 				F734531F0C454622001D5375 /* UserManager.h in Headers */,
 				F73453200C454622001D5375 /* ReceiveControl.h in Headers */,
 				F73453210C454622001D5375 /* PrefControl.h in Headers */,
 				F73453220C454622001D5375 /* SendMessage.h in Headers */,
+				F77375C9239DE517001F369C /* NSData+IPMessenger.h in Headers */,
 				F73453230C454622001D5375 /* Config.h in Headers */,
 				F73453240C454622001D5375 /* LogManager.h in Headers */,
 				F73453250C454622001D5375 /* RetryInfo.h in Headers */,
 				F73453260C454622001D5375 /* RefuseInfo.h in Headers */,
-				F73453270C454622001D5375 /* WindowManager.h in Headers */,
+				F783456E238BF3E900982043 /* CryptoCapability.h in Headers */,
 				F73453280C454622001D5375 /* ReceiveMessageView.h in Headers */,
 				F73453290C454622001D5375 /* SendMessageView.h in Headers */,
 				F734532A0C454622001D5375 /* PortChangeControl.h in Headers */,
-				F734532B0C454622001D5375 /* AttachmentServer.h in Headers */,
-				F734532C0C454622001D5375 /* Attachment.h in Headers */,
+				F734532C0C454622001D5375 /* RecvAttachment.h in Headers */,
 				F734532D0C454622001D5375 /* DebugLog.h in Headers */,
-				F734532F0C454622001D5375 /* AttachmentClient.h in Headers */,
-				F73453300C454622001D5375 /* IPMessenger.h in Headers */,
-				F73453310C454622001D5375 /* NSStringIPMessenger.h in Headers */,
+				F73453310C454622001D5375 /* NSString+IPMessenger.h in Headers */,
 				F73453320C454622001D5375 /* AttachStatusControl.h in Headers */,
-				F73453330C454622001D5375 /* AttachmentFile.h in Headers */,
+				F73453330C454622001D5375 /* RecvFile.h in Headers */,
 				F73453350C454622001D5375 /* RecvMessage.h in Headers */,
-				F7BC02BD1382522900EDBC81 /* LogConverter.h in Headers */,
-				F7196E9013842A5300BE747B /* LogConvertController.h in Headers */,
 				F77D69641397A95B00BA58D6 /* SendHeaderView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -470,11 +447,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F73453660C454622001D5375 /* Build configuration list for PBXNativeTarget "IPMessenger" */;
 			buildPhases = (
+				165DADE201DA1505DAB1E365 /* [CP] Check Pods Manifest.lock */,
 				F73453190C454622001D5375 /* Headers */,
 				F73453370C454622001D5375 /* Resources */,
 				F73453460C454622001D5375 /* Sources */,
 				F73453640C454622001D5375 /* Frameworks */,
-				F743AAE911C1003A003B098E /* CopyFiles */,
+				7DF5BE70E162E4840DCFB7FC /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -492,19 +470,19 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0510;
+				LastUpgradeCheck = 1240;
 			};
 			buildConfigurationList = F734530C0C4545F7001D5375 /* Build configuration list for PBXProject "IPMessenger" */;
-			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			compatibilityVersion = "Xcode 10.0";
+			developmentRegion = en;
 			hasScannedForEncodings = 1;
 			knownRegions = (
-				English,
-				Japanese,
-				French,
-				German,
+				ja,
+				en,
+				Base,
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* IPMessenger */;
+			productRefGroup = 19C28FACFE9D520D11CA2CBB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -518,29 +496,61 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F734533D0C454622001D5375 /* IPMsg.icns in Resources */,
-				F734533E0C454622001D5375 /* IPMsgAbsence.icns in Resources */,
-				F734533F0C454622001D5375 /* IPMsgAbsenceReverse.icns in Resources */,
-				F73453400C454622001D5375 /* IPMsgReverse.icns in Resources */,
-				F73453420C454622001D5375 /* AltLog.icns in Resources */,
-				F73453430C454622001D5375 /* Attach.icns in Resources */,
-				F73453440C454622001D5375 /* AttachS.tiff in Resources */,
-				F743AB1311C10B7A003B098E /* dsa_pub.pem in Resources */,
-				F7E66CA71361A9120014B3D7 /* menu_alternate.png in Resources */,
-				F7E66CA81361A9120014B3D7 /* menu_highlight.png in Resources */,
-				F7E66CA91361A9120014B3D7 /* menu_normal.png in Resources */,
-				F7E66CC31361ABBA0014B3D7 /* MainMenu.nib in Resources */,
+				F70A1EDE2322366900BE33F2 /* Images.xcassets in Resources */,
+				F70E8438232676A70003AB04 /* SendWindow.xib in Resources */,
+				F71A0E9B2351CACE0091A546 /* RefusePanel.xib in Resources */,
+				F70E843C232677260003AB04 /* MainMenu.xib in Resources */,
+				F70E84342326752D0003AB04 /* ReceiveWindow.xib in Resources */,
 				F7E66CCE1361ABC80014B3D7 /* Localizable.strings in Resources */,
-				F7E66CCF1361ABC80014B3D7 /* NoticeDialog.nib in Resources */,
-				F7E66CD01361ABC80014B3D7 /* PortChangeDialog.nib in Resources */,
-				F7E66CD11361ABC80014B3D7 /* ReceiveWindow.nib in Resources */,
-				F7E66CD21361ABC80014B3D7 /* SendWindow.nib in Resources */,
-				F794E5BA13855BCC003FB780 /* LogConvertDialog.xib in Resources */,
+				F70E8430232674BE0003AB04 /* PortChangeDialog.xib in Resources */,
+				F70E84232326733B0003AB04 /* NoticeDialog.xib in Resources */,
 				F7C81E72138D7A2E00E329B5 /* Acknowledgement.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		165DADE201DA1505DAB1E365 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-IPMessenger-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7DF5BE70E162E4840DCFB7FC /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IPMessenger/Pods-IPMessenger-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-IPMessenger/Pods-IPMessenger-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-IPMessenger/Pods-IPMessenger-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F73453460C454622001D5375 /* Sources */ = {
@@ -549,9 +559,11 @@
 			files = (
 				F73453470C454622001D5375 /* main.m in Sources */,
 				F73453480C454622001D5375 /* SendControl.m in Sources */,
+				F7B38DA5237C6463006385C7 /* SendAttachment.m in Sources */,
 				F73453490C454622001D5375 /* AppControl.m in Sources */,
 				F734534A0C454622001D5375 /* NoticeControl.m in Sources */,
 				F734534B0C454622001D5375 /* MessageCenter.m in Sources */,
+				F7834579238CE89B00982043 /* RSAPublicKey.m in Sources */,
 				F734534C0C454622001D5375 /* UserInfo.m in Sources */,
 				F734534D0C454622001D5375 /* UserManager.m in Sources */,
 				F734534E0C454622001D5375 /* ReceiveControl.m in Sources */,
@@ -560,21 +572,20 @@
 				F73453510C454622001D5375 /* PrefControl.m in Sources */,
 				F73453520C454622001D5375 /* LogManager.m in Sources */,
 				F73453530C454622001D5375 /* RetryInfo.m in Sources */,
+				F7834576238BFD6F00982043 /* CryptoManager.m in Sources */,
 				F73453540C454622001D5375 /* RefuseInfo.m in Sources */,
-				F73453550C454622001D5375 /* WindowManager.m in Sources */,
+				F7834574238BFD3C00982043 /* CryptoCapability.m in Sources */,
 				F73453560C454622001D5375 /* ReceiveMessageView.m in Sources */,
 				F73453570C454622001D5375 /* SendMessageView.m in Sources */,
 				F73453580C454622001D5375 /* PortChangeControl.m in Sources */,
-				F73453590C454622001D5375 /* AttachmentServer.m in Sources */,
-				F734535A0C454622001D5375 /* Attachment.m in Sources */,
-				F734535C0C454622001D5375 /* AttachmentClient.m in Sources */,
+				F734535A0C454622001D5375 /* RecvAttachment.m in Sources */,
 				F734535D0C454622001D5375 /* DebugLog.m in Sources */,
-				F734535E0C454622001D5375 /* NSStringIPMessenger.m in Sources */,
+				F74EF9462383C8520079CE16 /* RecvClipboard.m in Sources */,
+				F734535E0C454622001D5375 /* NSString+IPMessenger.m in Sources */,
 				F734535F0C454622001D5375 /* AttachStatusControl.m in Sources */,
-				F73453600C454622001D5375 /* AttachmentFile.m in Sources */,
+				F73453600C454622001D5375 /* RecvFile.m in Sources */,
+				F77375CB239DE525001F369C /* NSData+IPMessenger.m in Sources */,
 				F73453620C454622001D5375 /* RecvMessage.m in Sources */,
-				F7BC02BE1382522900EDBC81 /* LogConverter.m in Sources */,
-				F7196E9113842A5300BE747B /* LogConvertController.m in Sources */,
 				F77D69651397A95B00BA58D6 /* SendHeaderView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -582,67 +593,67 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		F794E5B913855BCC003FB780 /* LogConvertDialog.xib */ = {
+		F70E84252326733B0003AB04 /* NoticeDialog.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				F7196E83138428F400BE747B /* English */,
-				F794E5BB13855BDE003FB780 /* Japanese */,
+				F72B898D2350D5F400ADB9D8 /* Base */,
+				F72B899C2350EFFB00ADB9D8 /* ja */,
 			);
-			name = LogConvertDialog.xib;
+			name = NoticeDialog.xib;
 			sourceTree = "<group>";
 		};
-		F7E66CC11361ABBA0014B3D7 /* MainMenu.nib */ = {
+		F70E842E232674BE0003AB04 /* PortChangeDialog.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				F7E66CC21361ABBA0014B3D7 /* English */,
-				F7E66CD41361ABD30014B3D7 /* Japanese */,
+				F72B898E2350D5F400ADB9D8 /* Base */,
+				F72B89962350EE2700ADB9D8 /* ja */,
 			);
-			name = MainMenu.nib;
+			name = PortChangeDialog.xib;
+			sourceTree = "<group>";
+		};
+		F70E84322326752D0003AB04 /* ReceiveWindow.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F72B898C2350D5F400ADB9D8 /* Base */,
+				F72B899F2350F20500ADB9D8 /* ja */,
+			);
+			name = ReceiveWindow.xib;
+			sourceTree = "<group>";
+		};
+		F70E8436232676A70003AB04 /* SendWindow.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F72B898B2350D5F400ADB9D8 /* Base */,
+				F72B89A22350FAF600ADB9D8 /* ja */,
+			);
+			name = SendWindow.xib;
+			sourceTree = "<group>";
+		};
+		F70E843A232677260003AB04 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F72B898A2350D5F400ADB9D8 /* Base */,
+				F71A0EA123521D6C0091A546 /* ja */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		F71A0E9D2351CACE0091A546 /* RefusePanel.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F71A0E9C2351CACE0091A546 /* Base */,
+				F71A0EA02351CB680091A546 /* ja */,
+			);
+			name = RefusePanel.xib;
 			sourceTree = "<group>";
 		};
 		F7E66CC41361ABC80014B3D7 /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				F7E66CC51361ABC80014B3D7 /* English */,
-				F7E66CD31361ABD30014B3D7 /* Japanese */,
+				F7BF217D230E731C00569076 /* ja */,
+				F7BF2184230E732600569076 /* en */,
 			);
 			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-		F7E66CC61361ABC80014B3D7 /* NoticeDialog.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F7E66CC71361ABC80014B3D7 /* English */,
-				F7E66CD51361ABD30014B3D7 /* Japanese */,
-			);
-			name = NoticeDialog.nib;
-			sourceTree = "<group>";
-		};
-		F7E66CC81361ABC80014B3D7 /* PortChangeDialog.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F7E66CC91361ABC80014B3D7 /* English */,
-				F7E66CD61361ABD30014B3D7 /* Japanese */,
-			);
-			name = PortChangeDialog.nib;
-			sourceTree = "<group>";
-		};
-		F7E66CCA1361ABC80014B3D7 /* ReceiveWindow.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F7E66CCB1361ABC80014B3D7 /* English */,
-				F7E66CD71361ABD30014B3D7 /* Japanese */,
-			);
-			name = ReceiveWindow.nib;
-			sourceTree = "<group>";
-		};
-		F7E66CCC1361ABC80014B3D7 /* SendWindow.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F7E66CCD1361ABC80014B3D7 /* English */,
-				F7E66CD81361ABD30014B3D7 /* Japanese */,
-			);
-			name = SendWindow.nib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -651,36 +662,109 @@
 		F734530D0C4545F7001D5375 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
 		};
 		F734530E0C4545F7001D5375 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 			};
 			name = Release;
 		};
 		F73453670C454622001D5375 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A745B7A2DFB40FE6CF56F7B8 /* Pods-IPMessenger.debug.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = resource/Debug.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 21KO0;
+				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/framework\"",
 					"\"$(SRCROOT)\"",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = IPMSG_DEBUG;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					IPMSG_DEBUG,
+					"$(inherited)",
+				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = resource/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"$(inherited)",
+				);
+				MARKETING_VERSION = 0.13.1;
+				PRODUCT_BUNDLE_IDENTIFIER = IPMessenger;
 				PRODUCT_NAME = IPMessenger;
 				WRAPPER_EXTENSION = app;
 			};
@@ -688,12 +772,18 @@
 		};
 		F73453680C454622001D5375 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FB0E7E4D3633048BEE0C9108 /* Pods-IPMessenger.release.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = resource/Release.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 21KO0;
+				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/framework\"",
 					"\"$(SRCROOT)\"",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
@@ -701,6 +791,12 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = resource/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"$(inherited)",
+				);
+				MARKETING_VERSION = 0.13.1;
+				PRODUCT_BUNDLE_IDENTIFIER = IPMessenger;
 				PRODUCT_NAME = IPMessenger;
 				WRAPPER_EXTENSION = app;
 			};

@@ -1,0 +1,87 @@
+
+/* Class = "NSBox"; title = "Message from..."; ObjectID = "11"; */
+"11.title" = "Message from...";
+
+/* Class = "NSWindow"; title = "Received Message"; ObjectID = "14"; */
+"14.title" = "受信メッセージ";
+
+/* Class = "NSButton"; ibShadowedToolTip = "Save message to Alternate Log File"; ObjectID = "19"; */
+"19.ibShadowedToolTip" = "重要ログファイルにメッセージを保存します";
+
+/* Class = "NSWindow"; title = "Input password"; ObjectID = "41"; */
+"41.title" = "パスワード入力";
+
+/* Class = "NSButton"; ibShadowedToolTip = "Open/Close Attachments Drawer"; ObjectID = "119"; */
+"119.ibShadowedToolTip" = "添付ファイルの引き出しを開閉します";
+
+/* Class = "NSWindow"; title = "Download panel"; ObjectID = "127"; */
+"127.title" = "添付ダウンロード";
+
+/* Class = "NSTableColumn"; headerCell.title = "Attachments"; ObjectID = "147"; */
+"147.headerCell.title" = "添付ファイル";
+
+/* Class = "NSTextFieldCell"; title = "Sunday, September 2, 2001 10:47:12"; ObjectID = "185"; */
+"185.title" = "Sunday, September 2, 2001 10:47:12";
+
+/* Class = "NSTextFieldCell"; title = "UserName"; ObjectID = "186"; */
+"186.title" = "送信者名";
+
+/* Class = "NSButtonCell"; title = "Reply"; ObjectID = "187"; */
+"187.title" = "返　信";
+
+/* Class = "NSButtonCell"; title = "Quote"; ObjectID = "188"; */
+"188.title" = "引用";
+
+/* Class = "NSButtonCell"; title = "Open"; ObjectID = "191"; */
+"191.title" = "開封";
+
+/* Class = "NSTextFieldCell"; title = "Message is locked. Please enter password."; ObjectID = "193"; */
+"193.title" = "錠前がかかっています。パスワードを入力してください。";
+
+/* Class = "NSButtonCell"; title = "OK"; ObjectID = "194"; */
+"194.title" = "認証";
+
+/* Class = "NSButtonCell"; title = "Cancel"; ObjectID = "196"; */
+"196.title" = "キャンセル";
+
+/* Class = "NSTextFieldCell"; title = "Error Message"; ObjectID = "197"; */
+"197.title" = "エラーメッセージ";
+
+/* Class = "NSButtonCell"; title = "↓"; ObjectID = "198"; */
+"198.title" = "↓";
+
+/* Class = "NSTextFieldCell"; title = "Preparing Download..."; ObjectID = "199"; */
+"199.title" = "ダウンロード準備中...";
+
+/* Class = "NSTextFieldCell"; title = "File Name"; ObjectID = "200"; */
+"200.title" = "ファイル名";
+
+/* Class = "NSTextFieldCell"; title = "100 %"; ObjectID = "201"; */
+"201.title" = "100 %";
+
+/* Class = "NSButtonCell"; title = "STOP"; ObjectID = "202"; */
+"202.title" = "キャンセル";
+
+/* Class = "NSTextFieldCell"; title = "Finished files :"; ObjectID = "203"; */
+"203.title" = "完了ファイル数：";
+
+/* Class = "NSTextFieldCell"; title = "Finished folders :"; ObjectID = "204"; */
+"204.title" = "完了フォルダ数：";
+
+/* Class = "NSTextFieldCell"; title = "0"; ObjectID = "205"; */
+"205.title" = "0";
+
+/* Class = "NSTextFieldCell"; title = "0"; ObjectID = "206"; */
+"206.title" = "0";
+
+/* Class = "NSTextFieldCell"; title = "Size :"; ObjectID = "207"; */
+"207.title" = "完了サイズ：";
+
+/* Class = "NSTextFieldCell"; title = "0/0"; ObjectID = "208"; */
+"208.title" = "0/0";
+
+/* Class = "NSTextFieldCell"; title = "Average speed :"; ObjectID = "209"; */
+"209.title" = "転送速度：";
+
+/* Class = "NSTextFieldCell"; title = "0 KB/s"; ObjectID = "210"; */
+"210.title" = "0 KB/s";

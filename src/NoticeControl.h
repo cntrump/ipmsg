@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: NoticeControl.h
  *	Module		: 通知ダイアログコントローラ
  *============================================================================*/
@@ -12,17 +12,16 @@
  * クラス定義
  *============================================================================*/
 
-@interface NoticeControl : NSObject
-{
-	IBOutlet NSWindow*		window;			// ダイアログ
-	IBOutlet NSTextField*	titleLabel;		// タイトルラベル
-	IBOutlet NSTextField*	messageLabel;	// メッセージラベル
-	IBOutlet NSTextField*	dateLabel;		// 日付ラベル
-}
+@interface NoticeControl : NSObject <NSWindowDelegate>
+
+@property(retain)	IBOutlet NSWindow*		window;			// ダイアログ
+@property(weak)		IBOutlet NSTextField*	titleLabel;		// タイトルラベル
+@property(weak)		IBOutlet NSTextField*	messageLabel;	// メッセージラベル
+@property(weak)		IBOutlet NSTextField*	dateLabel;		// 日付ラベル
 
 // 初期化
-- (id)initWithTitle:(NSString*)title
-			message:(NSString*)msg
-			   date:(NSDate*)date;
+- (instancetype)initWithTitle:(NSString*)title
+					  message:(NSString*)msg
+						 date:(NSDate*)date;
 
 @end

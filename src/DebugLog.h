@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: DebugLog.h
  *	Module		: デバッグログ機能
  *	Description	: デバッグログマクロ定義
@@ -37,14 +37,22 @@
 #endif
 
 /*============================================================================*
+ * ユーティリティ
+ *============================================================================*/
+
+// BOOLを文字列に
+#define BOOLSTR(val)	((val) ? "TRUE" : "FALSE")
+
+/*============================================================================*
  * トレースレベルログ
  *============================================================================*/
 
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_TRC == 1)
-#define _LOG_TRC	@"T ",__FILE__,__LINE__,__FUNCTION__
-#define TRC(...)	IPMsgLog(_LOG_TRC,[NSString stringWithFormat:__VA_ARGS__])
+	#define IPMSG_LOG_TRC_ENABLED
+	#define _LOG_TRC	@"T ",__FILE__,__LINE__,__FUNCTION__
+	#define TRC(...)	IPMsgLog(_LOG_TRC,[NSString stringWithFormat:__VA_ARGS__])
 #else
-#define TRC(...)
+	#define TRC(...)
 #endif
 
 /*============================================================================*
@@ -52,6 +60,7 @@
  *============================================================================*/
 
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_DBG == 1)
+	#define IPMSG_LOG_DBG_ENABLED
 	#define _LOG_DBG	@"D ",__FILE__,__LINE__,__FUNCTION__
 	#define DBG(...)	IPMsgLog(_LOG_DBG,[NSString stringWithFormat:__VA_ARGS__])
 #else
@@ -63,6 +72,7 @@
  *============================================================================*/
 
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_WRN == 1)
+	#define IPMSG_LOG_WRN_ENABLED
 	#define _LOG_WRN	@"W-",__FILE__,__LINE__,__FUNCTION__
 	#define WRN(...)	IPMsgLog(_LOG_WRN,[NSString stringWithFormat:__VA_ARGS__])
 #else
@@ -74,6 +84,7 @@
  *============================================================================*/
 
 #if defined(IPMSG_DEBUG) && (IPMSG_LOG_ERR == 1)
+	#define IPMSG_LOG_ERR_ENABLED
 	#define _LOG_ERR	@"E*",__FILE__,__LINE__,__FUNCTION__
 	#define ERR(...)	IPMsgLog(_LOG_ERR,[NSString stringWithFormat:__VA_ARGS__])
 #else

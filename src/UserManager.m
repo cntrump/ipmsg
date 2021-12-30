@@ -1,17 +1,32 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: UserManager.m
- *	Module		: ユーザ一覧管理クラス
+ *	Module		: ユーザ情報一覧管理クラス
  *============================================================================*/
 
-#import <Foundation/Foundation.h>
 #import "UserManager.h"
 #import "UserInfo.h"
 #import "DebugLog.h"
 
-#import <netinet/in.h>
+/*============================================================================*
+ * NSNotification通知キー
+ *============================================================================*/
+
+NSString* const kIPMsgUserListChangedNotification = @"IPMsgUserListChanged";
+
+/*============================================================================*
+ * 内部クラス拡張
+ *============================================================================*/
+
+@interface UserManager()
+
+@property(retain)	NSMutableArray<UserInfo*>*	userList;
+
+- (void)fireUserListChangeNotice;
+
+@end
 
 /*============================================================================*
  * クラス実装
@@ -19,163 +34,125 @@
 
 @implementation UserManager
 
-/*----------------------------------------------------------------------------*
- * ファクトリ
- *----------------------------------------------------------------------------*/
+//*---------------------------------------------------------------------------*
+#pragma mark - クラスメソッド
+//*---------------------------------------------------------------------------*
 
 // 共有インスタンスを返す
-+ (UserManager*)sharedManager {
-	static UserManager* sharedManager = nil;
-	if (!sharedManager) {
++ (instancetype)sharedManager
+{
+	static UserManager*		sharedManager = nil;
+	static dispatch_once_t	once;
+
+	dispatch_once(&once, ^{
 		sharedManager = [[UserManager alloc] init];
-	}
+	});
+
 	return sharedManager;
 }
 
-/*----------------------------------------------------------------------------*
- * 初期化／解放
- *----------------------------------------------------------------------------*/
+//*---------------------------------------------------------------------------*
+#pragma mark - 初期化/解放
+//*---------------------------------------------------------------------------*
 
 // 初期化
-- (id)init {
-	self		= [super init];
-	userList	= [[NSMutableArray alloc] init];
-	dialupSet	= [[NSMutableSet alloc] init];
-	lock		= [[NSRecursiveLock alloc] init];
-	[lock setName:@"UserManagerLock"];
+- (instancetype)init
+{
+	self = [super init];
+	if (self) {
+		_userList = [[NSMutableArray<UserInfo*> alloc] init];
+	}
 	return self;
 }
 
 // 解放
-- (void)dealloc {
-	[userList release];
-	[dialupSet release];
-	[lock release];
+- (void)dealloc
+{
+	[_userList release];
 	[super dealloc];
 }
 
-/*----------------------------------------------------------------------------*
- * ユーザ情報取得
- *----------------------------------------------------------------------------*/
+//*---------------------------------------------------------------------------*
+#pragma mark - プロパティアクセス
+//*---------------------------------------------------------------------------*
 
-// ユーザリストを返す
-- (NSArray*)users {
-	[lock lock];
-	NSArray* array = [NSArray arrayWithArray:userList];
-	[lock unlock];
-	return array;
+// ユーザ情報一覧
+- (NSArray<UserInfo*>*)users
+{
+	@synchronized (self.userList) {
+		return [NSArray arrayWithArray:self.userList];
+	}
 }
 
-// ユーザ数を返す
-- (int)numberOfUsers {
-	[lock lock];
-	int count = [userList count];
-	[lock unlock];
-	return count;
-}
-
-// 指定インデックスのユーザ情報を返す（見つからない場合nil）
-- (UserInfo*)userAtIndex:(int)index {
-	[lock lock];
-	UserInfo* info = [[[userList objectAtIndex:index] retain] autorelease];
-	[lock unlock];
-	return info;
-}
+//*---------------------------------------------------------------------------*
+#pragma mark - ユーザー情報アクセス
+//*---------------------------------------------------------------------------*
 
 // 指定キーのユーザ情報を返す（見つからない場合nil）
-- (UserInfo*)userForLogOnUser:(NSString*)logOn address:(UInt32)addr port:(UInt16)port {
-	UserInfo*	info = nil;
-	int			i;
-	[lock lock];
-	for (i = 0; i < [userList count]; i++) {
-		UserInfo* u = [userList objectAtIndex:i];
-		if ([u.logOnName isEqualToString:logOn] &&
-			(u.ipAddressNumber == addr) &&
-			(u.portNo == port)) {
-			info = [[u retain] autorelease];
-			break;
+- (UserInfo*)userForLogOnUser:(NSString*)logOn address:(struct sockaddr_in*)addr
+{
+	@synchronized (self.userList) {
+		for (UserInfo* user in self.userList) {
+			if ([user.logOnName isEqualToString:logOn] &&
+				(user.address.sin_addr.s_addr == addr->sin_addr.s_addr)) {
+				return [[user retain] autorelease];
+			}
 		}
 	}
-	[lock unlock];
-	return info;
-}
-
-/*----------------------------------------------------------------------------*
- * ユーザ情報追加／削除
- *----------------------------------------------------------------------------*/
-
-// ユーザ一覧変更通知発行
-- (void)fireUserListChangeNotice {
-	[[NSNotificationCenter defaultCenter] postNotificationName:NOTICE_USER_LIST_CHANGED object:nil];
+	return nil;
 }
 
 // ユーザ追加
-- (void)appendUser:(UserInfo*)info {
-	if (info) {
-		[lock lock];
-		int index = [userList indexOfObject:info];
+- (void)appendUser:(UserInfo*)user
+{
+	@synchronized (self.userList) {
+		NSUInteger index = [self.userList indexOfObject:user];
 		if (index == NSNotFound) {
 			// なければ追加
-			[userList addObject:info];
+			[self.userList addObject:user];
 		} else {
 			// あれば置き換え
-			[userList replaceObjectAtIndex:index withObject:info];
+			self.userList[index] = user;
 		}
-		// ダイアルアップユーザであればアドレス一覧を更新
-		if (info.dialupConnect) {
-			[dialupSet addObject:[[info.ipAddress copy] autorelease]];
+	}
+	[self fireUserListChangeNotice];
+}
+
+// ユーザ削除
+- (void)removeUser:(UserInfo*)user
+{
+	BOOL changed = NO;
+	@synchronized (self.userList) {
+		NSUInteger index = [self.userList indexOfObject:user];
+		if (index != NSNotFound) {
+			// あれば削除
+			[self.userList removeObjectAtIndex:index];
+			changed = YES;
 		}
-		[lock unlock];
+	}
+	if (changed) {
 		[self fireUserListChangeNotice];
 	}
 }
 
-// バージョン情報設定
-- (void)setVersion:(NSString*)version ofUser:(UserInfo*)user {
-	if (user) {
-		[lock lock];
-		int index = [userList indexOfObject:user];
-		if (index != NSNotFound) {
-			// あれば設定
-			user.version = version;
-			[self fireUserListChangeNotice];
-		}
-		[lock unlock];
-	}
-}
-
-// ユーザ削除
-- (void)removeUser:(UserInfo*)info {
-	if (info) {
-		[lock lock];
-		int index = [userList indexOfObject:info];
-		if (index != NSNotFound) {
-			// あれば削除
-			[userList removeObjectAtIndex:index];
-			if ([dialupSet containsObject:info.ipAddress]) {
-				[dialupSet removeObject:info.ipAddress];
-			}
-			[self fireUserListChangeNotice];
-		}
-		[lock unlock];
-	}
-}
-
 // ずべてのユーザを削除
-- (void)removeAllUsers {
-	[lock lock];
-	[userList removeAllObjects];
-	[dialupSet removeAllObjects];
-	[lock unlock];
+- (void)removeAllUsers
+{
+	@synchronized (self.userList) {
+		[self.userList removeAllObjects];
+	}
 	[self fireUserListChangeNotice];
 }
 
-// ダイアルアップアドレス一覧
-- (NSArray*)dialupAddresses {
-	[lock lock];
-	NSArray* array = [dialupSet allObjects];
-	[lock unlock];
-	return array;
+//*---------------------------------------------------------------------------*
+#pragma mark - 内部利用
+//*---------------------------------------------------------------------------*
+
+// ユーザ一覧変更通知発行
+- (void)fireUserListChangeNotice
+{
+	NSNotificationCenter* nc = NSNotificationCenter.defaultCenter;
+	[nc postNotificationName:kIPMsgUserListChangedNotification object:nil];
 }
 
 @end

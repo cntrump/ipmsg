@@ -1,51 +1,46 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: SendControl.h
  *	Module		: 送信メッセージウィンドウコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
 
-@class UserInfo;
 @class RecvMessage;
 
 /*============================================================================*
  * クラス定義
  *============================================================================*/
 
-@interface SendControl : NSObject
-{
-	IBOutlet NSWindow*		window;				// 送信ウィンドウ
-	IBOutlet NSSplitView*	splitView;
-	IBOutlet NSView*		splitSubview1;
-	IBOutlet NSView*		splitSubview2;
-	IBOutlet NSSearchField*	searchField;		// ユーザ検索フィールド
-	IBOutlet NSMenu*		searchMenu;			// ユーザ検索メニュー
-	IBOutlet NSTableView*	userTable;			// ユーザ一覧
-	IBOutlet NSTextField*	userNumLabel;		// ユーザ数ラベル
-	IBOutlet NSButton*		refreshButton;		// 更新ボタン
-	IBOutlet NSButton*		passwordCheck;		// 鍵チェックボックス
-	IBOutlet NSButton*		sealCheck;			// 封書チェックボックス
-	IBOutlet NSTextView*	messageArea;		// メッセージ入力欄
-	IBOutlet NSButton*		sendButton;			// 送信ボタン
-	IBOutlet NSButton*		attachButton;		// 添付ファイルDrawerトグルボタン
-	IBOutlet NSDrawer*		attachDrawer;		// 添付ファイルDrawer
-	IBOutlet NSTableView*	attachTable;		// 添付ファイル一覧
-	IBOutlet NSButton*		attachAddButton;	// 添付追加ボタン
-	IBOutlet NSButton*		attachDelButton;	// 添付削除ボタン
-	NSMutableArray*			attachments;		// 添付ファイル
-	NSMutableDictionary*	attachmentsDic;		// 添付ファイル辞書
-	RecvMessage*			receiveMessage;		// 返信元メッセージ
-	NSMutableArray*			users;				// ユーザリスト
-	NSPredicate*			userPredicate;		// ユーザ検索フィルタ
-	NSMutableArray*			selectedUsers;		// 選択ユーザリスト
-	NSLock*					selectedUsersLock;	// 選択ユーザリストロック
-}
+@interface SendControl : NSObject <NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate, NSSplitViewDelegate>
+
+@property(retain)	IBOutlet NSWindow*		window;				// 送信ウィンドウ
+@property(weak)		IBOutlet NSSplitView*	splitView;			// 上下分割View
+@property(weak)		IBOutlet NSView*		splitSubview1;		// 上側View
+@property(weak)		IBOutlet NSView*		splitSubview2;		// 下側View
+@property(weak)		IBOutlet NSSearchField*	searchField;		// ユーザ検索フィールド
+@property(weak)		IBOutlet NSMenu*		searchMenu;			// ユーザ検索メニュー
+@property(weak)		IBOutlet NSTableView*	userTable;			// ユーザ一覧
+@property(weak)		IBOutlet NSTextField*	userNumLabel;		// ユーザ数ラベル
+@property(weak)		IBOutlet NSButton*		refreshButton;		// 更新ボタン
+@property(weak)		IBOutlet NSButton*		passwordCheck;		// 鍵チェックボックス
+@property(weak)		IBOutlet NSButton*		sealCheck;			// 封書チェックボックス
+@property(weak)		IBOutlet NSTextView*	messageArea;		// メッセージ入力欄
+@property(weak)		IBOutlet NSButton*		sendButton;			// 送信ボタン
+@property(weak)		IBOutlet NSButton*		attachButton;		// 添付ファイルDrawerトグルボタン
+@property(weak)		IBOutlet NSDrawer*		attachDrawer;		// 添付ファイルDrawer
+@property(weak)		IBOutlet NSTableView*	attachTable;		// 添付ファイル一覧
+@property(weak)		IBOutlet NSButton*		attachAddButton;	// 添付追加ボタン
+@property(weak)		IBOutlet NSButton*		attachDelButton;	// 添付削除ボタン
+
+/// 返信元メッセージ
+@property(readonly)	RecvMessage*	recvMsg;
 
 // 初期化
-- (id)initWithSendMessage:(NSString*)msg recvMessage:(RecvMessage*)recv;
+- (instancetype)initWithSendMessage:(NSString*)msg
+						recvMessage:(RecvMessage*)recv;
 
 // ハンドラ
 - (IBAction)buttonPressed:(id)sender;

@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: AppControl.h
  *	Module		: アプリケーションコントローラ
  *============================================================================*/
@@ -11,18 +11,32 @@
 @class RecvMessage;
 @class SendControl;
 
-#ifndef MAC_OS_X_VERSION_10_6
-#define MAC_OS_X_VERSION_10_6	1060
-#endif
+/*============================================================================*
+ * Notification 通知キー
+ *============================================================================*/
+
+/// ホスト名変更
+extern NSString* const kIPMsgHostNameChangedNotification;
+/// ネットワーク検出
+extern NSString* const kIPMsgNetworkGainedNotification;
+/// ネットワーク喪失通知
+extern NSString* const kIPMsgNetworkLostNotification;
+
+/*============================================================================*
+ * 関数定義
+ *============================================================================*/
+
+// ホスト名取得
+extern NSString* AppControlGetHostName(void);
+
+// IPアドレス取得
+extern UInt32 AppControlGetIPAddress(void);
 
 /*============================================================================*
  * クラス定義
  *============================================================================*/
 
-@interface AppControl : NSObject
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-<NSApplicationDelegate>
-#endif
+@interface AppControl : NSObject <NSApplicationDelegate>
 {
 	IBOutlet NSMenu*		absenceMenu;					// 不在メニュー
 	IBOutlet NSMenuItem*	absenceOffMenuItem;				// 不在解除メニュー項目
@@ -41,28 +55,6 @@
 	IBOutlet NSMenuItem*	sendWindowListVersionMenuItem;	// 送信ウィンドウユーザ一覧バージョンメニュー項目
 
 	IBOutlet NSMenu*		statusBarMenu;					// ステータスバー用のメニュー
-	NSStatusItem*			statusBarItem;					// ステータスアイテムのインスタンス
-
-	BOOL					activatedFlag;					// アプリケーションアクティベートフラグ
-
-	NSMutableArray*			receiveQueue;					// 受信メッセージキュー
-	NSLock*					receiveQueueLock;				// 受信メッセージキュー排他ロック
-
-	NSTimer*				iconToggleTimer;				// アイコントグル用タイマー
-	BOOL					iconToggleState;				// アイコントグル状態（YES:通常/NO:リバース)
-
-	NSImage*				iconNormal;						// 通常時アプリアイコン
-	NSImage*				iconNormalReverse;				// 通常時アプリアイコン（反転）
-	NSImage*				iconAbsence;					// 不在時アプリアイコン
-	NSImage*				iconAbsenceReverse;				// 不在時アプリアイコン（反転）
-	NSImage* 				iconSmallNormal;				// 通常時アプリスモールアイコン
-	NSImage* 				iconSmallNormalReverse;			// 通常時アプリスモールアイコン（反転）
-	NSImage*				iconSmallAbsence;				// 不在時アプリスモールアイコン
-	NSImage*				iconSmallAbsenceReverse;		// 不在時アプリスモールアイコン（反転）
-	NSImage*				iconSmallAlaternate;			// 選択時アプリスモールアイコン
-
-	NSDate*					lastDockDraggedDate;			// 前回Dockドラッグ受付時刻
-	SendControl*			lastDockDraggedWindow;			// 前回Dockドラッグ時生成ウィンドウ
 }
 
 // メッセージ送受信／ウィンドウ関連処理
@@ -86,7 +78,5 @@
 - (IBAction)gotoHomePage:(id)sender;
 - (IBAction)showAcknowledgement:(id)sender;
 - (IBAction)openLog:(id)sender;
-
-- (void)checkLogConversion:(BOOL)aStdLog path:(NSString*)aPath;
 
 @end

@@ -1,14 +1,12 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: ReceiveControl.h
  *	Module		: 受信メッセージウィンドウコントローラ
  *============================================================================*/
 
 #import <Cocoa/Cocoa.h>
-#import "MessageCenter.h"
-#import "AttachmentClient.h"
 
 @class RecvMessage;
 
@@ -16,61 +14,53 @@
  * クラス定義
  *============================================================================*/
 
-@interface ReceiveControl : NSObject <AttachmentClientListener>
-{
-	IBOutlet NSWindow*				window;						// ウィンドウ
-	IBOutlet NSBox*					infoBox;					// ヘッダ部BOX
-	IBOutlet NSTextField*			userNameLabel;				// 送信元ユーザ名ラベル
-	IBOutlet NSTextField*			dateLabel;					// 受信日時ラベル
-	IBOutlet NSButton*				altLogButton;				// 重要ログボタン
-	IBOutlet NSButton*				quotCheck;					// 引用チェックボックス
-	IBOutlet NSButton*				replyButton;				// 返信ボタン
-	IBOutlet NSButton*				sealButton;					// 封書ボタン（メッセージ部のカバー）
-	IBOutlet NSTextView*			messageArea;				// メッセージ部
-	IBOutlet NSButton*				attachButton;				// 添付ボタン
-	IBOutlet NSDrawer*				attachDrawer;				// 添付ファイルDrawer
-	IBOutlet NSTableView*			attachTable;				// 添付ファイル一覧
-	IBOutlet NSButton*				attachSaveButton;			// 添付保存ボタン
-	IBOutlet NSPanel*				pwdSheet;					// パスワード入力パネル（シート）
-	IBOutlet NSTextField*			pwdSheetErrorLabel;			// パスワード入力パネルエラーラベル
-	IBOutlet NSSecureTextField*		pwdSheetField;				// パスワード入力パネルテキストフィールド
-	IBOutlet NSPanel*				attachSheet;				// ダウンロードシート
-	IBOutlet NSTextField*			attachSheetTitleLabel;		// ダウンロードシートタイトルラベル
-	IBOutlet NSTextField*			attachSheetSpeedLabel;		// ダウンロードシート転送速度ラベル
-	IBOutlet NSTextField*			attachSheetFileNameLabel;	// ダウンロードシートファイル名ラベル
-	IBOutlet NSTextField*			attachSheetPercentageLabel;	// ダウンロードシート％ラベル
-	IBOutlet NSTextField*			attachSheetFileNumLabel;	// ダウンロードシートファイル数ラベル
-	IBOutlet NSTextField*			attachSheetDirNumLabel;		// ダウンロードシートフォルダ数ラベル
-	IBOutlet NSTextField*			attachSheetSizeLabel;		// ダウンロードシートサイズラベル
-	IBOutlet NSProgressIndicator*	attachSheetProgress;		// ダウンロードシートプログレスバー
-	IBOutlet NSButton*				attachSheetCancelButton;	// ダウンロードシートキャンセルボタン
- 	RecvMessage*					recvMsg;					// 受信メッセージ
-	BOOL							pleaseCloseMe;				// 閉じる確認済みか？
-	AttachmentClient*				downloader;					// ダウンロードオブジェクト
-	NSTimer*						attachSheetRefreshTimer;	// ダウンロードシート更新タイマ
-	BOOL							attachSheetRefreshFileName;	// ダウンロードシード更新フラグ
-	BOOL							attachSheetRefreshPercentage;
-	BOOL							attachSheetRefreshTitle;
-	BOOL							attachSheetRefreshFileNum;
-	BOOL							attachSheetRefreshDirNum;
-	BOOL							attachSheetRefreshSize;
-}
+@interface ReceiveControl : NSObject <NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate>
+
+@property(retain)	IBOutlet NSWindow*				window;						// ウィンドウ
+@property(weak)		IBOutlet NSBox*					infoBox;					// ヘッダ部BOX
+@property(weak)		IBOutlet NSTextField*			userNameLabel;				// 送信元ユーザ名ラベル
+@property(weak)		IBOutlet NSTextField*			dateLabel;					// 受信日時ラベル
+@property(weak)		IBOutlet NSButton*				altLogButton;				// 重要ログボタン
+@property(weak)		IBOutlet NSButton*				quotCheck;					// 引用チェックボックス
+@property(weak)		IBOutlet NSButton*				replyButton;				// 返信ボタン
+@property(weak)		IBOutlet NSButton*				sealButton;					// 封書ボタン（メッセージ部のカバー）
+@property(weak)		IBOutlet NSTextView*			messageArea;				// メッセージ部
+@property(weak)		IBOutlet NSButton*				attachButton;				// 添付ボタン
+@property(weak)		IBOutlet NSDrawer*				attachDrawer;				// 添付ファイルDrawer
+@property(weak)		IBOutlet NSTableView*			attachTable;				// 添付ファイル一覧
+@property(weak)		IBOutlet NSButton*				attachSaveButton;			// 添付保存ボタン
+@property(retain)	IBOutlet NSPanel*				pwdSheet;					// パスワード入力パネル（シート）
+@property(weak)		IBOutlet NSTextField*			pwdSheetErrorLabel;			// パスワード入力パネルエラーラベル
+@property(weak)		IBOutlet NSSecureTextField*		pwdSheetField;				// パスワード入力パネルテキストフィールド
+@property(retain)	IBOutlet NSPanel*				attachSheet;				// ダウンロードシート
+@property(weak)		IBOutlet NSTextField*			attachSheetTitleLabel;		// ダウンロードシートタイトルラベル
+@property(weak)		IBOutlet NSTextField*			attachSheetSpeedLabel;		// ダウンロードシート転送速度ラベル
+@property(weak)		IBOutlet NSTextField*			attachSheetFileNameLabel;	// ダウンロードシートファイル名ラベル
+@property(weak)		IBOutlet NSTextField*			attachSheetPercentageLabel;	// ダウンロードシート％ラベル
+@property(weak)		IBOutlet NSTextField*			attachSheetFileNumLabel;	// ダウンロードシートファイル数ラベル
+@property(weak)		IBOutlet NSTextField*			attachSheetDirNumLabel;		// ダウンロードシートフォルダ数ラベル
+@property(weak)		IBOutlet NSTextField*			attachSheetSizeLabel;		// ダウンロードシートサイズラベル
+@property(weak)		IBOutlet NSProgressIndicator*	attachSheetProgress;		// ダウンロードシートプログレスバー
+@property(weak)		IBOutlet NSButton*				attachSheetCancelButton;	// ダウンロードシートキャンセルボタン
+
+/// 受信メッセージ
+@property(readonly)	RecvMessage*					recvMsg;					// 受信メッセージ
 
 // 初期化（ウィンドウは表示しない）
-- (id)initWithRecvMessage:(RecvMessage*)msg;
+- (instancetype)initWithRecvMessage:(RecvMessage*)msg;
 // ウィンドウの表示
 - (void)showWindow;
 // ハンドラ
 - (IBAction)buttonPressed:(id)sender;
-
 - (IBAction)openSeal:(id)sender;
 - (IBAction)replyMessage:(id)sender;
 - (IBAction)writeAlternateLog:(id)sender;
-- (IBAction)cancelPwdSheet:(id)sender;
 - (IBAction)okPwdSheet:(id)sender;
+- (IBAction)cancelPwdSheet:(id)sender;
+- (IBAction)showReceiveMessageFontPanel:(id)sender;
+- (IBAction)saveReceiveMessageFont:(id)sender;
+- (IBAction)resetReceiveMessageFont:(id)sender;
 // その他
 - (IBAction)backWindowToFront:(id)sender;
-- (NSWindow*)window;
-- (void)setAttachHeader;
 
 @end

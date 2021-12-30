@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: LogManager.h
  *	Module		: ログ管理クラス
  *============================================================================*/
@@ -10,25 +10,15 @@
 
 @class RecvMessage;
 @class SendMessage;
+@class UserInfo;
 
 /*============================================================================*
  * クラス定義
  *============================================================================*/
 
 @interface LogManager : NSObject
-{
-	NSFileManager*		_fileManager;
-	NSString*			_filePath;
-	NSString*			_sTypeBroadcast;
-	NSString*			_sTypeMulticast;
-	NSString*			_sTypeAutoReturn;
-	NSString*			_sTypeLocked;
-	NSString*			_sTypeSealed;
-	NSString*			_sTypeAttached;
-	NSDateFormatter*	_dateFormat;
-}
 
-@property(copy,readwrite)	NSString*	filePath;		// ログファイルパス
+@property(copy)	NSString*	filePath;		// ログファイルパス
 
 // ファクトリ
 + (LogManager*)standardLog;
@@ -37,6 +27,6 @@
 // ログ出力
 - (void)writeRecvLog:(RecvMessage*)info;
 - (void)writeRecvLog:(RecvMessage*)info withRange:(NSRange)range;
-- (void)writeSendLog:(SendMessage*)info to:(NSArray*)to;
+- (void)writeSendLog:(SendMessage*)info to:(NSArray<UserInfo*>*)to;
 
 @end

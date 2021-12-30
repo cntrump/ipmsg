@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: PortChangeControl.m
  *	Module		: ポート変更ダイアログコントローラクラス
  *============================================================================*/
@@ -12,39 +12,41 @@
 
 @implementation PortChangeControl
 
-/*----------------------------------------------------------------------------*
- * 初期化
- *----------------------------------------------------------------------------*/
-
 // 初期化
-- (id)init {
+- (instancetype)init
+{
 	self = [super init];
+	if (self) {
+		// nibファイルロード
+		if (![NSBundle.mainBundle loadNibNamed:@"PortChangeDialog"
+										 owner:self
+							   topLevelObjects:nil]) {
+			[self release];
+			return nil;
+		}
 
-	// nibファイルロード
-	if (![NSBundle loadNibNamed:@"PortChangeDialog.nib" owner:self]) {
-		[self autorelease];
-		return nil;
+		_portNoField.objectValue = @(Config.sharedConfig.portNo);
+
+		// ダイアログ表示
+		[_panel center];
+		_panel.excludedFromWindowsMenu = YES;
+		[_panel makeKeyAndOrderFront:self];
+
+		// モーダル開始
+		[NSApp runModalForWindow:_panel];
 	}
-	[portNoField setObjectValue:[NSNumber numberWithInteger:[Config sharedConfig].portNo]];
-
-	// ダイアログ表示
-	[panel center];
-	[panel setExcludedFromWindowsMenu:YES];
-	[panel makeKeyAndOrderFront:self];
-
-	// モーダル開始
-	[NSApp runModalForWindow:panel];
-
 	return self;
 }
 
-- (IBAction)buttonPressed:(id)sender {
-	if (sender == okButton) {
-		NSInteger newVal = [portNoField integerValue];
+// ボタン押下時処理
+- (IBAction)buttonPressed:(id)sender
+{
+	if (sender == self.okButton) {
+		NSInteger newVal = self.portNoField.integerValue;
 		if (newVal != 0) {
 			// ポート変更／ウィンドウクローズ／モーダル終了
-			[Config sharedConfig].portNo = newVal;
-			[panel close];
+			Config.sharedConfig.portNo = newVal;
+			[self.panel close];
 			[NSApp stopModal];
 		}
 	} else {
@@ -52,22 +54,20 @@
 	}
 }
 
-- (IBAction)textChanged:(id)sender {
-	if (sender == portNoField) {
+// テキスト変更時処理
+- (IBAction)textChanged:(id)sender
+{
+	if (sender == self.portNoField) {
 		// NOP
 	} else {
 		ERR(@"Unknown TextField Changed(%@)", sender);
 	}
 }
 
-/*----------------------------------------------------------------------------*
- * その他
- *----------------------------------------------------------------------------*/
-
 // ウィンドウクローズ時処理
-- (void)windowWillClose:(NSNotification*)aNotification {
+- (void)windowWillClose:(NSNotification*)aNotification
+{
 	[self release];
 }
-
 
 @end

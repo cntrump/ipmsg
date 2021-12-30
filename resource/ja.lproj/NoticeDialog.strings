@@ -1,0 +1,15 @@
+
+/* Class = "NSWindow"; title = "IP Messenger"; ObjectID = "5"; */
+"5.title" = "IP Messenger";
+
+/* Class = "NSTextFieldCell"; title = "Message Title"; ObjectID = "26"; */
+"26.title" = "メッセージテキスト";
+
+/* Class = "NSTextFieldCell"; title = "Sunday, September 23, 2001 2:27:15"; ObjectID = "27"; */
+"27.title" = "Sunday, September 23, 2001 2:27:15";
+
+/* Class = "NSButtonCell"; title = "OK"; ObjectID = "28"; */
+"28.title" = "OK";
+
+/* Class = "NSTextFieldCell"; title = "Message Text"; ObjectID = "29"; */
+"29.title" = "メッセージテキスト";

@@ -22,11 +22,9 @@
 	<key>CFBundleExecutable</key>
 	<string>IPMessenger</string>
 	<key>CFBundleGetInfoString</key>
-	<string>IP Messenger for Mac OS X</string>
-	<key>CFBundleIconFile</key>
-	<string>IPMsg</string>
+	<string>IP Messenger for macOS</string>
 	<key>CFBundleIdentifier</key>
-	<string>IPMessenger</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -34,13 +32,15 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.11.5</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>14H50</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.social-networking</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2001-2014, G.Ishiwata.</string>
+	<string>Copyright © 2001-2021, G.Ishiwata.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
@@ -48,8 +48,8 @@
 	<key>SUAllowsAutomaticUpdates</key>
 	<string>NO</string>
 	<key>SUFeedURL</key>
-	<string>http://ishwt.net/files/ipmsg/su/appcast.xml</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
+	<string>https://ishwt.net/files/ipmsg/su/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>s53pUvC/SvnjPvE2knmaSb2yl2ZA1FbrIs7DmkYvS0A=</string>
 </dict>
 </plist>

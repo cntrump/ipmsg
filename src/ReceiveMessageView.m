@@ -1,7 +1,7 @@
 /*============================================================================*
- * (C) 2001-2011 G.Ishiwata, All Rights Reserved.
+ * (C) 2001-2019 G.Ishiwata, All Rights Reserved.
  *
- *	Project		: IP Messenger for Mac OS X
+ *	Project		: IP Messenger for macOS
  *	File		: ReceiveMessageView.m
  *	Module		: 受信メッセージ表示View
  *============================================================================*/
@@ -15,21 +15,21 @@
 
 @implementation ReceiveMessageView
 
-- (id)initWithFrame:(NSRect)frameRect
+- (instancetype)initWithFrame:(NSRect)frameRect
 {
 	self = [super initWithFrame:frameRect];
 	if (self) {
-		[self setEditable:NO];
-		[self setBackgroundColor:[NSColor windowBackgroundColor]];
-		[self setFont:[Config sharedConfig].receiveMessageFont];
-		[self setUsesRuler:YES];
+		self.editable			= NO;
+		self.backgroundColor	= NSColor.windowBackgroundColor;
+		self.font				= Config.sharedConfig.receiveMessageFont;
+		self.usesRuler			= YES;
 	}
 	return self;
 }
 
 - (void)changeFont:(id)sender
 {
-	[self setFont:[sender convertFont:[self font]]];
+	self.font = [sender convertFont:self.font];
 }
 
 @end
