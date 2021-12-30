@@ -1,0 +1,38 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {
+                buttonPressed = id; 
+                checkboxChanged = id; 
+                sendMessage = id; 
+                sendPressed = id; 
+            }; 
+            CLASS = SendControl; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                attachAddButton = NSButton; 
+                attachButton = NSButton; 
+                attachDelButton = NSButton; 
+                attachDrawer = NSDrawer; 
+                attachTable = NSTableView; 
+                messageArea = NSTextView; 
+                passwordCheck = NSButton; 
+                refreshButton = NSButton; 
+                sealCheck = NSButton; 
+                sendAllCheck = NSButton; 
+                sendButton = NSButton; 
+                splitSubview1 = NSView; 
+                splitSubview2 = NSView; 
+                splitView = NSSplitView; 
+                userNumLabel = NSTextField; 
+                userTable = NSTableView; 
+                window = NSWindow; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = SendMessageView; LANGUAGE = ObjC; SUPERCLASS = NSTextView; }, 
+        {CLASS = SendWindow; LANGUAGE = ObjC; SUPERCLASS = NSWindow; }
+    ); 
+    IBVersion = 1; 
+}
