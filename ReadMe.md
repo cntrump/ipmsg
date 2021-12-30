@@ -10,6 +10,22 @@ Compatible with Windows version.
 
 ![](win.png)
 
+## How to build
+
+Install cocoapods
+
+```
+sudo gem install cocoapods
+```
+
+Install denpendencies
+
+```
+pod install
+```
+
+Open `IPMessenger.xcworkspace` with Xcode, Build and Run.
+
 ## Licence
 
 This software is licensed according to the [BSD Licence](https://en.wikipedia.org/wiki/BSD_license).
